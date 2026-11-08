@@ -2974,10 +2974,10 @@ function drawRankPanel() {
     textC('⁠' + r.name, 104, cy, { size: 7, thai: true, color: col, weight: r.me ? 700 : 400 });
     textC(netVal(b, r.value), 318, cy, { size: 7, align: 'right', color: col, weight: 700 });
   });
-  text('คุณ:', 80, 160, { size: 7, thai: true, color: '#bba8ba', weight: 400 });
+  textC('คุณ:', 80, 163.6, { size: 7, thai: true, color: '#bba8ba', weight: 400 });
   ctx.font = `400 7px ${THAI}`; const lw = ctx.measureText('คุณ:').width + 3;
-  if (NET.name) text('⁠' + NET.name, 80 + lw, 160, { size: 7, thai: true, color: '#f6ead2', weight: 700 }); else text('(ยังไม่ได้ตั้งชื่อ)', 80 + lw, 160, { size: 7, thai: true, color: '#8a7a6a', weight: 400 });
-  if (e.me) { const rs = 'อันดับที่ ' + e.me.rank; text(rs, 80, 169.5, { size: 7, thai: true, color: '#9be15d', weight: 400 }); ctx.font = `400 7px ${THAI}`; text('· ' + netVal(b, e.me.value), 83 + ctx.measureText(rs).width, 169.5, { size: 7, color: '#9be15d', weight: 400 }); }
+  if (NET.name) textC('⁠' + NET.name, 80 + lw, 163.6, { size: 7, thai: true, color: '#f6ead2', weight: 700 }); else textC('(ยังไม่ได้ตั้งชื่อ)', 80 + lw, 163.6, { size: 7, thai: true, color: '#8a7a6a', weight: 400 });
+  if (e.me) { const rs = 'อันดับที่ ' + e.me.rank; textC(rs, 80, 173.1, { size: 7, thai: true, color: '#9be15d', weight: 400 }); ctx.font = `400 7px ${THAI}`; textC('· ' + netVal(b, e.me.value), 83 + ctx.measureText(rs).width, 173.1, { size: 7, color: '#9be15d', weight: 700 }); }
   btn('rkn', 248, 159, 72, 15); uiBtn(248, 159, 72, 15, false); textC('เปลี่ยนชื่อ (N)', 284, 166.5, { size: 6.5, align: 'center', thai: true, color: '#ffd7a0' });
   if (NET.msg && Date.now() - NET.msgT < 3500) { const m = { ok: ['เปลี่ยนชื่อแล้ว', '#9be15d'], bad: ['ชื่อนี้ใช้ไม่ได้ (2-16 ตัวอักษร ห้ามคำหยาบ)', '#ff8a7a'], off: ['ต่อระบบอันดับไม่ได้ ลองใหม่อีกครั้ง', '#ff8a7a'] }[NET.msg]; text(m[0], 244, 170, { size: 6, align: 'right', thai: true, color: m[1], weight: 400 }); }
   if (nameEdit) {
