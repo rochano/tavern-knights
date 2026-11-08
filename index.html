@@ -2878,9 +2878,9 @@ let scene = 'title', titleT = 0;
 const TITLE_MENU = [0, 1, 2, 3, 4, 5].map(i => { const cy = 152.6 + i * 9.7; return [140, cy - 4.6, 260, cy + 4.6]; });
 let titleSel = 0, titlePanel = null, optSel = 0, rkB = 0, rkP = 'week', mapRank = false;
 // input for the ranking panel (title menu and world map)
-let nameEdit = false;
+let nameEdit = false, nameZ = false, nameH0 = 0;
 function nameOpen() {
-  const el = document.getElementById('nameIn'); nameEdit = true; el.value = NET.name || '';
+  const el = document.getElementById('nameIn'); nameEdit = true; nameZ = innerWidth < innerHeight; nameH0 = innerHeight; /* remember: the keyboard shrinks the page and would make it look landscape */ el.value = NET.name || '';
   el.style.display = 'block';
   try { el.focus(); el.select(); } catch (e) {}
 }
@@ -3227,10 +3227,10 @@ function tpRotFit(rot) { /* Safari/LINE: 100vh includes the area under the brows
 function tpSync() {
   if (!TOUCH_DEV) return;
   const land = innerWidth >= innerHeight || nameEdit; /* while typing a name, lay the game flat at the top so the phone keyboard never covers it (X/FB in-app browsers don't resize for the keyboard) */
-  document.body.classList.toggle('tp-name', nameEdit); const nz = nameEdit && innerWidth < innerHeight; document.body.classList.toggle('tp-namez', nz);
+  document.body.classList.toggle('tp-name', nameEdit); const nz = nameEdit && nameZ; document.body.classList.toggle('tp-namez', nz);
   { /* upright phone: zoom in on the name box and centre it in the space above the keyboard */
     const sc = document.querySelector('.screen'), vv = window.visualViewport;
-    if (nz) { const k = 1.75, wd = innerWidth, hd = wd * 9 / 16, avail = vv && vv.height < innerHeight * 0.9 ? vv.height : innerHeight * 0.56;
+    if (nz) { const k = 1.75, wd = innerWidth, hd = wd * 9 / 16, avail = innerHeight < nameH0 * 0.8 ? innerHeight : vv && vv.height < innerHeight * 0.9 ? vv.height : innerHeight * 0.56;
       sc.style.transformOrigin = '0 0'; sc.style.transform = `translate(${wd / 2 * (1 - k)}px, ${avail / 2 - 114 / 225 * hd * k}px) scale(${k})`; }
     else if (sc.style.transform) sc.style.transform = sc.style.transformOrigin = ''; }
   document.body.classList.toggle('tp-on', true); tpOnTxt = true; document.body.classList.toggle('tp-rot', !land); tpRotFit(!land);
