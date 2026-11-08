@@ -436,6 +436,8 @@ const I18N_EN = {
 "อันดับที่ #": "Rank #",
 "เปลี่ยนชื่อ (N)": "Rename (N)",
 "เปลี่ยนชื่อแล้ว": "Name changed",
+"ชื่อนี้ใช้ไม่ได้": "Name not allowed",
+"ต่อไม่ได้ ลองใหม่": "Offline, try again",
 "ชื่อนี้ใช้ไม่ได้ (2-16 ตัวอักษร ห้ามคำหยาบ)": "Name not allowed (2-16 letters, no rude words)",
 "ต่อระบบอันดับไม่ได้ ลองใหม่อีกครั้ง": "Could not reach the ranking. Try again",
 "ชื่อที่จะแสดงบนตารางอันดับ (2-16 ตัวอักษร)": "Name to show on the ranking (2-16 letters)",
@@ -2981,7 +2983,8 @@ function drawRankPanel() {
   if (NET.name) textC('⁠' + NET.name, 80 + lw, 163.6, { size: 7, thai: true, color: '#f6ead2', weight: 700 }); else textC('(ยังไม่ได้ตั้งชื่อ)', 80 + lw, 163.6, { size: 7, thai: true, color: '#8a7a6a', weight: 400 });
   if (e.me) { const rs = 'อันดับที่ ' + e.me.rank; textC(rs, 80, 173.1, { size: 7, thai: true, color: '#9be15d', weight: 400 }); ctx.font = `400 7px ${THAI}`; textC('· ' + netVal(b, e.me.value), 83 + ctx.measureText(rs).width, 173.1, { size: 7, color: '#9be15d', weight: 700 }); }
   btn('rkn', 248, 159, 72, 15); uiBtn(248, 159, 72, 15, false); textC('เปลี่ยนชื่อ (N)', 284, 166.5, { size: 6.5, align: 'center', thai: true, color: '#ffd7a0' });
-  if (NET.msg && Date.now() - NET.msgT < 3500) { const m = { ok: ['เปลี่ยนชื่อแล้ว', '#9be15d'], bad: ['ชื่อนี้ใช้ไม่ได้ (2-16 ตัวอักษร ห้ามคำหยาบ)', '#ff8a7a'], off: ['ต่อระบบอันดับไม่ได้ ลองใหม่อีกครั้ง', '#ff8a7a'] }[NET.msg]; text(m[0], 244, 170, { size: 6, align: 'right', thai: true, color: m[1], weight: 400 }); }
+  if (NET.msg && Date.now() - NET.msgT < 3500) { const m = { ok: ['เปลี่ยนชื่อแล้ว', '#9be15d'], bad: ['ชื่อนี้ใช้ไม่ได้', '#ff8a7a'], off: ['ต่อไม่ได้ ลองใหม่', '#ff8a7a'] }[NET.msg]; ctx.font = `700 7px ${THAI}`; const nx = 80 + lw + (NET.name ? ctx.measureText(NET.name).width : ctx.measureText(tr('(ยังไม่ได้ตั้งชื่อ)')).width) + 6; ctx.font = `400 6px ${THAI}`; const mw = ctx.measureText(tr(m[0])).width;
+    if (nx + mw <= 244) textC(m[0], nx, 163.6, { size: 6, thai: true, color: m[1], weight: 400 }); else textC(m[0], 244, 163.6, { size: 6, align: 'right', thai: true, color: m[1], weight: 400 }); }
   if (nameEdit) {
     rect(0, 0, W, H, '#05050ac0'); if (!nineBox('dialog', 92, 70, 216, 88, 16, 9)) panel(96, 74, 208, 80, '#1b120cf4', '#f2a93b');
     uiBtn(110, 92, 180, 22, false);
