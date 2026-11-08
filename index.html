@@ -131,33 +131,34 @@ canvas{width:100%;height:100%;display:block;image-rendering:pixelated;touch-acti
 body.tp-on #tpad{display:block}
 #tpad{position:fixed;inset:0;pointer-events:none;z-index:6;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 #tpad *{pointer-events:auto;touch-action:none}
-.tp-dpad{position:absolute;left:calc(2.5vh + env(safe-area-inset-left,0px));bottom:3vh;width:42vh;height:42vh;opacity:.82}
+.tp-dpad{position:absolute;left:calc(2.5vmin + env(safe-area-inset-left,0px));bottom:3vmin;width:42vmin;height:42vmin;opacity:.82}
 .tp-dpad{background:center/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 2px 3px #000a)}
 .tp-dpad i{display:none!important}
-.tp-knob{position:absolute;left:50%;top:50%;width:18vh;height:18vh;margin:-9vh 0 0 -9vh;background:center/contain no-repeat;image-rendering:pixelated;pointer-events:none!important;transition:transform .09s ease-out;filter:drop-shadow(0 3px 2px #000b)}
+.tp-knob{position:absolute;left:50%;top:50%;width:18vmin;height:18vmin;margin:-9vmin 0 0 -9vmin;background:center/contain no-repeat;image-rendering:pixelated;pointer-events:none!important;transition:transform .09s ease-out;filter:drop-shadow(0 3px 2px #000b)}
 .tp-knob.on{transition:none}
-.tp-dpad x{position:absolute;width:15vh;height:15vh;background:center/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 2px 2px #0008);transition:transform .05s}
-.tp-dpad i.u{left:13.5vh;top:0}.tp-dpad i.d{left:13.5vh;bottom:0}.tp-dpad i.l{left:0;top:13.5vh}.tp-dpad i.r{right:0;top:13.5vh}
+.tp-dpad x{position:absolute;width:15vmin;height:15vmin;background:center/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 2px 2px #0008);transition:transform .05s}
+.tp-dpad i.u{left:13.5vmin;top:0}.tp-dpad i.d{left:13.5vmin;bottom:0}.tp-dpad i.l{left:0;top:13.5vmin}.tp-dpad i.r{right:0;top:13.5vmin}
 .tp-dpad i.on{transform:scale(.88);filter:brightness(1.35) drop-shadow(0 0 4px #ffd76a)}
-.tp-acts{position:absolute;right:calc(2.5vh + env(safe-area-inset-right,0px));bottom:3vh;width:58vh;height:46vh}
+.tp-acts{position:absolute;right:calc(2.5vmin + env(safe-area-inset-right,0px));bottom:3vmin;width:58vmin;height:46vmin}
 .tp-b{position:absolute;box-sizing:border-box;margin:0;padding:0;border:0;background:center/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 2px 2px #000a);opacity:.88;cursor:pointer;transition:transform .05s}
-.tp-b span{position:absolute;left:50%;bottom:-1.2vh;transform:translateX(-50%);font-family:var(--thai);font-weight:600;font-size:max(10px,2.5vh);color:#f6ead2;text-shadow:0 1px 0 #000,0 0 3px #000,0 0 3px #000;white-space:nowrap;pointer-events:none}
+.tp-b span{position:absolute;left:50%;bottom:-1.2vmin;transform:translateX(-50%);font-family:var(--thai);font-weight:600;font-size:max(10px,2.5vmin);color:#f6ead2;text-shadow:0 1px 0 #000,0 0 3px #000,0 0 3px #000;white-space:nowrap;pointer-events:none}
 .tp-b.on{transform:scale(.88);opacity:1;filter:brightness(1.25) drop-shadow(0 0 5px #ffd76a)}
-.tp-atk{right:0;bottom:1vh;width:22vh;height:22vh}
-.tp-sp{right:23vh;bottom:1vh;width:16vh;height:16vh}
-.tp-ult{right:3vh;bottom:25vh;width:16vh;height:16vh}
-.tp-next{right:21vh;bottom:20vh;width:14vh;height:14vh}
-.tp-sup{right:40vh;bottom:1vh;width:14vh;height:14vh}
-.tp-pause{left:calc(1.5vh + env(safe-area-inset-left,0px));top:1.5vh;width:11vh;height:11vh}
-.tp-full{left:calc(14vh + env(safe-area-inset-left,0px));top:1.5vh;width:11vh;height:11vh}
+.tp-atk{right:0;bottom:1vmin;width:22vmin;height:22vmin}
+.tp-sp{right:23vmin;bottom:1vmin;width:16vmin;height:16vmin}
+.tp-ult{right:3vmin;bottom:25vmin;width:16vmin;height:16vmin}
+.tp-next{right:21vmin;bottom:20vmin;width:14vmin;height:14vmin}
+.tp-sup{right:40vmin;bottom:1vmin;width:14vmin;height:14vmin}
+.tp-pause{left:calc(1.5vmin + env(safe-area-inset-left,0px));top:1.5vmin;width:11vmin;height:11vmin}
+.tp-full{left:calc(14vmin + env(safe-area-inset-left,0px));top:1.5vmin;width:11vmin;height:11vmin}
 .tp-full.hide{display:none}
 body[data-tp=tav] .tp-ult,body[data-tp=tav] .tp-sup{display:none}
 body[data-tp=menu] #tpad{display:none}
 body[data-tp=title] .tp-sp,body[data-tp=title] .tp-ult,body[data-tp=title] .tp-next,body[data-tp=title] .tp-sup,body[data-tp=title] .tp-pause,body[data-tp=title] .tp-full{display:none}
 body[data-tp=title] .tp-back{display:none}
 body[data-tp=title][data-tpp] .tp-back{display:block}
-.tp-back{right:25vh;bottom:2vh;width:16vh;height:16vh;display:none}
-body.tp-rot #rotate{display:flex}
+.tp-back{right:25vmin;bottom:2vmin;width:16vmin;height:16vmin;display:none}
+body.tp-rot .wrap{position:fixed;top:0;left:100vw;width:100vh;height:100vw;transform-origin:0 0;transform:rotate(90deg)}
+body.tp-rot #tpad{display:block}
 #rotate{position:fixed;inset:0;z-index:9;background:#0c0a10f2;align-items:center;justify-content:center;padding:24px}
 #rotate .rot-box{border-style:solid;border-width:22px 20px;border-color:transparent;border-image-slice:22 20 fill;border-image-width:22px 20px;image-rendering:pixelated;padding:6px 10px;text-align:center;max-width:320px;font-family:var(--thai);color:#f6ead2}
 #rotate i{display:block;width:84px;height:84px;margin:0 auto 6px;background:center/contain no-repeat;image-rendering:pixelated;animation:tkrot 2.2s ease-in-out infinite}
@@ -2852,9 +2853,10 @@ function drawHelp() {
   text('กด Enter / J / แตะ เพื่อปิด · กด H เปิดหน้านี้ได้ทุกเมื่อ', W / 2, 200, { size: 7, align: 'center', thai: true, color: '#bfe8ff' });
 }
 let uiRegions = [];
+function localFrac(e, el) { const r = el.getBoundingClientRect(); if (document.body.classList.contains('tp-rot')) return [(e.clientY - r.top) / r.height, (r.right - e.clientX) / r.width]; return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; }
 function btn(id, x, y, w, h) { uiRegions.push({ id, x, y, w, h }); }
 cv.addEventListener('pointerdown', e => {
-  const r = cv.getBoundingClientRect(); const x = (e.clientX - r.left) / r.width * W, y = (e.clientY - r.top) / r.height * H;
+  const lf = localFrac(e, cv); const x = lf[0] * W, y = lf[1] * H;
   const hit = uiRegions.slice().reverse().find(b => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h);
   if (hit && !help) pressed['ui:' + hit.id] = true;
   // mouse combat in a stage: left button = attack, right button = special, middle = ultimate; the knight turns toward the cursor
@@ -2906,7 +2908,7 @@ const tpEl = document.getElementById('tpad');
   const dp = document.getElementById('tpDpad'), cur = { up: false, down: false, left: false, right: false }; let pid = null;
   const set = want => { for (const d in cur) { if (want[d] && !cur[d]) press(d); else if (!want[d] && cur[d]) release(d); cur[d] = !!want[d]; dp.querySelector(`[data-d=${d}]`).classList.toggle('on', cur[d]); } };
   const kn = document.getElementById('tpKnob'), knob = (dx, dy) => { if (dx === null) { kn.classList.remove('on'); kn.style.transform = ''; kn.style.backgroundImage = `url(${window.__TB.knob})`; return; } const l = Math.hypot(dx, dy), k = l > 0.62 ? 0.62 / l : 1, r = dp.getBoundingClientRect(); kn.classList.add('on'); kn.style.backgroundImage = `url(${window.__TB.knobon})`; kn.style.transform = `translate(${dx * k * r.width / 2}px,${dy * k * r.height / 2}px)`; };
-  const aim = e => { const r = dp.getBoundingClientRect(), dx = (e.clientX - r.left) / r.width * 2 - 1, dy = (e.clientY - r.top) / r.height * 2 - 1, w = {}; knob(dx, dy);
+  const aim = e => { const lf = localFrac(e, dp), dx = lf[0] * 2 - 1, dy = lf[1] * 2 - 1, w = {}; knob(dx, dy);
     if (Math.hypot(dx, dy) < 0.22) { stickVec = null; return set(w); }
     if (document.body.dataset.tp === 'act') { const l = Math.hypot(dx, dy); stickVec = { dx: dx / l, dy: dy / l }; if (dx < -0.3) w.left = 1; if (dx > 0.3) w.right = 1; if (dy / l < -0.55) w.up = 1; if (dy / l > 0.6) w.down = 1; }
     else if (Math.abs(dx) > Math.abs(dy)) w[dx < 0 ? 'left' : 'right'] = 1; else w[dy < 0 ? 'up' : 'down'] = 1;
@@ -2926,7 +2928,7 @@ let tpKey = '';
 function tpSync() {
   if (!TOUCH_DEV) return;
   const land = innerWidth >= innerHeight;
-  document.body.classList.toggle('tp-on', land); document.body.classList.toggle('tp-rot', !land);
+  document.body.classList.toggle('tp-on', true); document.body.classList.toggle('tp-rot', !land);
   const mode = help ? 'menu' : (scene === 'stage' || scene === 'gameover') ? 'act' : scene === 'tavern' ? 'tav' : scene === 'title' ? 'title' : 'menu';
   if (titlePanel && scene === 'title') document.body.dataset.tpp = '1'; else delete document.body.dataset.tpp;
   const key = mode + LANG + (mode === 'tav' && T ? T.active : ''); if (key === tpKey) return; tpKey = key; document.body.dataset.tp = mode;
