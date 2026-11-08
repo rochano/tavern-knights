@@ -1144,18 +1144,26 @@ function addGauge(v) { const before = S.gauge; S.gauge = clamp(S.gauge + v, 0, 1
 
 /* mouse aim: a click in a stage stores the cursor's world point; shots fired within 0.25 s fly toward it (kept in front of the knight, at most ~50 degrees up or down) */
 let stickVec = null; // mobile joystick direction (-1..1), used to aim shots when no tap aim is fresh
+function aimEnemy(sx, sy, face, px, py, rad) { /* nearest live monster on the facing side; with px/py, only ones within rad of that point */
+  let best = null, bd = 1e9;
+  for (const e of S.enemies) { if (e.dead || !e.active || e.state === 'sleep') continue; const ex = e.x + e.w / 2, ey = e.y + e.h * 0.5, dx = ex - sx; if (dx * face < 4 || Math.abs(dx) > W * 0.95) continue;
+    const d = px === undefined ? Math.abs(dx) + Math.abs(ey - sy) * 0.6 : Math.hypot(ex - px, ey - py) - Math.max(e.w, e.h) / 2; if (px !== undefined && d > rad) continue; if (d < bd) { bd = d; best = [ex, ey]; } }
+  return best;
+}
 function aimVel(sx, sy, speed, face) {
-  const a = S.aim;
-  if ((!a || S.t - a.t > 0.25) && stickVec && Math.abs(stickVec.dy) > 0.18) { let dx = Math.max(Math.abs(stickVec.dx), 0.35) * face, dy = stickVec.dy; const lim = Math.abs(dx) * 1.2; dy = Math.max(-lim, Math.min(lim, dy)); const l = Math.hypot(dx, dy) || 1; return [speed * dx / l, speed * dy / l]; }
-  if ((!a || S.t - a.t > 0.25) && document.body.classList.contains('tp-on')) { /* touch auto-aim: lock onto the nearest monster on the side the knight faces */
-    let best = null, bd = 1e9;
-    for (const e of S.enemies) { if (e.dead || !e.active || e.state === 'sleep') continue; const ex = e.x + e.w / 2, ey = e.y + e.h * 0.5, dx = ex - sx; if (dx * face < 4 || Math.abs(dx) > W * 0.95) continue; const d = Math.abs(dx) + Math.abs(ey - sy) * 0.6; if (d < bd) { bd = d; best = [dx, ey - sy]; } }
-    if (best) { let [dx, dy] = best; const lim = Math.abs(dx) * 1.2; dy = Math.max(-lim, Math.min(lim, dy)); const l = Math.hypot(dx, dy) || 1; return [speed * dx / l, speed * dy / l]; }
+  const a = S.aim, tap = a && S.t - a.t <= 0.25;
+  const vec = (dx, dy) => { if (dx * face < 10) dx = 10 * face; const lim = Math.abs(dx) * 1.2; dy = Math.max(-lim, Math.min(lim, dy)); const l = Math.hypot(dx, dy) || 1; return [speed * dx / l, speed * dy / l]; };
+  const stickAim = () => { let dx = Math.max(Math.abs(stickVec.dx), 0.35) * face, dy = stickVec.dy; const lim = Math.abs(dx) * 1.2; dy = Math.max(-lim, Math.min(lim, dy)); const l = Math.hypot(dx, dy) || 1; return [speed * dx / l, speed * dy / l]; };
+  if (document.body.classList.contains('tp-on')) {
+    /* touch: shots lock onto monsters. A tap snaps to the monster near the tap, otherwise to the nearest one on the facing side.
+       With no monster in front the shot flies straight ahead; the joystick never tilts shots, since a thumb drifts while running. */
+    const t = (tap && aimEnemy(sx, sy, face, a.x, a.y, 70)) || aimEnemy(sx, sy, face);
+    if (t) return vec(t[0] - sx, t[1] - sy);
+    return [speed * face, 0];
   }
-  if (!a || S.t - a.t > 0.25) return [speed * face, 0];
-  let dx = a.x - sx, dy = a.y - sy; if (dx * face < 10) dx = 10 * face;
-  const lim = Math.abs(dx) * 1.2; dy = Math.max(-lim, Math.min(lim, dy)); const l = Math.hypot(dx, dy) || 1;
-  return [speed * dx / l, speed * dy / l];
+  if (!tap && stickVec && Math.abs(stickVec.dy) > 0.18) return stickAim();
+  if (!tap) return [speed * face, 0];
+  return vec(a.x - sx, a.y - sy);
 }
 function doAttack() {
   const p = S.p, m = dmgMul(), id = kid();
