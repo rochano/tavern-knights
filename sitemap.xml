@@ -10,10 +10,4 @@
     <image:image><image:loc>https://tavern-knights.pages.dev/img/ult.jpg</image:loc></image:image>
     <image:image><image:loc>https://tavern-knights.pages.dev/img/tavern.jpg</image:loc></image:image>
   </url>
-  <url>
-    <loc>https://tavern-knights.pages.dev/play.html</loc>
-    <lastmod>2026-11-08</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
 </urlset>

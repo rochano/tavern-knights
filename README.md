@@ -8,9 +8,9 @@ A 16-bit side-scrolling action game mixed with a tavern-management mini-game. Ru
 
 ## วิธีเล่น / How to play
 
-เปิด `play.html` ผ่านเว็บเซิร์ฟเวอร์ (เช่น GitHub Pages) เสียงเพลงและ SFX ต้องโหลดผ่าน http จึงจะเล่นได้ครบ
+เปิด `index.html` ผ่านเว็บเซิร์ฟเวอร์ (เช่น GitHub Pages) เสียงเพลงและ SFX ต้องโหลดผ่าน http จึงจะเล่นได้ครบ
 
-Serve the folder over http (e.g. GitHub Pages, or `python3 -m http.server`) and open `index.html` (game page) or `play.html` (the game).
+Serve the folder over http (e.g. GitHub Pages, or `python3 -m http.server`) and open `index.html`.
 
 | ปุ่ม | ทำอะไร |
 |---|---|
@@ -25,8 +25,8 @@ Serve the folder over http (e.g. GitHub Pages, or `python3 -m http.server`) and 
 
 ## ไฟล์ / Files
 
-- `index.html` หน้าแนะนำเกม (SEO: meta, Open Graph, VideoGame schema)
-- `play.html` ตัวเกม (รูปทั้งหมดฝังอยู่ในไฟล์)
+- `index.html` ตัวเกมเต็มจอ ใต้เกมมีข้อมูลเกมสำหรับ SEO (meta, Open Graph, VideoGame schema)
+- `play.html` ลิงก์เก่า เด้งไปหน้าแรก
 - `img/` ภาพหน้าจอและกรอบไม้จากในเกม
 - `robots.txt`, `sitemap.xml`, `llms.txt` สำหรับ Google และ AI search
 - `audio/` เพลงประกอบ
