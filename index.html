@@ -2985,9 +2985,9 @@ function drawRankPanel() {
     text('ตั้งชื่อที่จะแสดงบนตารางอันดับ', W / 2, 80, { size: 8, align: 'center', thai: true, color: '#f2a93b', weight: 600 });
     { const el = document.getElementById('nameIn'), v = el.value, on = document.activeElement === el; /* the game draws the typed name itself so it is always crisp */
       ctx.font = `700 12px ${THAI}`; const tw = v ? ctx.measureText(v).width : 0, sz = tw > 156 ? 12 * 156 / tw : 12;
-      if (v) text('\u2060' + v, W / 2, 103 - sz * 0.55, { size: sz, align: 'center', thai: true, color: '#fff4dc', weight: 700 });
-      else text(on ? '' : 'แตะเพื่อพิมพ์ชื่อ', W / 2, 99, { size: 7, align: 'center', thai: true, color: '#8aa0c0', weight: 400 });
-      if (on && (performance.now() / 500 | 0) % 2 === 0) rect(W / 2 + tw * sz / 24 + 1.5, 96.5, 1.2, 13, '#fff4dc'); }
+      if (v) textC('\u2060' + v, W / 2, 103, { size: sz, align: 'center', thai: true, color: '#fff4dc', weight: 700 });
+      else textC(on ? '' : 'แตะเพื่อพิมพ์ชื่อ', W / 2, 103, { size: 7, align: 'center', thai: true, color: '#8aa0c0', weight: 400 });
+      if (on && (performance.now() / 500 | 0) % 2 === 0) rect(W / 2 + tw * sz / 24 + 1.5, 97, 1.2, 12, '#fff4dc'); }
     text('ใช้ได้ 2-16 ตัวอักษร', W / 2, 119, { size: 6, align: 'center', thai: true, color: '#bba8ba', weight: 400 });
     [['nok', 'ตกลง', 122, true], ['ncan', 'ยกเลิก', 204, false]].forEach(([id, lb, x, on]) => { btn(id, x, 132, 74, 15); uiBtn(x, 132, 74, 15, on); textC(lb, x + 37, 139.5, { size: 7, align: 'center', thai: true, color: on ? '#ffe9b0' : '#cfc0b0' }); });
   }
