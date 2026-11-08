@@ -4,11 +4,13 @@
 
 A 16-bit side-scrolling action game mixed with a tavern-management mini-game. Runs in the browser.
 
+เล่นออนไลน์ / Play online: https://rochano.github.io/tavern-knights/ (หลังเปิด GitHub Pages)
+
 ## วิธีเล่น / How to play
 
-เปิด `index.html` ผ่านเว็บเซิร์ฟเวอร์ (เช่น GitHub Pages) เสียงเพลงและ SFX ต้องโหลดผ่าน http จึงจะเล่นได้ครบ
+เปิด `play.html` ผ่านเว็บเซิร์ฟเวอร์ (เช่น GitHub Pages) เสียงเพลงและ SFX ต้องโหลดผ่าน http จึงจะเล่นได้ครบ
 
-Serve the folder over http (e.g. GitHub Pages, or `python3 -m http.server`) and open `index.html`.
+Serve the folder over http (e.g. GitHub Pages, or `python3 -m http.server`) and open `index.html` (game page) or `play.html` (the game).
 
 | ปุ่ม | ทำอะไร |
 |---|---|
@@ -23,7 +25,10 @@ Serve the folder over http (e.g. GitHub Pages, or `python3 -m http.server`) and 
 
 ## ไฟล์ / Files
 
-- `index.html` ตัวเกม (รูปทั้งหมดฝังอยู่ในไฟล์)
+- `index.html` หน้าแนะนำเกม (SEO: meta, Open Graph, VideoGame schema)
+- `play.html` ตัวเกม (รูปทั้งหมดฝังอยู่ในไฟล์)
+- `img/` ภาพหน้าจอและกรอบไม้จากในเกม
+- `robots.txt`, `sitemap.xml`, `llms.txt` สำหรับ Google และ AI search
 - `audio/` เพลงประกอบ
 - `sfx/` เสียงเอฟเฟกต์
 

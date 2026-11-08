@@ -1,0 +1,20 @@
+# Tavern Knights: สามอัศวินต้มยำกุ้ง
+
+> Free 16-bit pixel-art action side-scroller with a tavern-management mini-game, playable in the web browser. Made by Rochano Developer Teams. Thai and English.
+
+Tavern Knights follows three down-on-their-luck knights who secretly run The Tipsy Dragon tavern in the kingdom of Aethelgard. Players fight through stages, collect rare ingredients, beat bosses, then work the tavern night shift to earn gold for upgrades.
+
+## Key facts
+- Price: free, no install, runs in any modern browser
+- Genre: action side-scroller / beat 'em up + tavern management + rhythm cooking
+- Characters: Arthur (flaming sword and shield, Flame Wave special), Rosemary (cat-eared maid chef, star-shooting bamboo staff, giant tom yum bowl special), Percival (blue-coated bard/mage, ice bolts, meteor shower; calms customers with a harp)
+- Stage 1: Poison Mushroom Forest, boss King Shroomba (ราชาเห็ด); secret cracked wall, treasure vault, mimic chests
+- Ultimate: Ultimate Tavern Combo, a giant boiling tom yum pot that clears the screen
+- Tavern night shift: rhythm cooking with arrow keys, pouring beer, serving, washing dishes, thieves, VIP guests, kitchen fires
+- Save: progress is stored in the player's browser
+- Controls: arrows/WASD move, Up/Space jump, J/Z attack, K/X special, L/V ultimate, 1-3 swap knight, C call crew, H help, Esc pause
+
+## Links
+- [Game page](https://rochano.github.io/tavern-knights/): story, characters, screenshots, controls, FAQ
+- [Play now](https://rochano.github.io/tavern-knights/play.html)
+- [Source on GitHub](https://github.com/rochano/tavern-knights)
