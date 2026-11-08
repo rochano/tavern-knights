@@ -155,8 +155,9 @@ body[data-tp=tav] .tp-ult,body[data-tp=tav] .tp-sup{display:none}
 body[data-tp=menu] #tpad{display:none}
 body[data-tp=title] .tp-sp,body[data-tp=title] .tp-ult,body[data-tp=title] .tp-next,body[data-tp=title] .tp-sup,body[data-tp=title] .tp-pause,body[data-tp=title] .tp-full{display:none}
 body[data-tp=title] .tp-back{display:none}
-body[data-tp=map] .tp-dpad,body[data-tp=map] .tp-b{display:none}
+body[data-tp=map] .tp-ult,body[data-tp=map] .tp-next,body[data-tp=map] .tp-sup,body[data-tp=map] .tp-pause,body[data-tp=map] .tp-full,body[data-tp=map] .tp-back{display:none}
 body[data-tp=map][data-tpp] .tp-acts .tp-back{display:block}
+body[data-tp=map][data-tpp] .tp-atk,body[data-tp=map][data-tpp] .tp-sp{display:none}
 body[data-tp=title][data-tpp] .tp-back{display:block}
 .tp-back{right:18vmin;bottom:2vmin;width:12vmin;height:12vmin;display:none}
 body.tp-on,body.tp-on .wrap{touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none}
@@ -360,7 +361,7 @@ const I18N_EN = {
 'โรงเตี๊ยม The Tipsy Dragon': 'The Tipsy Dragon Tavern', 'ด่านที่ ': 'Stage ', 'บอส: ': 'Boss: ',
 '  ความลับ ': '  Secrets ', 'ยังไม่เคยเคลียร์': 'Not cleared yet', 'ยังไม่เปิด · Coming soon': 'Coming soon',
 'ลูกทีม (เลือก 2):': 'Crew (pick 2):', 'ลุยเลย! (Enter)': 'Go! (Enter)', 'ยังไม่เปิด': 'Locked',
-'ห้องปรุงยา/ตีเหล็ก': 'Alchemy/Forge', 'เลือกด่าน': 'Stage', 'เลือกลูกทีม': 'Crew', 'เริ่มด่าน': 'Start',
+'ห้องปรุงยา/ตีเหล็ก': 'Alchemy/Forge', 'ลุยเลย!': 'Go!', 'ห้องปรุงยา': 'Alchemy', 'เลือกด่าน': 'Stage', 'เลือกลูกทีม': 'Crew', 'เริ่มด่าน': 'Start',
 // title
 'ตัวเลือก (Options)': 'Options', 'เสียงทั้งหมด (M)': 'All sound (M)', 'เพลง (BGM)': 'Music (BGM)', 'เอฟเฟกต์เสียง (SFX)': 'Sound effects (SFX)',
 'ภาษา (Language)': 'Language',
@@ -2770,7 +2771,7 @@ function updateMap(dt) {
   if (pressed.sup) toggleCrew(3);
   for (let i = 0; i < 4; i++) if (pressed['ui:crew' + i]) toggleCrew(i);
   if (pressed['ui:go']) pressed.ok = true;
-  if (pressed['ui:alc']) { scene = 'alchemy'; alcSel = 0; return; }
+  if (pressed['ui:alc'] || pressed.sp) { scene = 'alchemy'; alcSel = 0; return; }
   if (mapMsg) { mapMsg.t -= dt; if (mapMsg.t <= 0) mapMsg = null; }
   if (pressed.ok || pressed.atk) {
     if (!STAGES[mapSel].open) { mapMsg = { str: 'ด่านนี้ยังไม่เปิด (กำลังสร้าง)', t: 1.5 }; SFX.fail(); return; }
@@ -2845,10 +2846,11 @@ function drawMap() {
   text(st.open ? (rec ? 'Clear Rank: ' + '★'.repeat(rec.stars) + '☆'.repeat(3 - rec.stars) + '  ความลับ ' + rec.hearts + '/2' : 'ยังไม่เคยเคลียร์') : 'ยังไม่เปิด · Coming soon', 12, 198, { size: 7, thai: true, color: st.open ? '#ffd76a' : '#8a7a6a' });
   text('ลูกทีม (เลือก 2):', 160, 176, { size: 6.5, thai: true, color: '#bba8ba' });
   CREW.forEach((c, i) => { const x = 160 + i * 34, y = 185, on = save.crew.includes(c.id); btn('crew' + i, x - 1, y - 2, 28, 26); uiBtn(x, y - 1, 26, 18, on, '#f2a93b', '#3a2a20', '#140d0a', '#140d0a'); crewFace.small = true; crewFace(c.id, x + 5, y, c.open); crewFace.small = false; textC((i + 1) + ' ' + c.th, x + 13, y + 21, { size: 5.5, align: 'center', thai: true, weight: 400, color: c.open ? '#f6ead2' : '#6a5a4a', shadow: false }); });
+  if (!tpOnTxt) { /* phones use the on-screen Go/Alchemy buttons instead */
   btn('go', 296, 178, 92, 15); uiBtn(296, 178, 92, 15, st.open, '#9be15d', '#3a2a20', '#22381a', '#140d0a');
   textC(st.open ? 'ลุยเลย! (Enter)' : 'ยังไม่เปิด', 342, 185.5, { size: 8, align: 'center', thai: true, color: st.open ? '#d8ffc0' : '#6a5a4a' });
   btn('alc', 296, 195, 92, 13); uiBtn(296, 195, 92, 13, false, '', '#5a3a22', '', '#2a1a10');
-  textC('ห้องปรุงยา/ตีเหล็ก', 342, 201.5, { size: 7, align: 'center', thai: true, color: '#ffd7a0' });
+  textC('ห้องปรุงยา/ตีเหล็ก', 342, 201.5, { size: 7, align: 'center', thai: true, color: '#ffd7a0' }); }
   if (mapMsg) { panel(110, 140, 180, 16, '#1b120cf2', '#ff8a7a'); text(mapMsg.str, 200, 143, { size: 8, align: 'center', thai: true, color: '#ffb0a0' }); }
   btn('mrank', 366, 5, 32, 17); uiBtn(366, 6, 31, 15, false); textC('อันดับ', 381.5, 13.5, { size: 7, align: 'center', thai: true, color: '#ffd7a0' });
   if (mapRank) {
@@ -3140,11 +3142,11 @@ const tpEl = document.getElementById('tpad');
   tpEl.querySelector('.tp-pause').style.backgroundImage = `url(${TB.pause})`; tpEl.querySelector('.tp-full').style.backgroundImage = `url(${TB.full})`;
   tpEl.querySelector('.tp-next').style.backgroundImage = `url(${TB.swap})`; tpEl.querySelector('.tp-ult').style.backgroundImage = `url(${TB.ult})`; tpEl.querySelector('.tp-sup').style.backgroundImage = `url(${TB.crew})`; tpEl.querySelector('.tp-back').style.backgroundImage = `url(${TB.close})`;
   document.querySelector('#rotate .rot-box').style.borderImageSource = `url(${PXF_SRC.e6_window})`; document.getElementById('rotIc').style.backgroundImage = `url(${TB.rotate})`;
-  window.__TB = TB;
+  window.__TB = TB; window.__CAUL = FX_ART_SRC.cauldron;
   document.getElementById('tpDpad').style.backgroundImage = `url(${TB.base})`; document.getElementById('tpKnob').style.backgroundImage = `url(${TB.knob})`;
   const tb = document.getElementById('tpad');
   tb.querySelectorAll('.tp-b').forEach(b => {
-    const a = b.dataset.k; if (!a) return; const on = v => { b.classList.toggle('on', v); if (b.classList.contains('tp-atk') && document.body.dataset.tp === 'title') b.style.backgroundImage = `url(${v ? window.__TB.okon : window.__TB.ok})`; };
+    const a = b.dataset.k; if (!a) return; const on = v => { b.classList.toggle('on', v); if (b.classList.contains('tp-atk') && (document.body.dataset.tp === 'title' || document.body.dataset.tp === 'map')) b.style.backgroundImage = `url(${v ? window.__TB.okon : window.__TB.ok})`; };
     b.addEventListener('pointerdown', e => { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (_) {} press(a); on(true); });
     const up = e => { e.preventDefault(); release(a); on(false); };
     b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('lostpointercapture', () => { release(a); on(false); });
@@ -3188,7 +3190,7 @@ function tpSync() {
   const lab = (sel, img, txt) => { const b = Q(sel); if (img) b.style.backgroundImage = `url(${img})`; b.querySelector('span').textContent = tr(txt); };
   if (mode === 'tav') { const who = T ? T.active : 0; lab('.tp-atk', TB.bowl, 'ทำงาน'); lab('.tp-sp', who === 2 ? TB.harp : TB.sp, 'สกิล'); lab('.tp-next', null, 'สลับคน'); }
   else if (mode === 'title') { lab('.tp-atk', TB.ok, 'ตกลง'); lab('.tp-back', null, '\u200bปิด'); }
-  else if (mode === 'map') { lab('.tp-back', null, '\u200bปิด'); }
+  else if (mode === 'map') { lab('.tp-atk', TB.ok, 'ลุยเลย!'); lab('.tp-sp', window.__CAUL, 'ห้องปรุงยา'); lab('.tp-back', null, '\u200bปิด'); }
   else { lab('.tp-atk', TB.atk, 'โจมตี'); lab('.tp-sp', TB.sp, 'ท่าพิเศษ'); lab('.tp-next', null, 'สลับตัว'); }
   lab('.tp-ult', null, 'ท่าประสาน'); lab('.tp-sup', null, 'ลูกทีม');
   document.getElementById('rotTxt').textContent = tr('หมุนมือถือเป็นแนวนอนเพื่อเล่น');
