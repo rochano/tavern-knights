@@ -25,7 +25,9 @@ Serve the folder over http (e.g. GitHub Pages, or `python3 -m http.server`) and 
 
 ## ไฟล์ / Files
 
-- `index.html` ตัวเกมเต็มจอ ใต้เกมมีข้อมูลเกมสำหรับ SEO (meta, Open Graph, VideoGame schema)
+- `index.html` ตัวเกมเต็มจอ พร้อมหน้าจอกำลังโหลด (meta, Open Graph, VideoGame schema อยู่ใน head)
+- `art/` รูปทั้งหมดของเกม (แยกออกจาก HTML ให้โหลดเร็วและ cache ได้)
+- `about.html` หน้าข้อมูลเกม: เรื่องราว ตัวละคร ภาพ วิธีเล่น FAQ
 - `play.html` ลิงก์เก่า เด้งไปหน้าแรก
 - `img/` ภาพหน้าจอและกรอบไม้จากในเกม
 - `robots.txt`, `sitemap.xml`, `llms.txt` สำหรับ Google และ AI search

@@ -6,6 +6,12 @@
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image><image:loc>https://tavern-knights.pages.dev/img/title.jpg</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://tavern-knights.pages.dev/about.html</loc>
+    <lastmod>2026-11-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
     <image:image><image:loc>https://tavern-knights.pages.dev/img/stage.jpg</image:loc></image:image>
     <image:image><image:loc>https://tavern-knights.pages.dev/img/ult.jpg</image:loc></image:image>
     <image:image><image:loc>https://tavern-knights.pages.dev/img/tavern.jpg</image:loc></image:image>
