@@ -115,7 +115,7 @@ button.tool:hover{border-color:var(--amber)}
 button:focus-visible,canvas:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 .stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;container-type:size}
 #nameIn::selection{background:transparent;color:transparent}
-#nameIn{position:absolute;left:29%;top:42.2%;width:42%;height:9.8%;box-sizing:border-box;display:none;margin:0;outline:none;background:none;border:9px solid transparent;border-radius:0;font-family:var(--thai);font-weight:700;color:transparent;caret-color:transparent;text-shadow:none;text-align:center;padding:0 6px;line-height:1;z-index:3;-webkit-user-select:text;user-select:text;touch-action:auto}
+#nameIn{position:absolute;left:27.5%;top:40.9%;width:45%;height:9.8%;box-sizing:border-box;display:none;margin:0;padding:0;border:0;outline:none;background:transparent;opacity:0;font-size:16px;color:transparent;caret-color:transparent;z-index:3;-webkit-user-select:text;user-select:text;touch-action:auto}
 .screen{position:relative;width:min(100cqw,calc(100cqh * 16 / 9));aspect-ratio:16/9;max-width:100%;background:#000;overflow:hidden}
 canvas{width:100%;height:100%;display:block;image-rendering:pixelated;touch-action:none}
 .touch{flex:none;display:none;justify-content:space-between;align-items:center;gap:10px;user-select:none;-webkit-user-select:none}
@@ -162,6 +162,7 @@ body[data-tp=map][data-tpp] .tp-acts .tp-back{display:block}
 body[data-tp=map] .tp-atk{bottom:9.5vmin;width:13vmin;height:13vmin;right:1.5vmin}body[data-tp=map] .tp-sp{bottom:9.5vmin;right:16vmin}
 body[data-tp=map][data-tpp] .tp-atk,body[data-tp=map][data-tpp] .tp-sp{display:none}
 body[data-tp=title][data-tpp] .tp-back{display:block}
+body[data-tpn] #tpad{display:none!important}
 .tp-back{right:18vmin;bottom:2vmin;width:12vmin;height:12vmin;display:none}
 body.tp-on,body.tp-on .wrap{touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none}
 body.tp-on header{display:none!important}
@@ -2878,14 +2879,8 @@ let titleSel = 0, titlePanel = null, optSel = 0, rkB = 0, rkP = 'week', mapRank 
 let nameEdit = false;
 function nameOpen() {
   const el = document.getElementById('nameIn'); nameEdit = true; el.value = NET.name || '';
-  el.style.borderImage = `url(${UI_ART_SRC.big.frame_blue || UI_ART_SRC.big.frame_dark}) 40 44 fill / 9px 11px stretch`;
-  nameFit(el); el.style.display = 'block';
+  el.style.display = 'block';
   try { el.focus(); el.select(); } catch (e) {}
-}
-function nameFit(el) { /* size the field from the live screen box (it shrinks when the phone keyboard opens) */
-  const h = el.parentNode.clientHeight, bw = Math.round(Math.min(9, Math.max(3, h * 0.02))), fh = Math.max(h * 0.098, 16 + 2 * bw + 6);
-  el.style.borderWidth = bw + 'px'; el.style.height = fh + 'px'; el.style.top = (h * 0.471 - fh / 2) + 'px';
-  el.style.fontSize = Math.max(16, h * 0.045) + 'px'; el.style.borderImageWidth = bw + 'px ' + Math.round(bw * 1.2) + 'px';
 }
 function nameDone(ok) {
   const el = document.getElementById('nameIn'); if (!nameEdit) return; nameEdit = false; el.style.display = 'none';
@@ -2985,15 +2980,15 @@ function drawRankPanel() {
   btn('rkn', 248, 159, 72, 15); uiBtn(248, 159, 72, 15, false); textC('เปลี่ยนชื่อ (N)', 284, 166.5, { size: 6.5, align: 'center', thai: true, color: '#ffd7a0' });
   if (NET.msg && Date.now() - NET.msgT < 3500) { const m = { ok: ['เปลี่ยนชื่อแล้ว', '#9be15d'], bad: ['ชื่อนี้ใช้ไม่ได้ (2-16 ตัวอักษร ห้ามคำหยาบ)', '#ff8a7a'], off: ['ต่อระบบอันดับไม่ได้ ลองใหม่อีกครั้ง', '#ff8a7a'] }[NET.msg]; text(m[0], 244, 170, { size: 6, align: 'right', thai: true, color: m[1], weight: 400 }); }
   if (nameEdit) {
-    nameFit(document.getElementById('nameIn'));
     rect(0, 0, W, H, '#05050ac0'); if (!nineBox('dialog', 92, 70, 216, 88, 16, 9)) panel(96, 74, 208, 80, '#1b120cf4', '#f2a93b');
-    text('ตั้งชื่อที่จะแสดงบนตารางอันดับ', W / 2, 82, { size: 8, align: 'center', thai: true, color: '#f2a93b', weight: 600 });
+    uiBtn(110, 92, 180, 22, false);
+    text('ตั้งชื่อที่จะแสดงบนตารางอันดับ', W / 2, 80, { size: 8, align: 'center', thai: true, color: '#f2a93b', weight: 600 });
     { const el = document.getElementById('nameIn'), v = el.value, on = document.activeElement === el; /* the game draws the typed name itself so it is always crisp */
       ctx.font = `700 12px ${THAI}`; const tw = v ? ctx.measureText(v).width : 0, sz = tw > 156 ? 12 * 156 / tw : 12;
-      if (v) text('\u2060' + v, W / 2, 106 - sz * 0.55, { size: sz, align: 'center', thai: true, color: '#fff4dc', weight: 700 });
-      else text(on ? '' : 'แตะเพื่อพิมพ์ชื่อ', W / 2, 102, { size: 7, align: 'center', thai: true, color: '#8aa0c0', weight: 400 });
-      if (on && (performance.now() / 500 | 0) % 2 === 0) rect(W / 2 + tw * sz / 24 + 1.5, 99.5, 1.2, 13, '#fff4dc'); }
-    text('ใช้ได้ 2-16 ตัวอักษร', W / 2, 121, { size: 6, align: 'center', thai: true, color: '#bba8ba', weight: 400 });
+      if (v) text('\u2060' + v, W / 2, 103 - sz * 0.55, { size: sz, align: 'center', thai: true, color: '#fff4dc', weight: 700 });
+      else text(on ? '' : 'แตะเพื่อพิมพ์ชื่อ', W / 2, 99, { size: 7, align: 'center', thai: true, color: '#8aa0c0', weight: 400 });
+      if (on && (performance.now() / 500 | 0) % 2 === 0) rect(W / 2 + tw * sz / 24 + 1.5, 96.5, 1.2, 13, '#fff4dc'); }
+    text('ใช้ได้ 2-16 ตัวอักษร', W / 2, 119, { size: 6, align: 'center', thai: true, color: '#bba8ba', weight: 400 });
     [['nok', 'ตกลง', 122, true], ['ncan', 'ยกเลิก', 204, false]].forEach(([id, lb, x, on]) => { btn(id, x, 132, 74, 15); uiBtn(x, 132, 74, 15, on); textC(lb, x + 37, 139.5, { size: 7, align: 'center', thai: true, color: on ? '#ffe9b0' : '#cfc0b0' }); });
   }
 }
@@ -3224,6 +3219,7 @@ function tpSync() {
   document.body.classList.toggle('tp-on', true); tpOnTxt = true; document.body.classList.toggle('tp-rot', !land); tpRotFit(!land);
   const mode = help ? 'menu' : (scene === 'stage' || scene === 'gameover') ? 'act' : scene === 'tavern' ? 'tav' : scene === 'title' ? 'title' : scene === 'map' ? 'map' : 'menu';
   if ((titlePanel && scene === 'title') || (mapRank && scene === 'map')) document.body.dataset.tpp = '1'; else delete document.body.dataset.tpp;
+  if (nameEdit) document.body.dataset.tpn = '1'; else delete document.body.dataset.tpn;
   const key = mode + LANG + (mode === 'tav' && T ? T.active : ''); if (key === tpKey) return; tpKey = key; document.body.dataset.tp = mode;
   const TB = window.__TB, Q = s => tpEl.querySelector(s);
   const lab = (sel, img, txt) => { const b = Q(sel); if (img) b.style.backgroundImage = `url(${img})`; b.querySelector('span').textContent = tr(txt); };
