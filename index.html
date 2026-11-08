@@ -157,6 +157,7 @@ body[data-tp=title] .tp-sp,body[data-tp=title] .tp-ult,body[data-tp=title] .tp-n
 body[data-tp=title] .tp-back{display:none}
 body[data-tp=map] .tp-ult,body[data-tp=map] .tp-next,body[data-tp=map] .tp-sup,body[data-tp=map] .tp-pause,body[data-tp=map] .tp-full,body[data-tp=map] .tp-back{display:none}
 body[data-tp=map][data-tpp] .tp-acts .tp-back{display:block}
+body[data-tp=map] .tp-atk{bottom:9.5vmin;width:13vmin;height:13vmin;right:1.5vmin}body[data-tp=map] .tp-sp{bottom:9.5vmin;right:16vmin}
 body[data-tp=map][data-tpp] .tp-atk,body[data-tp=map][data-tpp] .tp-sp{display:none}
 body[data-tp=title][data-tpp] .tp-back{display:block}
 .tp-back{right:18vmin;bottom:2vmin;width:12vmin;height:12vmin;display:none}
@@ -519,15 +520,17 @@ const NET = (() => {
     if (!run || N.on === false) { out.state = 'off'; return out; }
     run.p.then(id => id ? call('runs/finish', Object.assign({ run: id }, data)) : null).then(j => {
       if (!j || !j.ok) { out.state = 'off'; return; }
-      out.state = j.accepted ? 'ok' : 'rejected'; out.boards = j.boards || {}; N.boards = {};
+      out.state = j.accepted ? 'ok' : 'rejected'; out.boards = j.boards || {}; N.stale();
     });
     return out;
   };
+  try { const c = JSON.parse(localStorage.getItem('tk-boards') || '{}'); for (const k in c) N.boards[k] = { state: 'ok', at: 0, rows: c[k].rows || [], me: c[k].me || null }; } catch (e) {}
+  N.stale = () => { for (const k in N.boards) if (N.boards[k].state !== 'load') N.boards[k].at = 0; };
   N.board = (b, period) => {
     const k = b + '|' + period; let e = N.boards[k];
     if (e && (e.state === 'load' || Date.now() - e.at < 30000)) return e;
     e = N.boards[k] = { state: 'load', at: Date.now(), rows: e ? e.rows : [], me: e ? e.me : null };
-    call('boards/' + b + '?period=' + period + '&limit=8').then(j => { if (j.ok) { e.state = 'ok'; e.rows = j.rows; e.me = j.me; N.on = true; } else { e.state = 'off'; offline(j); } e.at = Date.now(); });
+    call('boards/' + b + '?period=' + period + '&limit=8').then(j => { if (j.ok) { e.state = 'ok'; e.rows = j.rows; e.me = j.me; N.on = true; try { const c = {}; for (const q in N.boards) if (N.boards[q].rows.length) c[q] = { rows: N.boards[q].rows, me: N.boards[q].me }; localStorage.setItem('tk-boards', JSON.stringify(c)); } catch (x) {} } else { e.state = 'off'; offline(j); } e.at = Date.now(); });
     return e;
   };
   N.rename = () => {
@@ -535,7 +538,7 @@ const NET = (() => {
     for (const k in keys) keys[k] = false;
     if (v === null || !v.trim()) return;
     ensure().then(ok => ok ? call('me/name', { name: v }) : null).then(j => {
-      if (j && j.ok) { st.name = N.name = j.player.name; keep(); N.boards = {}; N.msg = 'ok'; } else N.msg = j && j.error === 'bad_name' ? 'bad' : 'off';
+      if (j && j.ok) { st.name = N.name = j.player.name; keep(); N.stale(); N.msg = 'ok'; } else N.msg = j && j.error === 'bad_name' ? 'bad' : 'off';
       N.msgT = Date.now();
     });
   };
@@ -2763,7 +2766,8 @@ function toggleCrew(i) {
 }
 function updateMap(dt) {
   if (mapRank) { rankInput(() => { mapRank = false; }); return; }
-  if (pressed.rank || pressed['ui:mrank']) { mapRank = true; NET.boards = {}; SFX.select(); return; }
+  if (pressed.rank || pressed['ui:mrank']) { mapRank = true; NET.stale(); SFX.select(); return; }
+  NET.board(NET_BOARDS[rkB][0], rkP); /* prefetch so the Ranking panel opens instantly */
   if (pressed.left) { mapSel = Math.max(0, mapSel - 1); SFX.select(); }
   if (pressed.right) { mapSel = Math.min(5, mapSel + 1); SFX.select(); }
   for (let i = 0; i < 6; i++) if (pressed['ui:pin' + i]) { mapSel = i; SFX.select(); }
@@ -2879,7 +2883,7 @@ function titleAct(i) {
   track('title_menu', { item: ['start', 'ranking', 'options', 'about', 'credits', 'tavern_mode'][i] || i });
   SFX.select();
   if (i === 0) { scene = 'map'; mapSel = 0; }
-  else if (i === 1) { titlePanel = 'rank'; NET.boards = {}; }
+  else if (i === 1) { titlePanel = 'rank'; NET.stale(); }
   else if (i === 2) { titlePanel = 'options'; optSel = 0; }
   else if (i === 3) titlePanel = 'about';
   else if (i === 4) titlePanel = 'credits';
