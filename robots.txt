@@ -1,5 +1,6 @@
 # Everyone, including AI search and assistant crawlers, may read the whole site.
 User-agent: *
+Disallow: /api/
 Allow: /
 
 User-agent: GPTBot

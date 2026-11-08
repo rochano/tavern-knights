@@ -413,12 +413,38 @@ const I18N_EN = {
 'ปรุง (Cook) หรือ คราฟต์ (Craft)': 'Cook or Craft', 'แตะสูตร แล้วแตะปุ่ม [Craft / Cook]': 'Tap a recipe, then [Craft / Cook]',
 'Shroom Crown → Essence → ต้มยำกุ้งพญามังกร (บัฟ) หรือ Master Chef Set (ตำนาน)': 'Shroom Crown → Essence → Dragon King Tom Yum (buff) or Master Chef Set (legendary)',
 'กด Enter / J / แตะ เพื่อปิด · กด H เปิดหน้านี้ได้ทุกเมื่อ': 'Enter / J / tap to close · H opens this any time',
+"อันดับ (Ranking)": "Ranking",
+"คะแนนด่าน #": "Stage # Score",
+"เวลาผ่านด่าน #": "Stage # Best Time",
+"รายได้ร้านในคืนเดียว": "Best Night Takings",
+"สัปดาห์นี้": "This week",
+"ตลอดกาล": "All time",
+"กำลังโหลด...": "Loading...",
+"ยังไม่มีใครติดอันดับ เป็นคนแรกเลย!": "No one on the board yet. Be the first!",
+"ระบบอันดับออนไลน์ยังไม่เปิด หรือไม่ได้ต่อเน็ต": "Online ranking is closed, or you are offline",
+"คุณ:": "You:",
+"(ยังไม่ได้ตั้งชื่อ)": "(no name yet)",
+"อันดับที่ #": "Rank #",
+"เปลี่ยนชื่อ (N)": "Rename (N)",
+"เปลี่ยนชื่อแล้ว": "Name changed",
+"ชื่อนี้ใช้ไม่ได้ (2-16 ตัวอักษร ห้ามคำหยาบ)": "Name not allowed (2-16 letters, no rude words)",
+"ต่อระบบอันดับไม่ได้ ลองใหม่อีกครั้ง": "Could not reach the ranking. Try again",
+"ชื่อที่จะแสดงบนตารางอันดับ (2-16 ตัวอักษร)": "Name to show on the ranking (2-16 letters)",
+"กำลังส่งคะแนนขึ้นตารางอันดับ...": "Sending your score to the ranking...",
+"คะแนนรอบนี้ไม่ผ่านการตรวจ จึงไม่ขึ้นตารางอันดับ": "This run failed the score check, so it is not ranked",
+"อันดับสัปดาห์นี้: คะแนนที่ # · เวลาที่ #": "This week: score rank # · time rank #",
+"อันดับสัปดาห์นี้: คะแนนที่ # · เวลาที่ # · สถิติใหม่!": "This week: score rank # · time rank # · New record!",
+"อันดับรายได้สัปดาห์นี้: ที่ #": "This week's takings: rank #",
+"อันดับรายได้สัปดาห์นี้: ที่ # · สถิติใหม่!": "This week's takings: rank # · New record!",
+"ตาราง": "Board",
+"ช่วงเวลา": "Period",
+"เปลี่ยนชื่อ": "Rename",
 };
 
 let LANG = (() => { try { const q = new URLSearchParams(location.search).get('lang'); if (q) return q === 'en' ? 'en' : 'th'; const v = localStorage.getItem('tk-lang'); if (v === 'en' || v === 'th') return v; } catch (e) {} return /^th/i.test(navigator.language || 'th') ? 'th' : 'en'; })();
 const _TH = /[฀-๿]/, _trC = new Map(); let _trF = null;
 function tr(s) {
-  if (LANG === 'th' || typeof s !== 'string' || !_TH.test(s) || s === 'กานม') return s;
+  if (LANG === 'th' || typeof s !== 'string' || !_TH.test(s) || s === 'กานม' || s.charCodeAt(0) === 0x2060) return s;
   let r = _trC.get(s); if (r !== undefined) return r;
   r = I18N_EN[s];
   if (r === undefined) { const nums = [], k = s.replace(/\d+/g, m => (nums.push(m), '#')), t = I18N_EN[k]; if (t !== undefined) { let i = 0; r = t.replace(/#/g, () => nums[i++]); } }
@@ -458,6 +484,72 @@ function applyLangDom() {
 }
 // analytics: sends game events to Google Analytics (gtag) when the page has it; no-op otherwise
 function track(name, params) { try { const p = Object.assign({ lang: LANG }, params || {}); if (window.gtag) window.gtag('event', name, p); (window.__track = window.__track || []).push([name, p]); } catch (e) {} }
+/* ------------------------------------------------ online ranking (phase 1) */
+// Talks to functions/api (Cloudflare Pages Function + D1). Same origin on the web (develop -> staging DB, main -> production DB);
+// the store apps (app:// or capacitor://) use production. Everything fails soft: with no network or no database NET.on
+// becomes false and the game shows its offline lines instead.
+const NET = (() => {
+  const base = /^https?:$/.test(location.protocol) ? '' : 'https://tavern-knights.pages.dev';
+  let st = {}; try { st = JSON.parse(localStorage.getItem('tk-net') || '{}') || {}; } catch (e) {}
+  const keep = () => { try { localStorage.setItem('tk-net', JSON.stringify(st)); } catch (e) {} };
+  const N = { on: null, name: st.name || '', boards: {}, msg: null, msgT: 0 };
+  const offline = j => { if (!j.error || j.status === 503) N.on = false; };
+  async function call(path, body) {
+    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null, to = setTimeout(() => ctl && ctl.abort(), 8000);
+    try {
+      const h = { 'Content-Type': 'application/json' }; if (st.token) h.Authorization = 'Bearer ' + st.token;
+      const r = await fetch(base + '/api/v1/' + path, { method: body ? 'POST' : 'GET', headers: h, body: body ? JSON.stringify(body) : undefined, signal: ctl ? ctl.signal : undefined, cache: 'no-store' });
+      const j = await r.json().catch(() => ({})); j.status = r.status;
+      if (r.status === 401 && st.token) { st.token = null; keep(); }
+      return j;
+    } catch (e) { return { ok: false, status: 0, error: 'network' }; } finally { clearTimeout(to); }
+  }
+  let acct = null;
+  function ensure() {
+    if (st.token) return Promise.resolve(true);
+    if (!acct) acct = call('auth/guest', {}).then(j => { acct = null; if (j.ok) { st.token = j.token; st.id = j.player.id; st.name = N.name = j.player.name; keep(); N.on = true; return true; } offline(j); return false; });
+    return acct;
+  }
+  N.start = mode => { const run = { id: null }; run.p = ensure().then(ok => ok ? call('runs/start', { mode, v: '1.0.1' }) : null).then(j => { if (j && j.ok) { run.id = j.run.id; N.on = true; } else if (j) offline(j); return run.id; }); return run; };
+  N.finish = (run, data) => {
+    const out = { state: 'send' };
+    if (!run || N.on === false) { out.state = 'off'; return out; }
+    run.p.then(id => id ? call('runs/finish', Object.assign({ run: id }, data)) : null).then(j => {
+      if (!j || !j.ok) { out.state = 'off'; return; }
+      out.state = j.accepted ? 'ok' : 'rejected'; out.boards = j.boards || {}; N.boards = {};
+    });
+    return out;
+  };
+  N.board = (b, period) => {
+    const k = b + '|' + period; let e = N.boards[k];
+    if (e && (e.state === 'load' || Date.now() - e.at < 30000)) return e;
+    e = N.boards[k] = { state: 'load', at: Date.now(), rows: e ? e.rows : [], me: e ? e.me : null };
+    call('boards/' + b + '?period=' + period + '&limit=8').then(j => { if (j.ok) { e.state = 'ok'; e.rows = j.rows; e.me = j.me; N.on = true; } else { e.state = 'off'; offline(j); } e.at = Date.now(); });
+    return e;
+  };
+  N.rename = () => {
+    let v = null; try { v = window.prompt(tr('ชื่อที่จะแสดงบนตารางอันดับ (2-16 ตัวอักษร)'), N.name || ''); } catch (e) { v = null; }
+    for (const k in keys) keys[k] = false;
+    if (v === null || !v.trim()) return;
+    ensure().then(ok => ok ? call('me/name', { name: v }) : null).then(j => {
+      if (j && j.ok) { st.name = N.name = j.player.name; keep(); N.boards = {}; N.msg = 'ok'; } else N.msg = j && j.error === 'bad_name' ? 'bad' : 'off';
+      N.msgT = Date.now();
+    });
+  };
+  return N;
+})();
+const NET_BOARDS = [['stage1_score', 'คะแนนด่าน 1'], ['stage1_time', 'เวลาผ่านด่าน 1'], ['tavern_gold', 'รายได้ร้านในคืนเดียว']];
+function netVal(b, v) { if (b === 'stage1_time') { const t = v / 1000, m = Math.floor(t / 60), s = t - m * 60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(1); } return b === 'tavern_gold' ? v + 'g' : String(v); }
+// one line for the results screens: null when offline (the screen keeps its own line)
+function netLine(net, boards) {
+  if (!net || net.state === 'off') return null;
+  if (net.state === 'send') return { str: 'กำลังส่งคะแนนขึ้นตารางอันดับ...', col: '#bba8ba' };
+  if (net.state === 'rejected') return { str: 'คะแนนรอบนี้ไม่ผ่านการตรวจ จึงไม่ขึ้นตารางอันดับ', col: '#ff8a7a' };
+  const r = boards.map(b => net.boards[b] && net.boards[b].week).filter(Boolean); if (!r.length) return null;
+  const best = r.some(x => x.newBest);
+  const str = boards.length > 1 ? 'อันดับสัปดาห์นี้: คะแนนที่ ' + r[0].rank + ' · เวลาที่ ' + (r[1] ? r[1].rank : '-') : 'อันดับรายได้สัปดาห์นี้: ที่ ' + r[0].rank;
+  return { str: best ? str + ' · สถิติใหม่!' : str, col: '#9be15d' };
+}
 function setLang(l) { if (l !== LANG) track('language_change', { to: l }); LANG = l; _trC.clear(); try { localStorage.setItem('tk-lang', l); } catch (e) {} applyLangDom(); if (typeof btnMute !== 'undefined') btnMute.textContent = tr('เสียง: ') + tr(muted ? 'ปิด' : 'เปิด'); if (typeof btnReset !== 'undefined') btnReset.textContent = tr('ล้างเซฟ'); }
 ctx.imageSmoothingEnabled = false;
 
@@ -570,7 +662,7 @@ for (const k in SFX_FILE) { const syn = SFX[k]; SFX[k] = () => { if (!sfxPlay(k)
 const keys = {}, pressed = {};
 const KEYMAP = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'up', KeyW: 'up', Space: 'sp', ArrowDown: 'down', KeyS: 'down',
   KeyJ: 'atk', KeyZ: 'atk', KeyK: 'sp', KeyX: 'sp', KeyL: 'ult', KeyV: 'ult', Digit1: 'k1', Digit2: 'k2', Digit3: 'k3', KeyQ: 'prev', KeyE: 'next',
-  KeyC: 'sup', KeyH: 'help', Enter: 'ok', KeyP: 'pause', Escape: 'pause', KeyM: 'mute', Numpad1: 'k1', Numpad2: 'k2', Numpad3: 'k3' };
+  KeyC: 'sup', KeyH: 'help', Enter: 'ok', KeyP: 'pause', Escape: 'pause', KeyM: 'mute', KeyN: 'rename', Numpad1: 'k1', Numpad2: 'k2', Numpad3: 'k3' };
 function press(a) { if (!keys[a]) pressed[a] = true; keys[a] = true; initAudio(); }
 function release(a) { keys[a] = false; }
 { const hd = document.querySelector('header'); let ht = 0; const show = () => { hd.classList.add('show'); clearTimeout(ht); ht = setTimeout(() => hd.classList.remove('show'), 2200); }; window.addEventListener('mousemove', e => { if (e.clientY < 70) show(); }); window.addEventListener('touchstart', e => { if (e.touches[0] && e.touches[0].clientY < 70) show(); }, { passive: true }); }
@@ -1081,6 +1173,7 @@ function dmgMul() { return (1 + 0.2 * save.up.blade + (save.up.legend ? 0.5 : 0)
 let S = null;
 function startStage(checkpoint) {
   track(checkpoint ? 'stage_retry' : 'stage_start', { stage: 1 });
+  const prevS = checkpoint ? S : null;
   const prevLoot = S && checkpoint ? S.loot : null, prevKills = S && checkpoint ? S.kills : 0, prevWall = S && checkpoint ? S.wall.broken : false, prevVault = S && checkpoint ? S.vaultOpened : false;
   S = {
     t: 0, camX: 0, paused: false,
@@ -1102,6 +1195,7 @@ function startStage(checkpoint) {
     sup: { bart: save.tools && save.tools.bell ? 3 : 2, bartCd: 0, gorn: null },
     ult: null, banner: null, end: null, speech: null, score: 0, hint: null, checkpoint: !!checkpoint, poolT: 0,
   };
+  S.net = prevS ? prevS.net : NET.start('stage'); S.netT0 = prevS ? (prevS.netT0 || 0) + prevS.t : 0;
   if (save.buff && !checkpoint) { S.buff = true; save.buff = false; persist(); S.gauge = Math.min(100, S.gauge + 50); }
   if (save.drink && !checkpoint) { save.drink = false; persist(); S.gauge = 100; }
   if (!S.wall.broken) S.solids.push(S.wall);
@@ -1574,7 +1668,7 @@ function finishStage() {
   save.runs++; persist();
   const stars = 1 + (S.t < 300 ? 1 : 0) + (S.ko === 0 ? 1 : 0), hearts = (S.vaultOpened ? 1 : 0) + (S.end.ember ? 1 : 0);
   const prev = save.stages[1] || { stars: 0, hearts: 0 }; save.stages[1] = { stars: Math.max(prev.stars, stars), hearts: Math.max(prev.hearts, hearts) }; persist();
-  results = { time: S.t, kills: S.kills, loot: Object.assign({}, S.loot), vault: S.vaultOpened, ember: S.end.ember, t: 0, stars, hearts, score: S.score };
+  results = { time: S.t, kills: S.kills, loot: Object.assign({}, S.loot), vault: S.vaultOpened, ember: S.end.ember, t: 0, stars, hearts, score: S.score, net: NET.finish(S.net, { score: S.score, timeMs: Math.round(((S.netT0 || 0) + S.t) * 1000), kills: S.kills }) };
   scene = 'results';
 }
 
@@ -2037,6 +2131,7 @@ function startTavern() {
     events: [ { at: rnd(16, 22), type: 'vip' }, { at: rnd(32, 38), type: 'robber' }, { at: rnd(50, 56), type: 'fire' } ],
     banner: { text: 'NIGHT SHIFT', sub: 'กะดึกที่ร้าน The Tipsy Dragon เริ่มแล้ว!', t: 2.4 }, over: false, overT: 0,
   };
+  T.net = NET.start('tavern');
   scene = 'tavern';
 }
 const CUST_LOOKS = [ { skin: '#f3c58e', hair: '#5a3a22', coat: '#4a5670' }, { skin: '#c98e5a', hair: '#1b1020', coat: '#6a4a2a' }, { skin: '#f6d7b8', hair: '#e9c46a', coat: '#3f6a8a' }, { skin: '#8d5a3a', hair: '#2e1d12', coat: '#5a6a3a' }, { skin: '#7ad37a', hair: '#3f8f3f', coat: '#6a3a5a' }, { skin: '#b7a1d6', hair: '#6c2f8f', coat: '#3a5a5a' } ];
@@ -2242,7 +2337,7 @@ function endTavern() {
   track('tavern_end', { gold: T.gold, served: T.served, angry: T.angry });
   const stars = clamp(Math.round((T.served * 1 - T.angry * 1.5) / 4), 0, 5);
   save.gold += T.gold; save.best = Math.max(save.best, T.gold); persist();
-  night = { gold: T.gold, served: T.served, angry: T.angry, kicked: T.kicked, stars, usedGlow: T.usedGlow };
+  night = { gold: T.gold, served: T.served, angry: T.angry, kicked: T.kicked, stars, usedGlow: T.usedGlow, net: NET.finish(T.net, { gold: T.gold }) };
 }
 
 function drawTavern() {
@@ -2380,6 +2475,7 @@ function drawTavern() {
     const rows = [['รายได้', night.gold + 'g'], ['เสิร์ฟสำเร็จ', night.served], ['ลูกค้าหัวร้อนเดินออก', night.angry], ['ขี้เมาที่ถูกเคาะ', night.kicked], ['ต้มยำกุ้งพญามังกร', night.usedGlow]];
     rows.forEach(([a, b2], k) => { text(a, 100, 56 + k * 15, { size: 9, thai: true }); text(String(b2), 300, 56 + k * 15, { size: 10, align: 'right', color: '#ffd76a' }); });
     for (let k = 0; k < 5; k++) text('★', 160 + k * 20, 136, { size: 16, align: 'center', color: k < night.stars ? '#f2c94c' : '#3a2a40', shadow: k < night.stars });
+    const nl = netLine(night.net, ['tavern_gold']); if (nl) text(nl.str, W / 2, 155, { size: 8, align: 'center', thai: true, color: nl.col, weight: 400 });
     if (T.overT > 0.8) text('Enter / แตะ: ไปห้องปรุงยา & ตีเหล็ก', W / 2, 168, { size: 9, align: 'center', thai: true, color: Math.floor(T.overT * 2) % 2 ? '#f6ead2' : '#bba8ba' });
   }
 }
@@ -2755,15 +2851,16 @@ function drawMap() {
 
 /* =========================================================== TITLE ETC */
 let scene = 'title', titleT = 0;
-const TITLE_MENU = [0, 1, 2, 3, 4].map(i => { const cy = 154 + i * 11.6; return [140, cy - 5.2, 260, cy + 5.2]; });
-let titleSel = 0, titlePanel = null, optSel = 0;
+const TITLE_MENU = [0, 1, 2, 3, 4, 5].map(i => { const cy = 152.6 + i * 9.7; return [140, cy - 4.6, 260, cy + 4.6]; });
+let titleSel = 0, titlePanel = null, optSel = 0, rkB = 0, rkP = 'week';
 function titleAct(i) {
-  track('title_menu', { item: ['start', 'options', 'about', 'credits', 'tavern_mode'][i] || i });
+  track('title_menu', { item: ['start', 'ranking', 'options', 'about', 'credits', 'tavern_mode'][i] || i });
   SFX.select();
   if (i === 0) { scene = 'map'; mapSel = 0; }
-  else if (i === 1) { titlePanel = 'options'; optSel = 0; }
-  else if (i === 2) titlePanel = 'about';
-  else if (i === 3) titlePanel = 'credits';
+  else if (i === 1) { titlePanel = 'rank'; NET.boards = {}; }
+  else if (i === 2) { titlePanel = 'options'; optSel = 0; }
+  else if (i === 3) titlePanel = 'about';
+  else if (i === 4) titlePanel = 'credits';
   else { startTavern(); T.fromTitle = true; }
 }
 function updateTitle(dt) {
@@ -2781,12 +2878,20 @@ function updateTitle(dt) {
       for (const k of [1, 2]) { if (pressed['ui:opt' + k + 'm']) { optSel = k; adj(k, -1); } if (pressed['ui:opt' + k + 'p']) { optSel = k; adj(k, 1); } }
       if ((pressed.ok || pressed.atk) && optSel === 0) { toggleMute(); SFX.select(); }
       if (pressed.pause || pressed['ui:close']) titlePanel = null;
+    } else if (titlePanel === 'rank') {
+      if (pressed.left || pressed['ui:rkl']) { rkB = (rkB + 2) % 3; SFX.select(); }
+      if (pressed.right || pressed['ui:rkr']) { rkB = (rkB + 1) % 3; SFX.select(); }
+      for (let k = 0; k < 3; k++) if (pressed['ui:rk' + k]) { rkB = k; SFX.select(); }
+      if (pressed.up || pressed.down) { rkP = rkP === 'week' ? 'all' : 'week'; SFX.select(); }
+      if (pressed['ui:rkw'] || pressed['ui:rka']) { rkP = pressed['ui:rkw'] ? 'week' : 'all'; SFX.select(); }
+      if (pressed.rename || pressed['ui:rkn']) { SFX.select(); NET.rename(); }
+      else if (pressed.ok || pressed.atk || pressed.pause || pressed['ui:close']) titlePanel = null;
     } else if (pressed.ok || pressed.atk || pressed.pause || pressed['ui:close']) titlePanel = null;
     return;
   }
-  if (pressed.up) { titleSel = (titleSel + 4) % 5; SFX.select(); }
-  if (pressed.down) { titleSel = (titleSel + 1) % 5; SFX.select(); }
-  for (let i = 0; i < 5; i++) if (pressed['ui:tm' + i]) { titleSel = i; titleAct(i); return; }
+  if (pressed.up) { titleSel = (titleSel + 5) % 6; SFX.select(); }
+  if (pressed.down) { titleSel = (titleSel + 1) % 6; SFX.select(); }
+  for (let i = 0; i < 6; i++) if (pressed['ui:tm' + i]) { titleSel = i; titleAct(i); return; }
   if ((pressed.ok || pressed.atk) && titleT > 0.3) titleAct(titleSel);
 }
 // title words drawn per language over the text-free title art (the painted Thai plate/menu were inpainted out)
@@ -2809,12 +2914,35 @@ function drawTitleWords() {
     const sub = en ? 'Three Tom Yum Knights' : 'สามอัศวินต้มยำกุ้ง';
     let sz = en ? 17 : 21; c.font = `600 ${sz}px ${THAI}`; while (c.measureText(sub).width > 146 && sz > 9) { sz -= 0.5; c.font = `600 ${sz}px ${THAI}`; }
     outlineText(c, sub, 199, en ? 52 : 51, sz, ['#fff0a8', '#ffcf45', '#f0962a'], '#3a1d0c', 3, 600);
-    const labels = en ? ['Start Game', 'Options', 'About', 'Ending / Credits', 'Tavern Mode'] : ['เริ่มเกม', 'ตัวเลือก', 'เกี่ยวกับ', 'ฉากจบ / เครดิต', 'โหมดบริหารร้าน'];
-    TITLE_MENU.forEach((b, i) => outlineText(c, labels[i], (b[0] + b[2]) / 2, (b[1] + b[3]) / 2 + 0.3, 9.5, i === titleSel && !titlePanel ? '#ffe9a0' : '#f3e6c8', '#1b1020', 2.2, 600));
+    const labels = en ? ['Start Game', 'Ranking', 'Options', 'About', 'Ending / Credits', 'Tavern Mode'] : ['เริ่มเกม', 'อันดับ', 'ตัวเลือก', 'เกี่ยวกับ', 'ฉากจบ / เครดิต', 'โหมดบริหารร้าน'];
+    TITLE_MENU.forEach((b, i) => outlineText(c, labels[i], (b[0] + b[2]) / 2, (b[1] + b[3]) / 2 + 0.3, 8.6, i === titleSel && !titlePanel ? '#ffe9a0' : '#f3e6c8', '#1b1020', 2.2, 600));
     outlineText(c, 'v1.0.1 · ' + (en ? 'Developer: ' : 'ผู้พัฒนา: ') + 'Rochano Developer Teams', 330, 204, 6, '#e9dcc0', '#1b1020', 1.8, 400);
     _twKey = key;
   }
   ctx.drawImage(_twCache, 0, 0, W, H);
+}
+// online ranking panel (title menu > Ranking): three boards, this week / all time, top 8 + your own rank
+function drawRankPanel() {
+  text('อันดับ (Ranking)', W / 2, 40, { size: 11, align: 'center', thai: true, color: '#f2a93b', weight: 600 });
+  NET_BOARDS.forEach(([b, lb], k) => { const x = 80 + k * 82, on = k === rkB; btn('rk' + k, x, 56, 78, 16); uiBtn(x, 56, 78, 16, on); textC(lb, x + 39, 64, { size: 6.5, align: 'center', thai: true, color: on ? '#ffe9b0' : '#cfc0b0' }); });
+  [['week', 'สัปดาห์นี้', 'rkw', 140], ['all', 'ตลอดกาล', 'rka', 202]].forEach(([p, lb, id, x]) => { const on = rkP === p; btn(id, x, 75, 58, 12); uiBtn(x, 75, 58, 12, on); textC(lb, x + 29, 81, { size: 6.5, align: 'center', thai: true, color: on ? '#ffe9b0' : '#a89a8a' }); });
+  const b = NET_BOARDS[rkB][0], e = NET.board(b, rkP), rows = e.rows || [];
+  if (!rows.length) {
+    const msg = e.state === 'load' ? 'กำลังโหลด...' : e.state === 'off' ? 'ระบบอันดับออนไลน์ยังไม่เปิด หรือไม่ได้ต่อเน็ต' : 'ยังไม่มีใครติดอันดับ เป็นคนแรกเลย!';
+    text(msg, W / 2, 118, { size: 7.5, align: 'center', thai: true, color: e.state === 'off' ? '#ff8a7a' : '#cfc0b0', weight: 400 });
+  }
+  rows.slice(0, 8).forEach((r, k) => {
+    const y = 91 + k * 8.4, col = r.me ? '#9be15d' : k === 0 ? '#ffd76a' : '#f6ead2';
+    text(String(r.rank), 96, y, { size: 7, align: 'right', color: col, weight: 700 });
+    text('⁠' + r.name, 104, y, { size: 7, thai: true, color: col, weight: r.me ? 700 : 400 });
+    text(netVal(b, r.value), 318, y, { size: 7, align: 'right', color: col, weight: 700 });
+  });
+  text('คุณ:', 80, 160, { size: 7, thai: true, color: '#bba8ba', weight: 400 });
+  ctx.font = `400 7px ${THAI}`; const lw = ctx.measureText('คุณ:').width + 3;
+  if (NET.name) text('⁠' + NET.name, 80 + lw, 160, { size: 7, thai: true, color: '#f6ead2', weight: 700 }); else text('(ยังไม่ได้ตั้งชื่อ)', 80 + lw, 160, { size: 7, thai: true, color: '#8a7a6a', weight: 400 });
+  if (e.me) { const rs = 'อันดับที่ ' + e.me.rank; text(rs, 80, 169.5, { size: 7, thai: true, color: '#9be15d', weight: 400 }); ctx.font = `400 7px ${THAI}`; text('· ' + netVal(b, e.me.value), 83 + ctx.measureText(rs).width, 169.5, { size: 7, color: '#9be15d', weight: 400 }); }
+  btn('rkn', 248, 159, 72, 15); uiBtn(248, 159, 72, 15, false); textC('เปลี่ยนชื่อ (N)', 284, 166.5, { size: 6.5, align: 'center', thai: true, color: '#ffd7a0' });
+  if (NET.msg && Date.now() - NET.msgT < 3500) { const m = { ok: ['เปลี่ยนชื่อแล้ว', '#9be15d'], bad: ['ชื่อนี้ใช้ไม่ได้ (2-16 ตัวอักษร ห้ามคำหยาบ)', '#ff8a7a'], off: ['ต่อระบบอันดับไม่ได้ ลองใหม่อีกครั้ง', '#ff8a7a'] }[NET.msg]; text(m[0], 244, 170, { size: 6, align: 'right', thai: true, color: m[1], weight: 400 }); }
 }
 function drawTitleMenuScreen() {
   const t = titleT;
@@ -2831,7 +2959,7 @@ function drawTitleMenuScreen() {
   });
   if (titlePanel) {
     rect(0, 0, W, H, '#05050af4'); if (!nineBox('dialog', 64, 28, 272, 162, 16, 9)) panel(70, 34, 260, 150, '#1b120cf4', '#f2a93b');
-    btn('close', 70, 34, 260, titlePanel === 'options' ? 20 : 150);
+    btn('close', 70, 34, 260, titlePanel === 'options' || titlePanel === 'rank' ? 20 : 150);
     if (titlePanel === 'options') {
       text('ตัวเลือก (Options)', W / 2, 40, { size: 11, align: 'center', thai: true, color: '#f2a93b', weight: 600 });
       const rows = [['เสียงทั้งหมด (M)', muted ? 'ปิด' : 'เปิด'], ['เพลง (BGM)', VOL.bgm], ['เอฟเฟกต์เสียง (SFX)', VOL.sfx], ['ภาษา (Language)', LANG === 'th' ? 'ไทย' : 'English']];
@@ -2841,7 +2969,8 @@ function drawTitleMenuScreen() {
         else { btn('opt' + k + 'm', 230, y - 4, 34, 22); btn('opt' + k + 'p', 266, y - 4, 44, 22); keyLabel('←', 244, y + 7, 9, { color: r[1] > 0 ? '#ffd76a' : '#6a5a4a' }); textC(String(r[1]), 268, y + 7, { size: 9, align: 'center', weight: 700, color: r[1] ? '#f6ead2' : '#ff8a7a' }); keyLabel('→', 292, y + 7, 9, { color: r[1] < 10 ? '#ffd76a' : '#6a5a4a' }); } });
       text('ล้างเซฟได้จากปุ่ม "ล้างเซฟ" ด้านบนเกม', W / 2, 158, { size: 7, align: 'center', thai: true, color: '#bba8ba', weight: 400 });
       text('ขึ้น/ลง เลือก · ซ้าย/ขวา ปรับ · Enter เปิด/ปิด · Esc ปิด', W / 2, 170, { size: 7, align: 'center', thai: true, color: '#ffd76a', weight: 400 });
-    } else if (titlePanel === 'about') {
+    } else if (titlePanel === 'rank') drawRankPanel();
+    else if (titlePanel === 'about') {
       text('เกี่ยวกับ (About)', W / 2, 40, { size: 11, align: 'center', thai: true, color: '#f2a93b', weight: 600 });
       wrapText('อัศวินตกอับสามคนเปิดร้าน The Tipsy Dragon บังหน้า กลางวันลุยดันเจี้ยนล่าวัตถุดิบหายากจากบอส กลางคืนเปิดร้านทำต้มยำกุ้งเลี้ยงลูกค้า แล้วนำของที่ได้ไปปรุงยาและตีอาวุธ เพื่อสู้กับกลุ่ม Obsidian Syndicate', 84, 62, 232, 11, { size: 8, thai: true, weight: 400, color: '#f6ead2' });
       wrapText('เวอร์ชันต้นแบบนี้มี: ด่าน 1 ป่าเห็ดพิษ + บอสราชาเห็ด, กะกลางคืนในร้าน, ห้องปรุงยา/ตีเหล็ก และแผนที่โลก', 84, 128, 232, 10, { size: 7, thai: true, weight: 400, color: '#bfe8ff' });
@@ -2857,7 +2986,7 @@ function drawTitleMenuScreen() {
       text('กด Enter / แตะ เพื่อปิด', W / 2, 168, { size: 7, align: 'center', thai: true, color: '#ffd76a', weight: 400 });
     }
   }
-  controlStripCustom(titlePanel ? [['Enter', 'ตกลง'], ['Esc', '\u200bปิด'], ['M', 'เสียง']] : [['↑ ↓', 'เลือกเมนู'], ['Enter / J', 'ตกลง'], ['H', 'วิธีเล่น'], ['M', 'เสียง']]);
+  controlStripCustom(titlePanel === 'rank' ? [['← →', 'ตาราง'], ['↑ ↓', 'ช่วงเวลา'], ['N', 'เปลี่ยนชื่อ'], ['Esc', '\u200bปิด']] : titlePanel ? [['Enter', 'ตกลง'], ['Esc', '\u200bปิด'], ['M', 'เสียง']] : [['↑ ↓', 'เลือกเมนู'], ['Enter / J', 'ตกลง'], ['H', 'วิธีเล่น'], ['M', 'เสียง']]);
 }
 function drawTitle() {
   if (ENV.title) { drawTitleMenuScreen(); return; }
@@ -2902,7 +3031,8 @@ function drawResults() {
   const m = Math.floor(results.time / 60), s = Math.floor(results.time % 60);
   const rows = [['เวลา', m + ':' + String(s).padStart(2, '0')], ['คะแนน', results.score], ['ปราบมอนสเตอร์', results.kills], ['Glowcap / พริก', '+' + results.loot.glowcap + ' / +' + results.loot.chili], ['Shroom Crown', '+' + results.loot.crown], ['ห้องลับ (เชฟกอร์น)', results.vault ? 'เจอ! Truffle of Ages' : 'พลาด'], ['ดรอปลับบอส', results.ember ? 'Ember Spore!' : 'พลาด (ปราบตอนติดไฟ)']];
   rows.forEach(([a, b], i) => { text(a, 78, 72 + i * 13, { size: 8.5, thai: true, weight: 400 }); text(String(b), 322, 72 + i * 13, { size: 8.5, align: 'right', thai: true, color: /พลาด/.test(String(b)) ? '#7a6a6a' : '#ffd76a' }); });
-  text('กลับร้านกันเถอะ ลูกค้ากะดึกรออยู่!', W / 2, 166, { size: 8, align: 'center', thai: true, color: '#bba8ba', weight: 400 });
+  const nl = netLine(results.net, ['stage1_score', 'stage1_time']);
+  text(nl ? nl.str : 'กลับร้านกันเถอะ ลูกค้ากะดึกรออยู่!', W / 2, 166, { size: 8, align: 'center', thai: true, color: nl ? nl.col : '#bba8ba', weight: 400 });
   if (results.t > 0.8) text('Enter / แตะ: เริ่มกะดึก', W / 2, 182, { size: 10, align: 'center', thai: true, color: Math.floor(results.t * 2) % 2 ? '#ffd76a' : '#f6ead2' });
 }
 function updateOver(dt) {
@@ -3090,7 +3220,7 @@ function frame(now) {
   tpSync();
   requestAnimationFrame(frame);
 }
-window.__tk = { sfxBuf: SFX_BUF, makeEnemy, get help() { return help; }, set help(v) { help = v; }, set scene(v) { scene = v; }, get scene() { return scene; }, get S() { return S; }, get T() { return T; }, startStage, startTavern, finishStage, step: n => { for (let i = 0; i < n; i++) update(STEP); draw(); }, press, release, pressed, keys, save: () => save };
+window.__tk = { sfxBuf: SFX_BUF, makeEnemy, get help() { return help; }, set help(v) { help = v; }, set scene(v) { scene = v; }, get scene() { return scene; }, get S() { return S; }, get T() { return T; }, startStage, startTavern, finishStage, endTavern, setLang, NET, titleAct, get results() { return results; }, set T(v) { T = v; }, set titlePanel(v) { titlePanel = v; }, set titleSel(v) { titleSel = v; }, set rank(v) { rkB = v[0]; rkP = v[1]; }, step: n => { for (let i = 0; i < n; i++) update(STEP); draw(); }, press, release, pressed, keys, save: () => save };
 (document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 1500))]) : Promise.resolve()).then(() => requestAnimationFrame(frame));
 })();
 </script>
