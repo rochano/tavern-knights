@@ -114,6 +114,7 @@ button.tool{font-family:var(--thai);font-size:12px;background:rgba(34,23,39,.85)
 button.tool:hover{border-color:var(--amber)}
 button:focus-visible,canvas:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 .stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;container-type:size}
+#nameIn{position:absolute;left:29%;top:42.2%;width:42%;height:9.8%;box-sizing:border-box;display:none;margin:0;outline:none;background:none;border:9px solid transparent;border-radius:0;font-family:var(--thai);font-weight:700;color:#f6ead2;text-shadow:0 1px 0 #000;text-align:center;padding:0 6px;z-index:3;-webkit-user-select:text;user-select:text;touch-action:auto}
 .screen{position:relative;width:min(100cqw,calc(100cqh * 16 / 9));aspect-ratio:16/9;max-width:100%;background:#000;overflow:hidden}
 canvas{width:100%;height:100%;display:block;image-rendering:pixelated;touch-action:none}
 .touch{flex:none;display:none;justify-content:space-between;align-items:center;gap:10px;user-select:none;-webkit-user-select:none}
@@ -187,7 +188,7 @@ body.tp-rot:not([data-tp=menu]) #tpad{display:block}
     </div>
   </header>
 
-  <div class="stage"><div class="screen"><canvas id="game" width="1600" height="900" tabindex="0" aria-label="Tavern Knights game screen"></canvas></div></div>
+  <div class="stage"><div class="screen"><canvas id="game" width="1600" height="900" tabindex="0" aria-label="Tavern Knights game screen"></canvas><input id="nameIn" type="text" maxlength="16" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" aria-label="name"></div></div>
 
 
   <div id="tpad" aria-hidden="true">
@@ -434,6 +435,9 @@ const I18N_EN = {
 "ชื่อนี้ใช้ไม่ได้ (2-16 ตัวอักษร ห้ามคำหยาบ)": "Name not allowed (2-16 letters, no rude words)",
 "ต่อระบบอันดับไม่ได้ ลองใหม่อีกครั้ง": "Could not reach the ranking. Try again",
 "ชื่อที่จะแสดงบนตารางอันดับ (2-16 ตัวอักษร)": "Name to show on the ranking (2-16 letters)",
+"ตั้งชื่อที่จะแสดงบนตารางอันดับ": "Your name on the ranking",
+"ใช้ได้ 2-16 ตัวอักษร": "2-16 letters",
+"ยกเลิก": "Cancel",
 "กำลังส่งคะแนนขึ้นตารางอันดับ...": "Sending your score to the ranking...",
 "คะแนนรอบนี้ไม่ผ่านการตรวจ จึงไม่ขึ้นตารางอันดับ": "This run failed the score check, so it is not ranked",
 "อันดับสัปดาห์นี้: คะแนนที่ # · เวลาที่ #": "This week: score rank # · time rank #",
@@ -533,10 +537,9 @@ const NET = (() => {
     call('boards/' + b + '?period=' + period + '&limit=8').then(j => { if (j.ok) { e.state = 'ok'; e.rows = j.rows; e.me = j.me; N.on = true; try { const c = {}; for (const q in N.boards) if (N.boards[q].rows.length) c[q] = { rows: N.boards[q].rows, me: N.boards[q].me }; localStorage.setItem('tk-boards', JSON.stringify(c)); } catch (x) {} } else { e.state = 'off'; offline(j); } e.at = Date.now(); });
     return e;
   };
-  N.rename = () => {
-    let v = null; try { v = window.prompt(tr('ชื่อที่จะแสดงบนตารางอันดับ (2-16 ตัวอักษร)'), N.name || ''); } catch (e) { v = null; }
+  N.rename = v => {
     for (const k in keys) keys[k] = false;
-    if (v === null || !v.trim()) return;
+    if (v == null || !v.trim()) return;
     ensure().then(ok => ok ? call('me/name', { name: v }) : null).then(j => {
       if (j && j.ok) { st.name = N.name = j.player.name; keep(); N.stale(); N.msg = 'ok'; } else N.msg = j && j.error === 'bad_name' ? 'bad' : 'off';
       N.msgT = Date.now();
@@ -673,7 +676,7 @@ function press(a) { if (!keys[a]) pressed[a] = true; keys[a] = true; initAudio()
 function release(a) { keys[a] = false; }
 { const hd = document.querySelector('header'); let ht = 0; const show = () => { hd.classList.add('show'); clearTimeout(ht); ht = setTimeout(() => hd.classList.remove('show'), 2200); }; window.addEventListener('mousemove', e => { if (e.clientY < 70) show(); }); window.addEventListener('touchstart', e => { if (e.touches[0] && e.touches[0].clientY < 70) show(); }, { passive: true }); }
 setTimeout(function styleTools() { const u = UI_ART_SRC.big.frame_dark; document.querySelectorAll('button.tool').forEach(b => { b.style.background = 'none'; b.style.border = '9px solid transparent'; b.style.borderImage = `url(${u}) 40 44 fill / 9px 11px stretch`; b.style.padding = '0 4px'; b.style.borderRadius = '0'; b.style.color = '#f6ead2'; b.style.textShadow = '0 1px 0 #000'; }); }, 0);
-window.addEventListener('keydown', e => { const a = KEYMAP[e.code]; if (!a) return; e.preventDefault(); if (a === 'mute' && !e.repeat) toggleMute(); press(a); });
+window.addEventListener('keydown', e => { if (e.target && e.target.id === 'nameIn') { if (e.key === 'Enter') { e.preventDefault(); nameDone(true); } else if (e.key === 'Escape') { e.preventDefault(); nameDone(false); } return; } const a = KEYMAP[e.code]; if (!a) return; e.preventDefault(); if (a === 'mute' && !e.repeat) toggleMute(); press(a); });
 window.addEventListener('keyup', e => { const a = KEYMAP[e.code]; if (a) release(a); });
 window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 cv.addEventListener('pointerdown', () => { cv.focus(); initAudio(); pressed.click = true; });
@@ -2870,13 +2873,26 @@ let scene = 'title', titleT = 0;
 const TITLE_MENU = [0, 1, 2, 3, 4, 5].map(i => { const cy = 152.6 + i * 9.7; return [140, cy - 4.6, 260, cy + 4.6]; });
 let titleSel = 0, titlePanel = null, optSel = 0, rkB = 0, rkP = 'week', mapRank = false;
 // input for the ranking panel (title menu and world map)
+let nameEdit = false;
+function nameOpen() {
+  const el = document.getElementById('nameIn'); nameEdit = true; el.value = NET.name || '';
+  el.style.borderImage = `url(${UI_ART_SRC.big.frame_blue || UI_ART_SRC.big.frame_dark}) 40 44 fill / 9px 11px stretch`;
+  el.style.fontSize = Math.max(16, el.parentNode.clientWidth / 400 * 9) + 'px'; el.style.display = 'block';
+  try { el.focus(); el.select(); } catch (e) {}
+}
+function nameDone(ok) {
+  const el = document.getElementById('nameIn'); if (!nameEdit) return; nameEdit = false; el.style.display = 'none';
+  try { el.blur(); } catch (e) {} cv.focus(); SFX.select();
+  if (ok) NET.rename(el.value);
+}
 function rankInput(close) {
+  if (nameEdit) { if (pressed['ui:nok'] || pressed.ok || pressed.atk) nameDone(true); else if (pressed['ui:ncan'] || pressed.pause || pressed.rank) nameDone(false); return; }
   if (pressed.left) { rkB = (rkB + 2) % 3; SFX.select(); }
   if (pressed.right) { rkB = (rkB + 1) % 3; SFX.select(); }
   for (let k = 0; k < 3; k++) if (pressed['ui:rk' + k]) { rkB = k; SFX.select(); }
   if (pressed.up || pressed.down) { rkP = rkP === 'week' ? 'all' : 'week'; SFX.select(); }
   if (pressed['ui:rkw'] || pressed['ui:rka']) { rkP = pressed['ui:rkw'] ? 'week' : 'all'; SFX.select(); }
-  if (pressed.rename || pressed['ui:rkn']) { SFX.select(); NET.rename(); }
+  if (pressed.rename || pressed['ui:rkn']) { SFX.select(); nameOpen(); }
   else if (pressed.ok || pressed.atk || pressed.pause || pressed.rank || pressed['ui:close']) { close(); SFX.select(); }
 }
 function titleAct(i) {
@@ -2961,6 +2977,12 @@ function drawRankPanel() {
   if (e.me) { const rs = 'อันดับที่ ' + e.me.rank; text(rs, 80, 169.5, { size: 7, thai: true, color: '#9be15d', weight: 400 }); ctx.font = `400 7px ${THAI}`; text('· ' + netVal(b, e.me.value), 83 + ctx.measureText(rs).width, 169.5, { size: 7, color: '#9be15d', weight: 400 }); }
   btn('rkn', 248, 159, 72, 15); uiBtn(248, 159, 72, 15, false); textC('เปลี่ยนชื่อ (N)', 284, 166.5, { size: 6.5, align: 'center', thai: true, color: '#ffd7a0' });
   if (NET.msg && Date.now() - NET.msgT < 3500) { const m = { ok: ['เปลี่ยนชื่อแล้ว', '#9be15d'], bad: ['ชื่อนี้ใช้ไม่ได้ (2-16 ตัวอักษร ห้ามคำหยาบ)', '#ff8a7a'], off: ['ต่อระบบอันดับไม่ได้ ลองใหม่อีกครั้ง', '#ff8a7a'] }[NET.msg]; text(m[0], 244, 170, { size: 6, align: 'right', thai: true, color: m[1], weight: 400 }); }
+  if (nameEdit) {
+    rect(0, 0, W, H, '#05050ac0'); if (!nineBox('dialog', 92, 70, 216, 88, 16, 9)) panel(96, 74, 208, 80, '#1b120cf4', '#f2a93b');
+    text('ตั้งชื่อที่จะแสดงบนตารางอันดับ', W / 2, 82, { size: 8, align: 'center', thai: true, color: '#f2a93b', weight: 600 });
+    text('ใช้ได้ 2-16 ตัวอักษร', W / 2, 121, { size: 6, align: 'center', thai: true, color: '#bba8ba', weight: 400 });
+    [['nok', 'ตกลง', 122, true], ['ncan', 'ยกเลิก', 204, false]].forEach(([id, lb, x, on]) => { btn(id, x, 132, 74, 15); uiBtn(x, 132, 74, 15, on); textC(lb, x + 37, 139.5, { size: 7, align: 'center', thai: true, color: on ? '#ffe9b0' : '#cfc0b0' }); });
+  }
 }
 function drawTitleMenuScreen() {
   const t = titleT;
