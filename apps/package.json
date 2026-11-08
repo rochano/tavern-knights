@@ -1,0 +1,73 @@
+{
+  "name": "tavern-knights",
+  "productName": "Tavern Knights",
+  "version": "1.0.1",
+  "description": "Tavern Knights: สามอัศวินต้มยำกุ้ง — 16-bit action side-scroller + tavern management",
+  "author": "Rochano Developer Teams",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "electron/main.cjs",
+  "scripts": {
+    "web": "node scripts/build-web.mjs",
+    "icons": "node scripts/build-web.mjs && npx capacitor-assets generate --iconBackgroundColor '#1a1210' --splashBackgroundColor '#1a1210'",
+    "cap:sync": "node scripts/build-web.mjs && npx cap sync",
+    "android": "npm run cap:sync && npx cap open android",
+    "ios": "npm run cap:sync && npx cap open ios",
+    "desktop": "node scripts/build-web.mjs && electron .",
+    "steam:win": "node scripts/build-web.mjs && electron-builder --win dir",
+    "steam:mac": "node scripts/build-web.mjs && electron-builder --mac dir",
+    "steam:linux": "node scripts/build-web.mjs && electron-builder --linux dir"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/ios": "^8.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.0.0",
+    "electron": "^45.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "dev.rochano.tavernknights",
+    "productName": "Tavern Knights",
+    "copyright": "© 2026 Rochano Developer Teams",
+    "directories": {
+      "output": "dist",
+      "buildResources": "resources"
+    },
+    "files": [
+      "electron/**",
+      "www/**",
+      "package.json",
+      "!node_modules/**"
+    ],
+    "asar": true,
+    "win": {
+      "icon": "resources/icon.png",
+      "target": [
+        "dir"
+      ]
+    },
+    "mac": {
+      "icon": "resources/icon.png",
+      "category": "public.app-category.games",
+      "target": [
+        "dir"
+      ]
+    },
+    "linux": {
+      "icon": "resources/icon.png",
+      "category": "Game",
+      "target": [
+        "dir"
+      ]
+    },
+    "publish": null
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rochano/tavern-knights.git"
+  }
+}

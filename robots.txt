@@ -1,32 +1,42 @@
 # Everyone, including AI search and assistant crawlers, may read the whole site.
 User-agent: *
 Allow: /
+Disallow: /apps/
 
 User-agent: GPTBot
 Allow: /
+Disallow: /apps/
 
 User-agent: OAI-SearchBot
 Allow: /
+Disallow: /apps/
 
 User-agent: ChatGPT-User
 Allow: /
+Disallow: /apps/
 
 User-agent: ClaudeBot
 Allow: /
+Disallow: /apps/
 
 User-agent: Claude-User
 Allow: /
+Disallow: /apps/
 
 User-agent: Claude-SearchBot
 Allow: /
+Disallow: /apps/
 
 User-agent: PerplexityBot
 Allow: /
+Disallow: /apps/
 
 User-agent: Google-Extended
 Allow: /
+Disallow: /apps/
 
 User-agent: Applebot-Extended
 Allow: /
+Disallow: /apps/
 
 Sitemap: https://tavern-knights.pages.dev/sitemap.xml
