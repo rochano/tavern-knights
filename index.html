@@ -2969,9 +2969,10 @@ function drawRankPanel() {
   }
   rows.slice(0, 8).forEach((r, k) => {
     const y = 91 + k * 8.4, col = r.me ? '#9be15d' : k === 0 ? '#ffd76a' : '#f6ead2';
-    text(String(r.rank), 96, y, { size: 7, align: 'right', color: col, weight: 700 });
-    text('⁠' + r.name, 104, y, { size: 7, thai: true, color: col, weight: r.me ? 700 : 400 });
-    text(netVal(b, r.value), 318, y, { size: 7, align: 'right', color: col, weight: 700 });
+    const cy = y + 3.6; /* number font and Thai font sit differently from the top, so centre each on one line */
+    textC(String(r.rank), 96, cy, { size: 7, align: 'right', color: col, weight: 700 });
+    textC('⁠' + r.name, 104, cy, { size: 7, thai: true, color: col, weight: r.me ? 700 : 400 });
+    textC(netVal(b, r.value), 318, cy, { size: 7, align: 'right', color: col, weight: 700 });
   });
   text('คุณ:', 80, 160, { size: 7, thai: true, color: '#bba8ba', weight: 400 });
   ctx.font = `400 7px ${THAI}`; const lw = ctx.measureText('คุณ:').width + 3;
