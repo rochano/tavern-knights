@@ -18,3 +18,6 @@ Tavern Knights follows three down-on-their-luck knights who secretly run The Tip
 - [Play now](https://tavern-knights.pages.dev/): the game, full screen
 - [About the game](https://tavern-knights.pages.dev/about.html): story, characters, screenshots, controls, FAQ
 - [Source on GitHub](https://github.com/rochano/tavern-knights)
+
+## Languages
+- Thai and English. The game picks the language from the browser; switch in Options > Language, or open https://tavern-knights.pages.dev/?lang=en

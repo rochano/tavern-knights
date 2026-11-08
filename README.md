@@ -35,3 +35,6 @@ Serve the folder over http (e.g. GitHub Pages, or `python3 -m http.server`) and 
 - `sfx/` เสียงเอฟเฟกต์
 
 Credits: Rochano Developer Teams
+
+## Languages / ภาษา
+Thai + English. Auto-detected from the browser; change in Options > Language, or use `?lang=en` / `?lang=th`.
