@@ -6,6 +6,8 @@ A 16-bit side-scrolling action game mixed with a tavern-management mini-game. Ru
 
 เล่นออนไลน์ / Play online: https://tavern-knights.pages.dev/
 
+ทดสอบก่อนขึ้นจริง / Staging: https://develop.tavern-knights.pages.dev/ (ดู / see [DEPLOY.md](DEPLOY.md))
+
 ## วิธีเล่น / How to play
 
 เปิด `index.html` ผ่านเว็บเซิร์ฟเวอร์ (เช่น GitHub Pages) เสียงเพลงและ SFX ต้องโหลดผ่าน http จึงจะเล่นได้ครบ
