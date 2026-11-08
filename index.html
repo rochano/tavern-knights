@@ -149,6 +149,10 @@ body.tp-on #tpad{display:block}
 .tp-full.hide{display:none}
 body[data-tp=tav] .tp-ult,body[data-tp=tav] .tp-sup{display:none}
 body[data-tp=menu] #tpad{display:none}
+body[data-tp=title] .tp-sp,body[data-tp=title] .tp-ult,body[data-tp=title] .tp-next,body[data-tp=title] .tp-sup,body[data-tp=title] .tp-pause,body[data-tp=title] .tp-full{display:none}
+body[data-tp=title] .tp-back{display:none}
+body[data-tp=title][data-tpp] .tp-back{display:block}
+.tp-back{right:25vh;bottom:2vh;width:16vh;height:16vh}
 body.tp-rot #rotate{display:flex}
 #rotate{position:fixed;inset:0;z-index:9;background:#0c0a10f2;align-items:center;justify-content:center;padding:24px}
 #rotate .rot-box{border-style:solid;border-width:22px 20px;border-color:transparent;border-image-slice:22 20 fill;border-image-width:22px 20px;image-rendering:pixelated;padding:6px 10px;text-align:center;max-width:320px;font-family:var(--thai);color:#f6ead2}
@@ -182,6 +186,7 @@ body.tp-rot #rotate{display:flex}
       <button type="button" class="tp-b tp-ult" data-k="ult"><span></span></button>
       <button type="button" class="tp-b tp-next" data-k="next"><span></span></button>
       <button type="button" class="tp-b tp-sup" data-k="sup"><span></span></button>
+      <button type="button" class="tp-b tp-back" data-k="pause"><span></span></button>
     </div>
     <button type="button" class="tp-b tp-pause" data-k="pause" aria-label="pause"></button>
     <button type="button" class="tp-b tp-full hide" id="tpFull" aria-label="fullscreen"></button>
@@ -2877,7 +2882,7 @@ const tpEl = document.getElementById('tpad');
   tpEl.querySelectorAll('.tp-dpad i').forEach(i => { i.style.backgroundImage = `url(${[].concat(big['ar_' + i.dataset.d])[0]})`; });
   const TB = {"atk": "art/1d49f6e542e5.webp", "sp": "art/5b41ee0111f4.webp", "ult": "art/d0df181ca6fe.webp", "bowl": "art/fb1025919639.webp", "swap": "art/6d49bb9cbb72.webp", "crew": "art/5f1580632b25.webp", "harp": "art/5987157def42.webp", "close": "art/cf2bcf9cc425.webp", "pause": "art/a177c75724f2.webp", "rotate": "art/35f3fa8159e8.webp", "full": "art/f6d3526c2f94.webp"};
   tpEl.querySelector('.tp-pause').style.backgroundImage = `url(${TB.pause})`; tpEl.querySelector('.tp-full').style.backgroundImage = `url(${TB.full})`;
-  tpEl.querySelector('.tp-next').style.backgroundImage = `url(${TB.swap})`; tpEl.querySelector('.tp-ult').style.backgroundImage = `url(${TB.ult})`; tpEl.querySelector('.tp-sup').style.backgroundImage = `url(${TB.crew})`;
+  tpEl.querySelector('.tp-next').style.backgroundImage = `url(${TB.swap})`; tpEl.querySelector('.tp-ult').style.backgroundImage = `url(${TB.ult})`; tpEl.querySelector('.tp-sup').style.backgroundImage = `url(${TB.crew})`; tpEl.querySelector('.tp-back').style.backgroundImage = `url(${TB.close})`;
   document.querySelector('#rotate .rot-box').style.borderImageSource = `url(${PXF_SRC.e6_window})`; document.getElementById('rotIc').style.backgroundImage = `url(${TB.rotate})`;
   window.__TB = TB;
   const tb = document.getElementById('tpad');
@@ -2912,11 +2917,13 @@ function tpSync() {
   if (!TOUCH_DEV) return;
   const land = innerWidth >= innerHeight;
   document.body.classList.toggle('tp-on', land); document.body.classList.toggle('tp-rot', !land);
-  const mode = help ? 'menu' : (scene === 'stage' || scene === 'gameover') ? 'act' : scene === 'tavern' ? 'tav' : 'menu';
+  const mode = help ? 'menu' : (scene === 'stage' || scene === 'gameover') ? 'act' : scene === 'tavern' ? 'tav' : scene === 'title' ? 'title' : 'menu';
+  if (titlePanel && scene === 'title') document.body.dataset.tpp = '1'; else delete document.body.dataset.tpp;
   const key = mode + LANG + (mode === 'tav' && T ? T.active : ''); if (key === tpKey) return; tpKey = key; document.body.dataset.tp = mode;
   const TB = window.__TB, Q = s => tpEl.querySelector(s);
   const lab = (sel, img, txt) => { const b = Q(sel); if (img) b.style.backgroundImage = `url(${img})`; b.querySelector('span').textContent = tr(txt); };
   if (mode === 'tav') { const who = T ? T.active : 0; lab('.tp-atk', TB.bowl, 'ทำงาน'); lab('.tp-sp', who === 2 ? TB.harp : TB.sp, 'สกิล'); lab('.tp-next', null, 'สลับคน'); }
+  else if (mode === 'title') { lab('.tp-atk', TB.atk, 'ตกลง'); lab('.tp-back', null, '\u200bปิด'); }
   else { lab('.tp-atk', TB.atk, 'โจมตี'); lab('.tp-sp', TB.sp, 'ท่าพิเศษ'); lab('.tp-next', null, 'สลับตัว'); }
   lab('.tp-ult', null, 'ท่าประสาน'); lab('.tp-sup', null, 'ลูกทีม');
   document.getElementById('rotTxt').textContent = tr('หมุนมือถือเป็นแนวนอนเพื่อเล่น');
