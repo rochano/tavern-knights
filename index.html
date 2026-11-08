@@ -219,9 +219,14 @@ const W = 400, H = 225, GROUND = 190;
 const cv = document.getElementById('game');
 const ctx = cv.getContext('2d');
 const I18N_EN = {
+'กดปุ่มลูกทีม เรียกเชฟกอร์นมาทุบกำแพงร้าว!': 'Press Crew to call Chef Gorn to smash the cracked wall!', 'แตะที่จอเพื่อเล่นต่อ': 'Tap to resume',
+'ดันจอยหรือแตะปุ่มลูกศร ให้ตรงตอนโน้ตเข้าวงกลม!': 'Push the stick or tap arrows as notes hit the circle!', 'แตะปุ่มดาบอีกครั้งให้หยุดในแถบทอง': 'Tap the sword again to stop in the gold zone',
+'ขี้เมาอาละวาด! แตะโต๊ะให้อาเธอร์ไปเคาะ หรือใช้สกิลพิณ': 'Rowdy drunk! Tap the table for Arthur, or use the harp skill', 'โจรบุกปล้นร้าน! สลับเป็นอาเธอร์ แล้วกดปุ่มสกิล': 'Thief! Swap to Arthur and press Skill',
+'แตะเพื่อเลือก': 'Tap to choose', 'แตะ: ไปห้องปรุงยา & ตีเหล็ก': 'Tap: go to the alchemy & forge', 'ลุยเลย!': 'Go!', 'แตะเพื่อเลือกและปรับ · แตะ X เพื่อปิด': 'Tap to choose and adjust · Tap X to close',
+'แตะเพื่อปิด': 'Tap to close', 'แตะเพื่อเริ่ม': 'Tap to start', 'วิธีเล่นจะขึ้นตอนเริ่มเล่น · เปิดดูอีกได้จากปุ่มหยุด': 'Tap pause, then "How to play" to see the controls', 'แตะ: เริ่มกะดึก': 'Tap: start night shift', 'แตะ: ': 'Tap: ',
 'รัวปุ่มสกิลดับไฟ!': 'Mash Skill to put out the fire!', 'เตาไฟไหม้! แตะที่ครัว แล้วรัวปุ่มสกิล (สีส้ม)': 'Stove fire! Tap the kitchen, then mash Skill (orange)',
 'ดันจอยซ้าย-ขวาเพื่อเดิน ดันขึ้นเพื่อกระโดด · ดันเฉียงขึ้น/ลงพร้อมกดดาบเพื่อเล็งยิง': 'Push the stick left/right to move, up to jump · Push diagonally while attacking to aim shots',
-'กดดาบ หรือแตะที่จอ = โจมตี (โรสแมรี่กับเพอร์ซิวาลยิงไปทางที่แตะ)': 'Sword button or tap the screen = attack (Rosemary and Percival shoot where you tap)',
+'กดดาบ = โจมตี ดาวและเวทเล็งมอนตัวที่ใกล้สุดด้านที่หันอยู่ให้เอง · แตะที่จอเพื่อยิงไปจุดนั้น': 'Sword = attack; stars and spells auto-aim at the nearest monster you face · Tap the screen to shoot at that spot',
 'แตะจอ': 'Tap',
 'แตะที่ครัว อ่าง โต๊ะ หรือก๊อก แล้วคนที่ถูกงานจะเดินไปทำให้เลย': 'Tap the kitchen, sink, table or taps and the right worker goes there',
 'ทำงานตรงที่ยืนอยู่: ปรุงอาหาร ล้างจาน เสิร์ฟ รินเบียร์ (แตะอีกครั้งให้หยุดในแถบทอง)': 'Work at your spot: cook, wash, serve, pour (tap again to stop in the gold zone)',
@@ -420,7 +425,26 @@ function tr(s) {
   if (r === undefined) { if (!_trF) _trF = Object.keys(I18N_EN).filter(k => !k.includes('#')).sort((a, b) => b.length - a.length); r = s; for (const f of _trF) if (r.includes(f)) r = r.split(f).join(I18N_EN[f]); if (_TH.test(r)) (window.__trMiss = window.__trMiss || new Set()).add(s); }
   _trC.set(s, r); return r;
 }
-{ const ft = ctx.fillText.bind(ctx), mt = ctx.measureText.bind(ctx); ctx.fillText = (s, x, y, m) => m === undefined ? ft(tr(s), x, y) : ft(tr(s), x, y, m); ctx.measureText = s => mt(tr(s)); }
+const TOUCH_TXT = {
+  'กด C เรียกเชฟกอร์นมาทุบกำแพงร้าว!': 'กดปุ่มลูกทีม เรียกเชฟกอร์นมาทุบกำแพงร้าว!',
+  'กด P หรือ Enter เพื่อเล่นต่อ': 'แตะที่จอเพื่อเล่นต่อ',
+  'กดลูกศร หรือคลิกปุ่มลูกศร ให้ตรงตอนโน้ตเข้าวงกลม!': 'ดันจอยหรือแตะปุ่มลูกศร ให้ตรงตอนโน้ตเข้าวงกลม!',
+  'กด J หรือคลิกอีกครั้งให้หยุดในแถบทอง': 'แตะปุ่มดาบอีกครั้งให้หยุดในแถบทอง',
+  'ขี้เมาอาละวาด! อาเธอร์ (1) หรือ K พิณ': 'ขี้เมาอาละวาด! แตะโต๊ะให้อาเธอร์ไปเคาะ หรือใช้สกิลพิณ',
+  'โจรบุกปล้นร้าน! สลับเป็นอาเธอร์ (1) แล้วกด K': 'โจรบุกปล้นร้าน! สลับเป็นอาเธอร์ แล้วกดปุ่มสกิล',
+  '↑↓ เลือก · Enter ตกลง · Esc เล่นต่อ': 'แตะเพื่อเลือก',
+  'Enter / แตะ: ไปห้องปรุงยา & ตีเหล็ก': 'แตะ: ไปห้องปรุงยา & ตีเหล็ก',
+  'ลุยเลย! (Enter)': 'ลุยเลย!',
+  'ขึ้น/ลง เลือก · ซ้าย/ขวา ปรับ · Enter เปิด/ปิด · Esc ปิด': 'แตะเพื่อเลือกและปรับ · แตะ X เพื่อปิด',
+  'กด Enter / แตะ เพื่อปิด': 'แตะเพื่อปิด',
+  'คลิก / แตะ / กด Enter เพื่อเริ่ม': 'แตะเพื่อเริ่ม',
+  'กด H หรือปุ่ม "วิธีเล่น" เพื่อดูปุ่มบังคับ': 'วิธีเล่นจะขึ้นตอนเริ่มเล่น · เปิดดูอีกได้จากปุ่มหยุด',
+  'Enter / แตะ: เริ่มกะดึก': 'แตะ: เริ่มกะดึก',
+  'Enter / tap: retry from the boss': 'Tap: retry from the boss', 'Enter / tap: try again': 'Tap: try again',
+};
+let tpOnTxt = false;
+function touchT(s) { if (!tpOnTxt || typeof s !== 'string') return s; const r = TOUCH_TXT[s]; if (r !== undefined) return r; return s.startsWith('J/คลิก: ') ? 'แตะ: ' + s.slice(8) : s; }
+{ const ft = ctx.fillText.bind(ctx), mt = ctx.measureText.bind(ctx); ctx.fillText = (s, x, y, m) => m === undefined ? ft(tr(touchT(s)), x, y) : ft(tr(touchT(s)), x, y, m); ctx.measureText = s => mt(tr(touchT(s))); }
 const _domTh = new WeakMap();
 function applyLangDom() {
   document.documentElement.lang = LANG;
@@ -1120,6 +1144,11 @@ let stickVec = null; // mobile joystick direction (-1..1), used to aim shots whe
 function aimVel(sx, sy, speed, face) {
   const a = S.aim;
   if ((!a || S.t - a.t > 0.25) && stickVec && Math.abs(stickVec.dy) > 0.18) { let dx = Math.max(Math.abs(stickVec.dx), 0.35) * face, dy = stickVec.dy; const lim = Math.abs(dx) * 1.2; dy = Math.max(-lim, Math.min(lim, dy)); const l = Math.hypot(dx, dy) || 1; return [speed * dx / l, speed * dy / l]; }
+  if ((!a || S.t - a.t > 0.25) && document.body.classList.contains('tp-on')) { /* touch auto-aim: lock onto the nearest monster on the side the knight faces */
+    let best = null, bd = 1e9;
+    for (const e of S.enemies) { if (e.dead || !e.active || e.state === 'sleep') continue; const ex = e.x + e.w / 2, ey = e.y + e.h * 0.5, dx = ex - sx; if (dx * face < 4 || Math.abs(dx) > W * 0.95) continue; const d = Math.abs(dx) + Math.abs(ey - sy) * 0.6; if (d < bd) { bd = d; best = [dx, ey - sy]; } }
+    if (best) { let [dx, dy] = best; const lim = Math.abs(dx) * 1.2; dy = Math.max(-lim, Math.min(lim, dy)); const l = Math.hypot(dx, dy) || 1; return [speed * dx / l, speed * dy / l]; }
+  }
   if (!a || S.t - a.t > 0.25) return [speed * face, 0];
   let dx = a.x - sx, dy = a.y - sy; if (dx * face < 10) dx = 10 * face;
   const lim = Math.abs(dx) * 1.2; dy = Math.max(-lim, Math.min(lim, dy)); const l = Math.hypot(dx, dy) || 1;
@@ -1326,7 +1355,7 @@ function updateEnemy(e, dt) {
 
 function updateStage(dt) {
   if (pressed.pause) S.paused = !S.paused;
-  if (S.paused) { if (pressed.ok || pressed.click) S.paused = false; return; }
+  if (S.paused) { if (pressed['ui:shelp']) { help = 'stage'; return; } if (pressed.ok || pressed.click || pressed['ui:sresume']) S.paused = false; return; }
   S.t += dt;
   const p = S.p;
   if (S.banner) { S.banner.t -= dt; if (S.banner.t <= 0) S.banner = null; }
@@ -1917,7 +1946,7 @@ function drawStageHud() {
     ctx.globalAlpha = 1;
   }
   controlStrip(S.bossOn ? null : null);
-  if (S.paused) { rect(0, 0, W, H, '#0d0812aa'); if (!nineBox('dialog', 110, 74, 180, 62, 16, 8)) panel(110, 74, 180, 62, '#1b120cf2', '#8a5a2e'); text('หยุดชั่วคราว', W / 2, 84, { size: 18, align: 'center', color: '#f2a93b', thai: true, weight: 600 }); text('กด P หรือ Enter เพื่อเล่นต่อ', W / 2, 114, { size: 9, align: 'center', thai: true }); }
+  if (S.paused) { rect(0, 0, W, H, '#0d0812aa'); if (!nineBox('dialog', 110, 74, 180, 62, 16, 8)) panel(110, 74, 180, 62, '#1b120cf2', '#8a5a2e'); text('หยุดชั่วคราว', W / 2, 84, { size: 18, align: 'center', color: '#f2a93b', thai: true, weight: 600 }); if (tpOnTxt) { [['เล่นต่อ', 'sresume'], ['วิธีเล่น', 'shelp']].forEach(([lb, id], k) => { const x = 122 + k * 80; btn(id, x, 108, 76, 19); uiBtn(x, 108, 76, 19, k === 0, '#f2a93b', '#3a2a20', '#5a3a12', '#1b120c'); textC(lb, x + 38, 117.5, { size: 8.5, align: 'center', thai: true, color: k === 0 ? '#ffe9b0' : '#cfc0b0' }); }); } else text('กด P หรือ Enter เพื่อเล่นต่อ', W / 2, 114, { size: 9, align: 'center', thai: true }); }
 }
 function outlined(str, x, y, size, col) {
   ctx.font = `700 ${size}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillStyle = '#1b1020';
@@ -2034,6 +2063,7 @@ function updateTavern(dt) {
     const quit = () => { const back = T.fromTitle ? 'title' : 'map'; T = null; scene = back; if (back === 'title') titlePanel = null; SFX.select(); };
     if (pressed['ui:tquit']) { quit(); return; }
     if (pressed['ui:tresume']) { T.paused = false; return; }
+    if (pressed['ui:thelp']) { help = 'tavern'; return; }
     if (pressed.ok || pressed.atk) { if (T.pauseSel === 1) { quit(); return; } T.paused = false; }
     return;
   }
@@ -2325,9 +2355,9 @@ function drawTavern() {
   else { if (!(uiArtReady && UI_BIG.frame_dark && (slice3(UI_BIG.frame_dark, -6, 197.5, W + 12, 15, 44), true))) rect(0, 198, W, 15, '#0c0810d8'); text(KNIGHTS[T.active].th + ': ' + tavernHint(), W / 2, 200, { size: 8, align: 'center', thai: true, color: '#f6ead2' }); }
   controlStrip();
   if (T.banner) { const b = T.banner, a = clamp(Math.min(b.t, 2) * 3, 0, 1); ctx.globalAlpha = a; if (!nineBox('dialog', 70, 82, 260, 44, 16, 8)) rect(0, 84, W, 40, '#1b1020dd'); text(b.text, W / 2, 87, { size: 16, align: 'center', color: '#f2a93b', weight: 700 }); text(b.sub, W / 2, 108, { size: 9, align: 'center', thai: true }); ctx.globalAlpha = 1; }
-  if (T.paused) { rect(0, 0, W, H, '#0d0812cc'); if (!nineBox('dialog', 120, 62, 160, 98, 16, 8)) panel(120, 62, 160, 98, '#1b120cf4', '#f2a93b'); text('หยุดชั่วคราว', W / 2, 70, { size: 16, align: 'center', color: '#f2a93b', thai: true });
-    [['เล่นต่อ', 'tresume'], [T.fromTitle ? 'ออกจากร้าน (กลับหน้าแรก)' : 'ออกจากร้าน (กลับแผนที่)', 'tquit']].forEach(([lb, id], k) => { const y = 98 + k * 24, sel = (T.pauseSel || 0) === k; btn(id, 136, y, 128, 19); uiBtn(136, y, 128, 19, sel, '#f2a93b', '#3a2a20', '#5a3a12', '#1b120c'); textC(lb, W / 2, y + 9.5, { size: 8.5, align: 'center', thai: true, color: sel ? '#ffe9b0' : '#cfc0b0' }); });
-    text('↑↓ เลือก · Enter ตกลง · Esc เล่นต่อ', W / 2, 146, { size: 6.5, align: 'center', thai: true, color: '#bba8ba', weight: 400 }); }
+  if (T.paused) { rect(0, 0, W, H, '#0d0812cc'); const tph = tpOnTxt ? 122 : 98; if (!nineBox('dialog', 120, 62, 160, tph, 16, 8)) panel(120, 62, 160, tph, '#1b120cf4', '#f2a93b'); text('หยุดชั่วคราว', W / 2, 70, { size: 16, align: 'center', color: '#f2a93b', thai: true });
+    [['เล่นต่อ', 'tresume'], [T.fromTitle ? 'ออกจากร้าน (กลับหน้าแรก)' : 'ออกจากร้าน (กลับแผนที่)', 'tquit']].concat(tpOnTxt ? [['วิธีเล่น', 'thelp']] : []).forEach(([lb, id], k) => { const y = 98 + k * 24, sel = (T.pauseSel || 0) === k; btn(id, 136, y, 128, 19); uiBtn(136, y, 128, 19, sel, '#f2a93b', '#3a2a20', '#5a3a12', '#1b120c'); textC(lb, W / 2, y + 9.5, { size: 8.5, align: 'center', thai: true, color: sel ? '#ffe9b0' : '#cfc0b0' }); });
+    text('↑↓ เลือก · Enter ตกลง · Esc เล่นต่อ', W / 2, tpOnTxt ? 170 : 146, { size: 6.5, align: 'center', thai: true, color: '#bba8ba', weight: 400 }); }
   if (T.over && night) {
     rect(0, 0, W, H, '#0d0812cc'); panel(80, 24, 240, 170);
     text('ปิดร้าน! สรุปกะดึก', W / 2, 30, { size: 13, align: 'center', color: '#f2a93b', thai: true });
@@ -2851,7 +2881,7 @@ const HELP = {
   alchemy: { title: 'วิธีเล่น: ห้องปรุงยา & ตีเหล็ก', rows: [['← →', 'เปลี่ยนหมวด: อาวุธ & ชุด / อาหารสวรรค์ / เครื่องใช้', 'Tabs'], ['↑ ↓', 'เลือกสูตร', 'Select'], ['Enter / J', 'ปรุง (Cook) หรือ คราฟต์ (Craft)', 'Make'], ['คลิก', 'แตะสูตร แล้วแตะปุ่ม [Craft / Cook]', 'Tap']], tip: 'Shroom Crown → Essence → ต้มยำกุ้งพญามังกร (บัฟ) หรือ Master Chef Set (ตำนาน)' },
 };
 const HELP_TOUCH = {
-  stage: { title: 'วิธีเล่น: ลุยด่าน', rows: [['@stick', 'ดันจอยซ้าย-ขวาเพื่อเดิน ดันขึ้นเพื่อกระโดด · ดันเฉียงขึ้น/ลงพร้อมกดดาบเพื่อเล็งยิง', 'Move / Jump'], ['@atk', 'กดดาบ หรือแตะที่จอ = โจมตี (โรสแมรี่กับเพอร์ซิวาลยิงไปทางที่แตะ)', 'Attack'], ['@sp', 'ท่าพิเศษ (เกจครึ่งหลอด): คลื่นเพลิง / พลังแห่งต้มยำกุ้ง / คาถาฝนดาวตก', 'Special'], ['@ult', 'ท่าประสาน 3 อัศวิน "ต้มยำมหาภัยกระทะเหล็กเดือด" เมื่อเกจ MAX', 'Ultimate'], ['@swap', 'สลับตัวละครได้ตลอดเวลา', 'Swap'], ['@crew', 'เรียกลูกทีม: เชฟกอร์นทุบกำแพงร้าว / บาร์ตเฒ่าส่งเบียร์ฟื้นพลัง', 'Crew'], ['@pause', 'หยุดชั่วคราว', 'Pause']], tip: 'เกจ SPECIAL เพิ่มเมื่อโจมตีโดนและเก็บเบียร์วุ้น · ปราบบอสตอนติดไฟ (คลื่นเพลิง/ต้มยำ) = ดรอปลับ' },
+  stage: { title: 'วิธีเล่น: ลุยด่าน', rows: [['@stick', 'ดันจอยซ้าย-ขวาเพื่อเดิน ดันขึ้นเพื่อกระโดด · ดันเฉียงขึ้น/ลงพร้อมกดดาบเพื่อเล็งยิง', 'Move / Jump'], ['@atk', 'กดดาบ = โจมตี ดาวและเวทเล็งมอนตัวที่ใกล้สุดด้านที่หันอยู่ให้เอง · แตะที่จอเพื่อยิงไปจุดนั้น', 'Attack'], ['@sp', 'ท่าพิเศษ (เกจครึ่งหลอด): คลื่นเพลิง / พลังแห่งต้มยำกุ้ง / คาถาฝนดาวตก', 'Special'], ['@ult', 'ท่าประสาน 3 อัศวิน "ต้มยำมหาภัยกระทะเหล็กเดือด" เมื่อเกจ MAX', 'Ultimate'], ['@swap', 'สลับตัวละครได้ตลอดเวลา', 'Swap'], ['@crew', 'เรียกลูกทีม: เชฟกอร์นทุบกำแพงร้าว / บาร์ตเฒ่าส่งเบียร์ฟื้นพลัง', 'Crew'], ['@pause', 'หยุดชั่วคราว', 'Pause']], tip: 'เกจ SPECIAL เพิ่มเมื่อโจมตีโดนและเก็บเบียร์วุ้น · ปราบบอสตอนติดไฟ (คลื่นเพลิง/ต้มยำ) = ดรอปลับ' },
   tavern: { title: 'วิธีเล่น: กะดึกร้านเหล้า', rows: [['แตะจอ', 'แตะที่ครัว อ่าง โต๊ะ หรือก๊อก แล้วคนที่ถูกงานจะเดินไปทำให้เลย', 'Tap'], ['@stick', 'เดินไป ครัว / อ่างล้างจาน / โต๊ะลูกค้า / ก๊อกเบียร์', 'Move'], ['@atk', 'ทำงานตรงที่ยืนอยู่: ปรุงอาหาร ล้างจาน เสิร์ฟ รินเบียร์ (แตะอีกครั้งให้หยุดในแถบทอง)', 'Work'], ['@swap', 'สลับคนทำงาน (อาเธอร์ / โรสแมรี่ / เพอร์ซิวาล)', 'Swap'], ['@sp', 'สกิล: พิณสงบลูกค้า / อาเธอร์จับโจร / โรสแมรี่ดับไฟ', 'Skill'], ['@stick', 'ตอนปรุงอาหาร: ดันจอยหรือแตะปุ่มลูกศรให้ตรงโน้ตที่วิ่งมาถึงวงกลม', 'Cook']], tip: 'ดูแถบแจ้งเตือนด้านล่าง: VIP, โจร, เตาไฟไหม้ · Glowcap ทำต้มยำกุ้งพญามังกรขายได้แพง' },
   map: { title: 'วิธีเล่น: แผนที่โลก', rows: [['แตะจอ', 'แตะหมุด ลูกทีม หรือปุ่มได้เลย', 'Tap'], ['@stick', 'เลือกด่าน (ตอนนี้เปิดด่าน 1)', 'Select'], ['@crew', 'เลือก/ถอดลูกทีม (พาได้ 2 คน)', 'Crew'], ['@atk', 'เริ่มลุยด่าน', 'Start']], tip: 'ดาว = อันดับการเคลียร์ · หัวใจ = ความลับที่เจอ (ห้องลับ + ดรอปลับบอส)' },
   alchemy: { title: 'วิธีเล่น: ห้องปรุงยา & ตีเหล็ก', rows: [['แตะจอ', 'แตะสูตร แล้วแตะปุ่ม [Craft / Cook]', 'Tap'], ['@stick', 'ซ้าย-ขวา เปลี่ยนหมวด · ขึ้น-ลง เลือกสูตร', 'Select'], ['@atk', 'ปรุง (Cook) หรือ คราฟต์ (Craft)', 'Make']], tip: 'Shroom Crown → Essence → ต้มยำกุ้งพญามังกร (บัฟ) หรือ Master Chef Set (ตำนาน)' },
@@ -2964,7 +2994,7 @@ function tpRotFit(rot) { /* Safari/LINE: 100vh includes the area under the brows
 function tpSync() {
   if (!TOUCH_DEV) return;
   const land = innerWidth >= innerHeight;
-  document.body.classList.toggle('tp-on', true); document.body.classList.toggle('tp-rot', !land); tpRotFit(!land);
+  document.body.classList.toggle('tp-on', true); tpOnTxt = true; document.body.classList.toggle('tp-rot', !land); tpRotFit(!land);
   const mode = help ? 'menu' : (scene === 'stage' || scene === 'gameover') ? 'act' : scene === 'tavern' ? 'tav' : scene === 'title' ? 'title' : 'menu';
   if (titlePanel && scene === 'title') document.body.dataset.tpp = '1'; else delete document.body.dataset.tpp;
   const key = mode + LANG + (mode === 'tav' && T ? T.active : ''); if (key === tpKey) return; tpKey = key; document.body.dataset.tp = mode;
