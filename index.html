@@ -155,13 +155,15 @@ body[data-tp=tav] .tp-ult,body[data-tp=tav] .tp-sup{display:none}
 body[data-tp=menu] #tpad{display:none}
 body[data-tp=title] .tp-sp,body[data-tp=title] .tp-ult,body[data-tp=title] .tp-next,body[data-tp=title] .tp-sup,body[data-tp=title] .tp-pause,body[data-tp=title] .tp-full{display:none}
 body[data-tp=title] .tp-back{display:none}
+body[data-tp=map] .tp-dpad,body[data-tp=map] .tp-b{display:none}
+body[data-tp=map][data-tpp] .tp-acts .tp-back{display:block}
 body[data-tp=title][data-tpp] .tp-back{display:block}
 .tp-back{right:18vmin;bottom:2vmin;width:12vmin;height:12vmin;display:none}
 body.tp-on,body.tp-on .wrap{touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none}
 body.tp-on header{display:none!important}
 html:has(body.tp-on){overscroll-behavior:none;touch-action:none}
 body.tp-rot .wrap{position:fixed;top:0;left:100vw;left:100dvw;width:100vh;width:100dvh;height:100vw;height:100dvw;transform-origin:0 0;transform:rotate(90deg)}
-body.tp-rot #tpad{display:block}
+body.tp-rot:not([data-tp=menu]) #tpad{display:block}
 #rotate{position:fixed;inset:0;z-index:9;background:#0c0a10f2;align-items:center;justify-content:center;padding:24px}
 #rotate .rot-box{border-style:solid;border-width:22px 20px;border-color:transparent;border-image-slice:22 20 fill;border-image-width:22px 20px;image-rendering:pixelated;padding:6px 10px;text-align:center;max-width:320px;font-family:var(--thai);color:#f6ead2}
 #rotate i{display:block;width:84px;height:84px;margin:0 auto 6px;background:center/contain no-repeat;image-rendering:pixelated;animation:tkrot 2.2s ease-in-out infinite}
@@ -438,7 +440,7 @@ const I18N_EN = {
 "อันดับรายได้สัปดาห์นี้: ที่ # · สถิติใหม่!": "This week's takings: rank # · New record!",
 "ตาราง": "Board",
 "ช่วงเวลา": "Period",
-"เปลี่ยนชื่อ": "Rename",
+"เปลี่ยนชื่อ": "Rename", "อันดับ": "Ranking",
 };
 
 let LANG = (() => { try { const q = new URLSearchParams(location.search).get('lang'); if (q) return q === 'en' ? 'en' : 'th'; const v = localStorage.getItem('tk-lang'); if (v === 'en' || v === 'th') return v; } catch (e) {} return /^th/i.test(navigator.language || 'th') ? 'th' : 'en'; })();
@@ -662,7 +664,7 @@ for (const k in SFX_FILE) { const syn = SFX[k]; SFX[k] = () => { if (!sfxPlay(k)
 const keys = {}, pressed = {};
 const KEYMAP = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'up', KeyW: 'up', Space: 'sp', ArrowDown: 'down', KeyS: 'down',
   KeyJ: 'atk', KeyZ: 'atk', KeyK: 'sp', KeyX: 'sp', KeyL: 'ult', KeyV: 'ult', Digit1: 'k1', Digit2: 'k2', Digit3: 'k3', KeyQ: 'prev', KeyE: 'next',
-  KeyC: 'sup', KeyH: 'help', Enter: 'ok', KeyP: 'pause', Escape: 'pause', KeyM: 'mute', KeyN: 'rename', Numpad1: 'k1', Numpad2: 'k2', Numpad3: 'k3' };
+  KeyC: 'sup', KeyH: 'help', Enter: 'ok', KeyP: 'pause', Escape: 'pause', KeyM: 'mute', KeyN: 'rename', KeyR: 'rank', Numpad1: 'k1', Numpad2: 'k2', Numpad3: 'k3' };
 function press(a) { if (!keys[a]) pressed[a] = true; keys[a] = true; initAudio(); }
 function release(a) { keys[a] = false; }
 { const hd = document.querySelector('header'); let ht = 0; const show = () => { hd.classList.add('show'); clearTimeout(ht); ht = setTimeout(() => hd.classList.remove('show'), 2200); }; window.addEventListener('mousemove', e => { if (e.clientY < 70) show(); }); window.addEventListener('touchstart', e => { if (e.touches[0] && e.touches[0].clientY < 70) show(); }, { passive: true }); }
@@ -2475,7 +2477,7 @@ function drawTavern() {
     const rows = [['รายได้', night.gold + 'g'], ['เสิร์ฟสำเร็จ', night.served], ['ลูกค้าหัวร้อนเดินออก', night.angry], ['ขี้เมาที่ถูกเคาะ', night.kicked], ['ต้มยำกุ้งพญามังกร', night.usedGlow]];
     rows.forEach(([a, b2], k) => { text(a, 100, 56 + k * 15, { size: 9, thai: true }); text(String(b2), 300, 56 + k * 15, { size: 10, align: 'right', color: '#ffd76a' }); });
     for (let k = 0; k < 5; k++) text('★', 160 + k * 20, 136, { size: 16, align: 'center', color: k < night.stars ? '#f2c94c' : '#3a2a40', shadow: k < night.stars });
-    const nl = netLine(night.net, ['tavern_gold']); if (nl) text(nl.str, W / 2, 155, { size: 8, align: 'center', thai: true, color: nl.col, weight: 400 });
+    const nl = netLine(night.net, ['tavern_gold']); if (nl) text(nl.str, W / 2, 154, { size: 9, align: 'center', thai: true, color: nl.col, weight: 700 });
     if (T.overT > 0.8) text('Enter / แตะ: ไปห้องปรุงยา & ตีเหล็ก', W / 2, 168, { size: 9, align: 'center', thai: true, color: Math.floor(T.overT * 2) % 2 ? '#f6ead2' : '#bba8ba' });
   }
 }
@@ -2759,6 +2761,8 @@ function toggleCrew(i) {
   persist(); SFX.select();
 }
 function updateMap(dt) {
+  if (mapRank) { rankInput(() => { mapRank = false; }); return; }
+  if (pressed.rank || pressed['ui:mrank']) { mapRank = true; NET.boards = {}; SFX.select(); return; }
   if (pressed.left) { mapSel = Math.max(0, mapSel - 1); SFX.select(); }
   if (pressed.right) { mapSel = Math.min(5, mapSel + 1); SFX.select(); }
   for (let i = 0; i < 6; i++) if (pressed['ui:pin' + i]) { mapSel = i; SFX.select(); }
@@ -2846,13 +2850,29 @@ function drawMap() {
   btn('alc', 296, 195, 92, 13); uiBtn(296, 195, 92, 13, false, '', '#5a3a22', '', '#2a1a10');
   textC('ห้องปรุงยา/ตีเหล็ก', 342, 201.5, { size: 7, align: 'center', thai: true, color: '#ffd7a0' });
   if (mapMsg) { panel(110, 140, 180, 16, '#1b120cf2', '#ff8a7a'); text(mapMsg.str, 200, 143, { size: 8, align: 'center', thai: true, color: '#ffb0a0' }); }
-  controlStripCustom([['← →', 'เลือกด่าน'], ['1 2 3 C', 'เลือกลูกทีม'], ['Enter', 'เริ่มด่าน'], ['H', 'วิธีเล่น']]);
+  btn('mrank', 366, 5, 32, 17); uiBtn(366, 6, 31, 15, false); textC('อันดับ', 381.5, 13.5, { size: 7, align: 'center', thai: true, color: '#ffd7a0' });
+  if (mapRank) {
+    rect(0, 0, W, H, '#05050ae0'); if (!nineBox('dialog', 64, 28, 272, 162, 16, 9)) panel(70, 34, 260, 150, '#1b120cf4', '#f2a93b');
+    btn('close', 70, 34, 260, 20); drawRankPanel();
+    controlStripCustom([['← →', 'ตาราง'], ['↑ ↓', 'ช่วงเวลา'], ['N', 'เปลี่ยนชื่อ'], ['Esc', '\u200bปิด']]); return;
+  }
+  controlStripCustom([['← →', 'เลือกด่าน'], ['1 2 3 C', 'เลือกลูกทีม'], ['Enter', 'เริ่มด่าน'], ['R', 'อันดับ'], ['H', 'วิธีเล่น']]);
 }
 
 /* =========================================================== TITLE ETC */
 let scene = 'title', titleT = 0;
 const TITLE_MENU = [0, 1, 2, 3, 4, 5].map(i => { const cy = 152.6 + i * 9.7; return [140, cy - 4.6, 260, cy + 4.6]; });
-let titleSel = 0, titlePanel = null, optSel = 0, rkB = 0, rkP = 'week';
+let titleSel = 0, titlePanel = null, optSel = 0, rkB = 0, rkP = 'week', mapRank = false;
+// input for the ranking panel (title menu and world map)
+function rankInput(close) {
+  if (pressed.left) { rkB = (rkB + 2) % 3; SFX.select(); }
+  if (pressed.right) { rkB = (rkB + 1) % 3; SFX.select(); }
+  for (let k = 0; k < 3; k++) if (pressed['ui:rk' + k]) { rkB = k; SFX.select(); }
+  if (pressed.up || pressed.down) { rkP = rkP === 'week' ? 'all' : 'week'; SFX.select(); }
+  if (pressed['ui:rkw'] || pressed['ui:rka']) { rkP = pressed['ui:rkw'] ? 'week' : 'all'; SFX.select(); }
+  if (pressed.rename || pressed['ui:rkn']) { SFX.select(); NET.rename(); }
+  else if (pressed.ok || pressed.atk || pressed.pause || pressed.rank || pressed['ui:close']) { close(); SFX.select(); }
+}
 function titleAct(i) {
   track('title_menu', { item: ['start', 'ranking', 'options', 'about', 'credits', 'tavern_mode'][i] || i });
   SFX.select();
@@ -2878,15 +2898,7 @@ function updateTitle(dt) {
       for (const k of [1, 2]) { if (pressed['ui:opt' + k + 'm']) { optSel = k; adj(k, -1); } if (pressed['ui:opt' + k + 'p']) { optSel = k; adj(k, 1); } }
       if ((pressed.ok || pressed.atk) && optSel === 0) { toggleMute(); SFX.select(); }
       if (pressed.pause || pressed['ui:close']) titlePanel = null;
-    } else if (titlePanel === 'rank') {
-      if (pressed.left || pressed['ui:rkl']) { rkB = (rkB + 2) % 3; SFX.select(); }
-      if (pressed.right || pressed['ui:rkr']) { rkB = (rkB + 1) % 3; SFX.select(); }
-      for (let k = 0; k < 3; k++) if (pressed['ui:rk' + k]) { rkB = k; SFX.select(); }
-      if (pressed.up || pressed.down) { rkP = rkP === 'week' ? 'all' : 'week'; SFX.select(); }
-      if (pressed['ui:rkw'] || pressed['ui:rka']) { rkP = pressed['ui:rkw'] ? 'week' : 'all'; SFX.select(); }
-      if (pressed.rename || pressed['ui:rkn']) { SFX.select(); NET.rename(); }
-      else if (pressed.ok || pressed.atk || pressed.pause || pressed['ui:close']) titlePanel = null;
-    } else if (pressed.ok || pressed.atk || pressed.pause || pressed['ui:close']) titlePanel = null;
+    } else if (titlePanel === 'rank') rankInput(() => { titlePanel = null; }); else if (pressed.ok || pressed.atk || pressed.pause || pressed['ui:close']) titlePanel = null;
     return;
   }
   if (pressed.up) { titleSel = (titleSel + 5) % 6; SFX.select(); }
@@ -3020,7 +3032,7 @@ function drawTitle() {
   if (save.runs) text('เซฟ: ' + save.gold + 'g · เล่นแล้ว ' + save.runs + ' รอบ', 18, 144, { size: 7, color: '#8a9aa0', thai: true, weight: 400 });
   controlStripCustom([['Enter / J', 'เริ่ม'], ['H', 'วิธีเล่น'], ['M', 'เปิด/ปิดเสียง']]);
 }
-function updateResults(dt) { results.t += dt; if (results.t > 0.8 && anyConfirm()) { startTavern(); if (!save.seen.tavern) { help = 'tavern'; save.seen.tavern = true; persist(); } } }
+function updateResults(dt) { results.t += dt; if (results.t > 0.8 && (!results.net || results.net.state !== 'send' || results.t > 3) && anyConfirm()) { startTavern(); if (!save.seen.tavern) { help = 'tavern'; save.seen.tavern = true; persist(); } } }
 function drawResults() {
   drawForestBg(results.t * 10, results.t);
   rect(0, 0, W, H, '#05141aaa');
@@ -3032,8 +3044,8 @@ function drawResults() {
   const rows = [['เวลา', m + ':' + String(s).padStart(2, '0')], ['คะแนน', results.score], ['ปราบมอนสเตอร์', results.kills], ['Glowcap / พริก', '+' + results.loot.glowcap + ' / +' + results.loot.chili], ['Shroom Crown', '+' + results.loot.crown], ['ห้องลับ (เชฟกอร์น)', results.vault ? 'เจอ! Truffle of Ages' : 'พลาด'], ['ดรอปลับบอส', results.ember ? 'Ember Spore!' : 'พลาด (ปราบตอนติดไฟ)']];
   rows.forEach(([a, b], i) => { text(a, 78, 72 + i * 13, { size: 8.5, thai: true, weight: 400 }); text(String(b), 322, 72 + i * 13, { size: 8.5, align: 'right', thai: true, color: /พลาด/.test(String(b)) ? '#7a6a6a' : '#ffd76a' }); });
   const nl = netLine(results.net, ['stage1_score', 'stage1_time']);
-  text(nl ? nl.str : 'กลับร้านกันเถอะ ลูกค้ากะดึกรออยู่!', W / 2, 166, { size: 8, align: 'center', thai: true, color: nl ? nl.col : '#bba8ba', weight: 400 });
-  if (results.t > 0.8) text('Enter / แตะ: เริ่มกะดึก', W / 2, 182, { size: 10, align: 'center', thai: true, color: Math.floor(results.t * 2) % 2 ? '#ffd76a' : '#f6ead2' });
+  text(nl ? nl.str : 'กลับร้านกันเถอะ ลูกค้ากะดึกรออยู่!', W / 2, 165, { size: nl ? 9 : 8, align: 'center', thai: true, color: nl ? nl.col : '#bba8ba', weight: nl ? 700 : 400 });
+  if (results.t > 0.8 && (!results.net || results.net.state !== 'send' || results.t > 3)) text('Enter / แตะ: เริ่มกะดึก', W / 2, 182, { size: 10, align: 'center', thai: true, color: Math.floor(results.t * 2) % 2 ? '#ffd76a' : '#f6ead2' });
 }
 function updateOver(dt) {
   overT += dt;
@@ -3169,13 +3181,14 @@ function tpSync() {
   if (!TOUCH_DEV) return;
   const land = innerWidth >= innerHeight;
   document.body.classList.toggle('tp-on', true); tpOnTxt = true; document.body.classList.toggle('tp-rot', !land); tpRotFit(!land);
-  const mode = help ? 'menu' : (scene === 'stage' || scene === 'gameover') ? 'act' : scene === 'tavern' ? 'tav' : scene === 'title' ? 'title' : 'menu';
-  if (titlePanel && scene === 'title') document.body.dataset.tpp = '1'; else delete document.body.dataset.tpp;
+  const mode = help ? 'menu' : (scene === 'stage' || scene === 'gameover') ? 'act' : scene === 'tavern' ? 'tav' : scene === 'title' ? 'title' : scene === 'map' ? 'map' : 'menu';
+  if ((titlePanel && scene === 'title') || (mapRank && scene === 'map')) document.body.dataset.tpp = '1'; else delete document.body.dataset.tpp;
   const key = mode + LANG + (mode === 'tav' && T ? T.active : ''); if (key === tpKey) return; tpKey = key; document.body.dataset.tp = mode;
   const TB = window.__TB, Q = s => tpEl.querySelector(s);
   const lab = (sel, img, txt) => { const b = Q(sel); if (img) b.style.backgroundImage = `url(${img})`; b.querySelector('span').textContent = tr(txt); };
   if (mode === 'tav') { const who = T ? T.active : 0; lab('.tp-atk', TB.bowl, 'ทำงาน'); lab('.tp-sp', who === 2 ? TB.harp : TB.sp, 'สกิล'); lab('.tp-next', null, 'สลับคน'); }
   else if (mode === 'title') { lab('.tp-atk', TB.ok, 'ตกลง'); lab('.tp-back', null, '\u200bปิด'); }
+  else if (mode === 'map') { lab('.tp-back', null, '\u200bปิด'); }
   else { lab('.tp-atk', TB.atk, 'โจมตี'); lab('.tp-sp', TB.sp, 'ท่าพิเศษ'); lab('.tp-next', null, 'สลับตัว'); }
   lab('.tp-ult', null, 'ท่าประสาน'); lab('.tp-sup', null, 'ลูกทีม');
   document.getElementById('rotTxt').textContent = tr('หมุนมือถือเป็นแนวนอนเพื่อเล่น');
