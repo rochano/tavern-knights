@@ -219,6 +219,15 @@ const W = 400, H = 225, GROUND = 190;
 const cv = document.getElementById('game');
 const ctx = cv.getContext('2d');
 const I18N_EN = {
+'รัวปุ่มสกิลดับไฟ!': 'Mash Skill to put out the fire!', 'เตาไฟไหม้! แตะที่ครัว แล้วรัวปุ่มสกิล (สีส้ม)': 'Stove fire! Tap the kitchen, then mash Skill (orange)',
+'ดันจอยซ้าย-ขวาเพื่อเดิน ดันขึ้นเพื่อกระโดด · ดันเฉียงขึ้น/ลงพร้อมกดดาบเพื่อเล็งยิง': 'Push the stick left/right to move, up to jump · Push diagonally while attacking to aim shots',
+'กดดาบ หรือแตะที่จอ = โจมตี (โรสแมรี่กับเพอร์ซิวาลยิงไปทางที่แตะ)': 'Sword button or tap the screen = attack (Rosemary and Percival shoot where you tap)',
+'แตะจอ': 'Tap',
+'แตะที่ครัว อ่าง โต๊ะ หรือก๊อก แล้วคนที่ถูกงานจะเดินไปทำให้เลย': 'Tap the kitchen, sink, table or taps and the right worker goes there',
+'ทำงานตรงที่ยืนอยู่: ปรุงอาหาร ล้างจาน เสิร์ฟ รินเบียร์ (แตะอีกครั้งให้หยุดในแถบทอง)': 'Work at your spot: cook, wash, serve, pour (tap again to stop in the gold zone)',
+'ตอนปรุงอาหาร: ดันจอยหรือแตะปุ่มลูกศรให้ตรงโน้ตที่วิ่งมาถึงวงกลม': 'While cooking: push the stick or tap arrows as notes reach the circle',
+'ซ้าย-ขวา เปลี่ยนหมวด · ขึ้น-ลง เลือกสูตร': 'Left/right: tabs · Up/down: pick a recipe',
+'แตะที่ไหนก็ได้เพื่อปิด': 'Tap anywhere to close',
 // names
 'อาเธอร์': 'Arthur', 'โรสแมรี่': 'Rosemary', 'เพอร์ซิวาล': 'Percival',
 'เชฟกอร์น': 'Chef Gorn', 'บาร์ตเฒ่า': 'Old Bart', 'พิกซี่': 'Pixie', 'ตุ่น': 'Mole',
@@ -1998,7 +2007,7 @@ function tavernHint() {
   const st = STATIONS[T.sel], id = kidT();
   if (T.cook) return 'กดลูกศร หรือคลิกปุ่มลูกศร ให้ตรงตอนโน้ตเข้าวงกลม!';
   if (T.pour) return 'กด J หรือคลิกอีกครั้งให้หยุดในแถบทอง';
-  if (st.kind === 'kitchen') return id === 'rosemary' ? (T.fire ? 'รัว K ดับไฟ!' : T.bowls <= 0 ? 'ไม่มีจานสะอาด! ให้อาเธอร์ล้างจาน' : 'J/คลิก: ปรุงอาหาร (มินิเกมจังหวะ)') : 'สลับเป็นโรสแมรี่ (2) เพื่อทำอาหาร';
+  if (st.kind === 'kitchen') return id === 'rosemary' ? (T.fire ? (TOUCH_DEV ? 'รัวปุ่มสกิลดับไฟ!' : 'รัว K ดับไฟ!') : T.bowls <= 0 ? 'ไม่มีจานสะอาด! ให้อาเธอร์ล้างจาน' : 'J/คลิก: ปรุงอาหาร (มินิเกมจังหวะ)') : 'สลับเป็นโรสแมรี่ (2) เพื่อทำอาหาร';
   if (st.kind === 'sink') return id === 'arthur' ? (T.pile ? 'J/คลิก: ล้างจาน (เหลือ ' + T.pile + ' ใบ)' : 'อ่างว่าง ไปเก็บจานที่โต๊ะ') : 'อาเธอร์ (1) ล้างจานที่นี่';
   if (st.kind === 'taps') return id === 'percival' ? 'J/คลิก: รินเบียร์วุ้น' : 'สลับเป็นเพอร์ซิวาล (3) เพื่อรินเบียร์';
   const seat = T.seats[T.sel - 2], c = seat.cust;
@@ -2010,7 +2019,7 @@ function tavernHint() {
 function tavernAlert() {
   const msgs = { vip: 'ลูกค้า VIP กำลังจะเดินเข้าร้าน!', robber: 'มีโจรด้อม ๆ มองหน้าร้าน! อาเธอร์เตรียมตัว', fire: 'เตาไฟเริ่มมีควันขึ้นแล้ว!' };
   if (T.robber && !T.robber.caught) return 'โจรบุกปล้นร้าน! สลับเป็นอาเธอร์ (1) แล้วกด K';
-  if (T.fire) return 'เตาไฟไหม้! โรสแมรี่ (2) ไปที่ครัวแล้วรัว K';
+  if (T.fire) return TOUCH_DEV ? 'เตาไฟไหม้! แตะที่ครัว แล้วรัวปุ่มสกิล (สีส้ม)' : 'เตาไฟไหม้! โรสแมรี่ (2) ไปที่ครัวแล้วรัว K';
   const ev = T.events.find(e => !e.done && T.t > e.at - 3.5); if (ev) return msgs[ev.type];
   const angry = T.seats.filter(s => s.cust && s.cust.order && !s.cust.leaving && s.cust.pat / s.cust.max < 0.35).length;
   if (angry) return 'ลูกค้า ' + angry + ' คนเริ่มหัวร้อน! เสิร์ฟด่วน หรือดีดพิณ';
@@ -2841,21 +2850,36 @@ const HELP = {
   map: { title: 'วิธีเล่น: แผนที่โลก', rows: [['← →', 'เลือกด่าน (ตอนนี้เปิดด่าน 1)', 'Select'], ['1 2 3 C', 'เลือก/ถอดลูกทีม (พาได้ 2 คน)', 'Crew'], ['Enter / J', 'เริ่มลุยด่าน', 'Start'], ['คลิก', 'แตะหมุด ลูกทีม หรือปุ่มได้เลย', 'Tap']], tip: 'ดาว = อันดับการเคลียร์ · หัวใจ = ความลับที่เจอ (ห้องลับ + ดรอปลับบอส)' },
   alchemy: { title: 'วิธีเล่น: ห้องปรุงยา & ตีเหล็ก', rows: [['← →', 'เปลี่ยนหมวด: อาวุธ & ชุด / อาหารสวรรค์ / เครื่องใช้', 'Tabs'], ['↑ ↓', 'เลือกสูตร', 'Select'], ['Enter / J', 'ปรุง (Cook) หรือ คราฟต์ (Craft)', 'Make'], ['คลิก', 'แตะสูตร แล้วแตะปุ่ม [Craft / Cook]', 'Tap']], tip: 'Shroom Crown → Essence → ต้มยำกุ้งพญามังกร (บัฟ) หรือ Master Chef Set (ตำนาน)' },
 };
+const HELP_TOUCH = {
+  stage: { title: 'วิธีเล่น: ลุยด่าน', rows: [['@stick', 'ดันจอยซ้าย-ขวาเพื่อเดิน ดันขึ้นเพื่อกระโดด · ดันเฉียงขึ้น/ลงพร้อมกดดาบเพื่อเล็งยิง', 'Move / Jump'], ['@atk', 'กดดาบ หรือแตะที่จอ = โจมตี (โรสแมรี่กับเพอร์ซิวาลยิงไปทางที่แตะ)', 'Attack'], ['@sp', 'ท่าพิเศษ (เกจครึ่งหลอด): คลื่นเพลิง / พลังแห่งต้มยำกุ้ง / คาถาฝนดาวตก', 'Special'], ['@ult', 'ท่าประสาน 3 อัศวิน "ต้มยำมหาภัยกระทะเหล็กเดือด" เมื่อเกจ MAX', 'Ultimate'], ['@swap', 'สลับตัวละครได้ตลอดเวลา', 'Swap'], ['@crew', 'เรียกลูกทีม: เชฟกอร์นทุบกำแพงร้าว / บาร์ตเฒ่าส่งเบียร์ฟื้นพลัง', 'Crew'], ['@pause', 'หยุดชั่วคราว', 'Pause']], tip: 'เกจ SPECIAL เพิ่มเมื่อโจมตีโดนและเก็บเบียร์วุ้น · ปราบบอสตอนติดไฟ (คลื่นเพลิง/ต้มยำ) = ดรอปลับ' },
+  tavern: { title: 'วิธีเล่น: กะดึกร้านเหล้า', rows: [['แตะจอ', 'แตะที่ครัว อ่าง โต๊ะ หรือก๊อก แล้วคนที่ถูกงานจะเดินไปทำให้เลย', 'Tap'], ['@stick', 'เดินไป ครัว / อ่างล้างจาน / โต๊ะลูกค้า / ก๊อกเบียร์', 'Move'], ['@atk', 'ทำงานตรงที่ยืนอยู่: ปรุงอาหาร ล้างจาน เสิร์ฟ รินเบียร์ (แตะอีกครั้งให้หยุดในแถบทอง)', 'Work'], ['@swap', 'สลับคนทำงาน (อาเธอร์ / โรสแมรี่ / เพอร์ซิวาล)', 'Swap'], ['@sp', 'สกิล: พิณสงบลูกค้า / อาเธอร์จับโจร / โรสแมรี่ดับไฟ', 'Skill'], ['@stick', 'ตอนปรุงอาหาร: ดันจอยหรือแตะปุ่มลูกศรให้ตรงโน้ตที่วิ่งมาถึงวงกลม', 'Cook']], tip: 'ดูแถบแจ้งเตือนด้านล่าง: VIP, โจร, เตาไฟไหม้ · Glowcap ทำต้มยำกุ้งพญามังกรขายได้แพง' },
+  map: { title: 'วิธีเล่น: แผนที่โลก', rows: [['แตะจอ', 'แตะหมุด ลูกทีม หรือปุ่มได้เลย', 'Tap'], ['@stick', 'เลือกด่าน (ตอนนี้เปิดด่าน 1)', 'Select'], ['@crew', 'เลือก/ถอดลูกทีม (พาได้ 2 คน)', 'Crew'], ['@atk', 'เริ่มลุยด่าน', 'Start']], tip: 'ดาว = อันดับการเคลียร์ · หัวใจ = ความลับที่เจอ (ห้องลับ + ดรอปลับบอส)' },
+  alchemy: { title: 'วิธีเล่น: ห้องปรุงยา & ตีเหล็ก', rows: [['แตะจอ', 'แตะสูตร แล้วแตะปุ่ม [Craft / Cook]', 'Tap'], ['@stick', 'ซ้าย-ขวา เปลี่ยนหมวด · ขึ้น-ลง เลือกสูตร', 'Select'], ['@atk', 'ปรุง (Cook) หรือ คราฟต์ (Craft)', 'Make']], tip: 'Shroom Crown → Essence → ต้มยำกุ้งพญามังกร (บัฟ) หรือ Master Chef Set (ตำนาน)' },
+};
+const HELP_IMG = {};
+function helpIcon(name, cx, cy, d) {
+  const tb = window.__TB; if (!tb) return false;
+  const get = k => { if (!tb[k]) return null; if (!HELP_IMG[k]) { HELP_IMG[k] = new Image(); HELP_IMG[k].src = tb[k]; } return HELP_IMG[k].complete && HELP_IMG[k].naturalWidth ? HELP_IMG[k] : null; };
+  const smooth = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = true;
+  if (name === 'stick') { const b = get('base'), k = get('knob'); if (b) ctx.drawImage(b, cx - d / 2, cy - d / 2, d, d); if (k) ctx.drawImage(k, cx - d * 0.22, cy - d * 0.22, d * 0.44, d * 0.44); }
+  else { const im = get(name); if (im) ctx.drawImage(im, cx - d / 2, cy - d / 2, d, d); }
+  ctx.imageSmoothingEnabled = smooth; return true;
+}
 function helpPageFor() { return scene === 'tavern' ? 'tavern' : scene === 'map' || scene === 'title' ? 'map' : scene === 'alchemy' ? 'alchemy' : 'stage'; }
 function drawHelp() {
-  const h = HELP[help]; if (!h) return;
+  const touch = document.body.classList.contains('tp-on'); const h = (touch ? HELP_TOUCH : HELP)[help]; if (!h) return;
   rect(0, 0, W, H, '#05080ccc'); panel(14, 8, 372, 208, '#101820f6', '#f2a93b');
   text(h.title, 27, 18, { size: 11, thai: true, color: '#f2a93b', weight: 600 }); text('How to play', 373, 20, { size: 8, align: 'right', color: '#8a9aa0' });
-  ctx.font = `700 8px ${THAI}`; const KW = Math.max(46, ...h.rows.map(r => keyLabelW(r[0], 8, THAI) + 16));
+  ctx.font = `700 8px ${THAI}`; const KW = touch ? 30 : Math.max(46, ...h.rows.map(r => keyLabelW(r[0], 8, THAI) + 16));
   let ry = 38; const RS = h.rows.length > 6 ? 16.5 : 19;
   h.rows.forEach(([k, th, en], i) => {
     const y = ry; ctx.font = `700 8px ${THAI}`; const kw = KW;
-    uiBtn(26, y - 0.5, kw + 2, 14, false, '', '#2a3a44', '', '#2a3a44'); keyLabel(k, 28 + kw / 2, y + 6.5, 8, { thai: true });
+    if (k[0] === '@') helpIcon(k.slice(1), 28 + kw / 2, y + 6.5, 17); else if (touch) text(k, 28 + kw / 2, y + 2.5, { size: 7, align: 'center', thai: true, weight: 600, color: '#ffd76a' }); else { uiBtn(26, y - 0.5, kw + 2, 14, false, '', '#2a3a44', '', '#2a3a44'); keyLabel(k, 28 + kw / 2, y + 6.5, 8, { thai: true }); }
     ry = Math.max(y + RS, wrapText(th, 27 + kw + 7, y + 1.5, 311 - kw, 8.5, { size: 7, thai: true, weight: 400 }) + 6);
     text(en, 373, y + 1, { size: 7, align: 'right', color: '#8a9aa0' });
   });
   wrapText(h.tip, 27, 183, 346, 9, { size: 7, thai: true, weight: 400, color: '#ffd76a' });
-  text('กด Enter / J / แตะ เพื่อปิด · กด H เปิดหน้านี้ได้ทุกเมื่อ', W / 2, 200, { size: 7, align: 'center', thai: true, color: '#bfe8ff' });
+  text(touch ? 'แตะที่ไหนก็ได้เพื่อปิด' : 'กด Enter / J / แตะ เพื่อปิด · กด H เปิดหน้านี้ได้ทุกเมื่อ', W / 2, 200, { size: 7, align: 'center', thai: true, color: '#bfe8ff' });
 }
 let uiRegions = [];
 function localFrac(e, el) { const r = el.getBoundingClientRect(); if (document.body.classList.contains('tp-rot')) return [(e.clientY - r.top) / r.height, (r.right - e.clientX) / r.width]; return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; }
