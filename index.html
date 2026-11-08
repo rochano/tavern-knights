@@ -2882,7 +2882,7 @@ let nameEdit = false, nameZ = false, nameH0 = 0;
 function nameOpen() {
   const el = document.getElementById('nameIn'); nameEdit = true; nameZ = innerWidth < innerHeight; nameH0 = innerHeight; /* remember: the keyboard shrinks the page and would make it look landscape */ el.value = NET.name || '';
   el.style.display = 'block';
-  try { el.focus(); el.select(); } catch (e) {}
+  try { el.focus(); const n = el.value.length; el.setSelectionRange(n, n); } catch (e) {} /* caret at the end, so backspace deletes one letter */
 }
 function nameDone(ok) {
   const el = document.getElementById('nameIn'); if (!nameEdit) return; nameEdit = false; el.style.display = 'none';
@@ -3145,7 +3145,7 @@ cv.addEventListener('pointerup', e => {
   const lf = localFrac(e, cv), x = lf[0] * W, y = lf[1] * H;
   const hit = uiRegions.slice().reverse().find(b => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h);
   if (!nameEdit && hit && hit.id === 'rkn' && !help) nameOpen();
-  else if (nameEdit && !(hit && (hit.id === 'nok' || hit.id === 'ncan'))) { try { document.getElementById('nameIn').focus(); } catch (x) {} }
+  else if (nameEdit && !(hit && (hit.id === 'nok' || hit.id === 'ncan'))) { try { const el = document.getElementById('nameIn'), n = el.value.length; el.focus(); el.setSelectionRange(n, n); } catch (x) {} }
 });
 cv.addEventListener('pointerdown', e => {
   const lf = localFrac(e, cv); const x = lf[0] * W, y = lf[1] * H;
