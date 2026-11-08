@@ -164,7 +164,7 @@ body[data-tp=map][data-tpp] .tp-atk,body[data-tp=map][data-tpp] .tp-sp{display:n
 body[data-tp=title][data-tpp] .tp-back{display:block}
 body[data-tpn] #tpad{display:none!important}
 body.tp-name .stage{align-items:flex-start}
-body.tp-namez .stage{overflow:hidden}body.tp-namez .screen{transform:scale(1.75);transform-origin:50% 28%} /* upright phone: zoom in on the name box so it fills the space above the keyboard */
+body.tp-namez .stage{overflow:hidden}
 .tp-back{right:18vmin;bottom:2vmin;width:12vmin;height:12vmin;display:none}
 body.tp-on,body.tp-on .wrap{touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none}
 body.tp-on header{display:none!important}
@@ -684,7 +684,7 @@ setTimeout(function styleTools() { const u = UI_ART_SRC.big.frame_dark; document
 window.addEventListener('keydown', e => { if (e.target && e.target.id === 'nameIn') { if (e.key === 'Enter') { e.preventDefault(); nameDone(true); } else if (e.key === 'Escape') { e.preventDefault(); nameDone(false); } return; } const a = KEYMAP[e.code]; if (!a) return; e.preventDefault(); if (a === 'mute' && !e.repeat) toggleMute(); press(a); });
 window.addEventListener('keyup', e => { const a = KEYMAP[e.code]; if (a) release(a); });
 window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
-cv.addEventListener('pointerdown', () => { cv.focus(); initAudio(); pressed.click = true; });
+cv.addEventListener('pointerdown', () => { if (!nameEdit) cv.focus(); initAudio(); pressed.click = true; });
 document.querySelectorAll('#touch button').forEach(b => {
   const a = b.dataset.k;
   b.addEventListener('pointerdown', e => { e.preventDefault(); b.setPointerCapture(e.pointerId); press(a); });
@@ -2896,7 +2896,7 @@ function rankInput(close) {
   for (let k = 0; k < 3; k++) if (pressed['ui:rk' + k]) { rkB = k; SFX.select(); }
   if (pressed.up || pressed.down) { rkP = rkP === 'week' ? 'all' : 'week'; SFX.select(); }
   if (pressed['ui:rkw'] || pressed['ui:rka']) { rkP = pressed['ui:rkw'] ? 'week' : 'all'; SFX.select(); }
-  if (pressed.rename || pressed['ui:rkn']) { SFX.select(); nameOpen(); }
+  if (pressed.rename || pressed['ui:rkn']) { SFX.select(); if (!nameEdit) nameOpen(); }
   else if (pressed.ok || pressed.atk || pressed.pause || pressed.rank || pressed['ui:close']) { close(); SFX.select(); }
 }
 function titleAct(i) {
@@ -3139,6 +3139,14 @@ function drawHelp() {
 let uiRegions = [];
 function localFrac(e, el) { const r = el.getBoundingClientRect(); if (document.body.classList.contains('tp-rot')) return [(e.clientY - r.top) / r.height, (r.right - e.clientX) / r.width]; return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; }
 function btn(id, x, y, w, h) { uiRegions.push({ id, x, y, w, h }); }
+/* phones only open the keyboard when focus() runs inside the tap itself, so the rename button focuses the name field right here */
+document.addEventListener('mousedown', e => { if (nameEdit && e.target.id !== 'nameIn') e.preventDefault(); }, true); /* the mouse event a tap sends afterwards would move focus back to the canvas */
+cv.addEventListener('pointerup', e => {
+  const lf = localFrac(e, cv), x = lf[0] * W, y = lf[1] * H;
+  const hit = uiRegions.slice().reverse().find(b => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h);
+  if (!nameEdit && hit && hit.id === 'rkn' && !help) nameOpen();
+  else if (nameEdit && !(hit && (hit.id === 'nok' || hit.id === 'ncan'))) { try { document.getElementById('nameIn').focus(); } catch (x) {} }
+});
 cv.addEventListener('pointerdown', e => {
   const lf = localFrac(e, cv); const x = lf[0] * W, y = lf[1] * H;
   const hit = uiRegions.slice().reverse().find(b => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h);
@@ -3219,7 +3227,12 @@ function tpRotFit(rot) { /* Safari/LINE: 100vh includes the area under the brows
 function tpSync() {
   if (!TOUCH_DEV) return;
   const land = innerWidth >= innerHeight || nameEdit; /* while typing a name, lay the game flat at the top so the phone keyboard never covers it (X/FB in-app browsers don't resize for the keyboard) */
-  document.body.classList.toggle('tp-name', nameEdit); document.body.classList.toggle('tp-namez', nameEdit && innerWidth < innerHeight);
+  document.body.classList.toggle('tp-name', nameEdit); const nz = nameEdit && innerWidth < innerHeight; document.body.classList.toggle('tp-namez', nz);
+  { /* upright phone: zoom in on the name box and centre it in the space above the keyboard */
+    const sc = document.querySelector('.screen'), vv = window.visualViewport;
+    if (nz) { const k = 1.75, wd = innerWidth, hd = wd * 9 / 16, avail = vv && vv.height < innerHeight * 0.9 ? vv.height : innerHeight * 0.56;
+      sc.style.transformOrigin = '0 0'; sc.style.transform = `translate(${wd / 2 * (1 - k)}px, ${avail / 2 - 114 / 225 * hd * k}px) scale(${k})`; }
+    else if (sc.style.transform) sc.style.transform = sc.style.transformOrigin = ''; }
   document.body.classList.toggle('tp-on', true); tpOnTxt = true; document.body.classList.toggle('tp-rot', !land); tpRotFit(!land);
   const mode = help ? 'menu' : (scene === 'stage' || scene === 'gameover') ? 'act' : scene === 'tavern' ? 'tav' : scene === 'title' ? 'title' : scene === 'map' ? 'map' : 'menu';
   if ((titlePanel && scene === 'title') || (mapRank && scene === 'map')) document.body.dataset.tpp = '1'; else delete document.body.dataset.tpp;
