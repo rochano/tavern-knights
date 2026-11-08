@@ -15,6 +15,6 @@ Tavern Knights follows three down-on-their-luck knights who secretly run The Tip
 - Controls: arrows/WASD move, Up/Space jump, J/Z attack, K/X special, L/V ultimate, 1-3 swap knight, C call crew, H help, Esc pause
 
 ## Links
-- [Game page](https://rochano.github.io/tavern-knights/): story, characters, screenshots, controls, FAQ
-- [Play now](https://rochano.github.io/tavern-knights/play.html)
+- [Game page](https://tavern-knights.pages.dev/): story, characters, screenshots, controls, FAQ
+- [Play now](https://tavern-knights.pages.dev/play.html)
 - [Source on GitHub](https://github.com/rochano/tavern-knights)

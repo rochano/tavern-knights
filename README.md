@@ -4,7 +4,7 @@
 
 A 16-bit side-scrolling action game mixed with a tavern-management mini-game. Runs in the browser.
 
-เล่นออนไลน์ / Play online: https://rochano.github.io/tavern-knights/ (หลังเปิด GitHub Pages)
+เล่นออนไลน์ / Play online: https://tavern-knights.pages.dev/
 
 ## วิธีเล่น / How to play
 
