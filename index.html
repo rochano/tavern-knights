@@ -114,7 +114,8 @@ button.tool{font-family:var(--thai);font-size:12px;background:rgba(34,23,39,.85)
 button.tool:hover{border-color:var(--amber)}
 button:focus-visible,canvas:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 .stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;container-type:size}
-#nameIn{position:absolute;left:29%;top:42.2%;width:42%;height:9.8%;box-sizing:border-box;display:none;margin:0;outline:none;background:none;border:9px solid transparent;border-radius:0;font-family:var(--thai);font-weight:700;color:#f6ead2;text-shadow:0 1px 0 #000;text-align:center;padding:0 6px;line-height:1;z-index:3;-webkit-user-select:text;user-select:text;touch-action:auto}
+#nameIn::selection{background:transparent;color:transparent}
+#nameIn{position:absolute;left:29%;top:42.2%;width:42%;height:9.8%;box-sizing:border-box;display:none;margin:0;outline:none;background:none;border:9px solid transparent;border-radius:0;font-family:var(--thai);font-weight:700;color:transparent;caret-color:transparent;text-shadow:none;text-align:center;padding:0 6px;line-height:1;z-index:3;-webkit-user-select:text;user-select:text;touch-action:auto}
 .screen{position:relative;width:min(100cqw,calc(100cqh * 16 / 9));aspect-ratio:16/9;max-width:100%;background:#000;overflow:hidden}
 canvas{width:100%;height:100%;display:block;image-rendering:pixelated;touch-action:none}
 .touch{flex:none;display:none;justify-content:space-between;align-items:center;gap:10px;user-select:none;-webkit-user-select:none}
@@ -438,6 +439,7 @@ const I18N_EN = {
 "ตั้งชื่อที่จะแสดงบนตารางอันดับ": "Your name on the ranking",
 "ใช้ได้ 2-16 ตัวอักษร": "2-16 letters",
 "ยกเลิก": "Cancel",
+"แตะเพื่อพิมพ์ชื่อ": "Tap to type your name",
 "กำลังส่งคะแนนขึ้นตารางอันดับ...": "Sending your score to the ranking...",
 "คะแนนรอบนี้ไม่ผ่านการตรวจ จึงไม่ขึ้นตารางอันดับ": "This run failed the score check, so it is not ranked",
 "อันดับสัปดาห์นี้: คะแนนที่ # · เวลาที่ #": "This week: score rank # · time rank #",
@@ -2986,6 +2988,11 @@ function drawRankPanel() {
     nameFit(document.getElementById('nameIn'));
     rect(0, 0, W, H, '#05050ac0'); if (!nineBox('dialog', 92, 70, 216, 88, 16, 9)) panel(96, 74, 208, 80, '#1b120cf4', '#f2a93b');
     text('ตั้งชื่อที่จะแสดงบนตารางอันดับ', W / 2, 82, { size: 8, align: 'center', thai: true, color: '#f2a93b', weight: 600 });
+    { const el = document.getElementById('nameIn'), v = el.value, on = document.activeElement === el; /* the game draws the typed name itself so it is always crisp */
+      ctx.font = `700 12px ${THAI}`; const tw = v ? ctx.measureText(v).width : 0, sz = tw > 156 ? 12 * 156 / tw : 12;
+      if (v) text('\u2060' + v, W / 2, 106 - sz * 0.55, { size: sz, align: 'center', thai: true, color: '#fff4dc', weight: 700 });
+      else text(on ? '' : 'แตะเพื่อพิมพ์ชื่อ', W / 2, 102, { size: 7, align: 'center', thai: true, color: '#8aa0c0', weight: 400 });
+      if (on && (performance.now() / 500 | 0) % 2 === 0) rect(W / 2 + tw * sz / 24 + 1.5, 99.5, 1.2, 13, '#fff4dc'); }
     text('ใช้ได้ 2-16 ตัวอักษร', W / 2, 121, { size: 6, align: 'center', thai: true, color: '#bba8ba', weight: 400 });
     [['nok', 'ตกลง', 122, true], ['ncan', 'ยกเลิก', 204, false]].forEach(([id, lb, x, on]) => { btn(id, x, 132, 74, 15); uiBtn(x, 132, 74, 15, on); textC(lb, x + 37, 139.5, { size: 7, align: 'center', thai: true, color: on ? '#ffe9b0' : '#cfc0b0' }); });
   }
