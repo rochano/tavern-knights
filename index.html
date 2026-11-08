@@ -163,6 +163,8 @@ body[data-tp=map] .tp-atk{bottom:9.5vmin;width:13vmin;height:13vmin;right:1.5vmi
 body[data-tp=map][data-tpp] .tp-atk,body[data-tp=map][data-tpp] .tp-sp{display:none}
 body[data-tp=title][data-tpp] .tp-back{display:block}
 body[data-tpn] #tpad{display:none!important}
+body.tp-name .stage{align-items:flex-start}
+body.tp-namez .stage{overflow:hidden}
 .tp-back{right:18vmin;bottom:2vmin;width:12vmin;height:12vmin;display:none}
 body.tp-on,body.tp-on .wrap{touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none}
 body.tp-on header{display:none!important}
@@ -434,6 +436,8 @@ const I18N_EN = {
 "อันดับที่ #": "Rank #",
 "เปลี่ยนชื่อ (N)": "Rename (N)",
 "เปลี่ยนชื่อแล้ว": "Name changed",
+"ชื่อนี้ใช้ไม่ได้": "Name not allowed",
+"ต่อไม่ได้ ลองใหม่": "Offline, try again",
 "ชื่อนี้ใช้ไม่ได้ (2-16 ตัวอักษร ห้ามคำหยาบ)": "Name not allowed (2-16 letters, no rude words)",
 "ต่อระบบอันดับไม่ได้ ลองใหม่อีกครั้ง": "Could not reach the ranking. Try again",
 "ชื่อที่จะแสดงบนตารางอันดับ (2-16 ตัวอักษร)": "Name to show on the ranking (2-16 letters)",
@@ -682,7 +686,7 @@ setTimeout(function styleTools() { const u = UI_ART_SRC.big.frame_dark; document
 window.addEventListener('keydown', e => { if (e.target && e.target.id === 'nameIn') { if (e.key === 'Enter') { e.preventDefault(); nameDone(true); } else if (e.key === 'Escape') { e.preventDefault(); nameDone(false); } return; } const a = KEYMAP[e.code]; if (!a) return; e.preventDefault(); if (a === 'mute' && !e.repeat) toggleMute(); press(a); });
 window.addEventListener('keyup', e => { const a = KEYMAP[e.code]; if (a) release(a); });
 window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
-cv.addEventListener('pointerdown', () => { cv.focus(); initAudio(); pressed.click = true; });
+cv.addEventListener('pointerdown', () => { if (!nameEdit) cv.focus(); initAudio(); pressed.click = true; });
 document.querySelectorAll('#touch button').forEach(b => {
   const a = b.dataset.k;
   b.addEventListener('pointerdown', e => { e.preventDefault(); b.setPointerCapture(e.pointerId); press(a); });
@@ -2876,11 +2880,11 @@ let scene = 'title', titleT = 0;
 const TITLE_MENU = [0, 1, 2, 3, 4, 5].map(i => { const cy = 152.6 + i * 9.7; return [140, cy - 4.6, 260, cy + 4.6]; });
 let titleSel = 0, titlePanel = null, optSel = 0, rkB = 0, rkP = 'week', mapRank = false;
 // input for the ranking panel (title menu and world map)
-let nameEdit = false;
+let nameEdit = false, nameZ = false, nameH0 = 0;
 function nameOpen() {
-  const el = document.getElementById('nameIn'); nameEdit = true; el.value = NET.name || '';
+  const el = document.getElementById('nameIn'); nameEdit = true; nameZ = innerWidth < innerHeight; nameH0 = innerHeight; /* remember: the keyboard shrinks the page and would make it look landscape */ el.value = NET.name || '';
   el.style.display = 'block';
-  try { el.focus(); el.select(); } catch (e) {}
+  try { el.focus(); const n = el.value.length; el.setSelectionRange(n, n); } catch (e) {} /* caret at the end, so backspace deletes one letter */
 }
 function nameDone(ok) {
   const el = document.getElementById('nameIn'); if (!nameEdit) return; nameEdit = false; el.style.display = 'none';
@@ -2894,7 +2898,7 @@ function rankInput(close) {
   for (let k = 0; k < 3; k++) if (pressed['ui:rk' + k]) { rkB = k; SFX.select(); }
   if (pressed.up || pressed.down) { rkP = rkP === 'week' ? 'all' : 'week'; SFX.select(); }
   if (pressed['ui:rkw'] || pressed['ui:rka']) { rkP = pressed['ui:rkw'] ? 'week' : 'all'; SFX.select(); }
-  if (pressed.rename || pressed['ui:rkn']) { SFX.select(); nameOpen(); }
+  if (pressed.rename || pressed['ui:rkn']) { SFX.select(); if (!nameEdit) nameOpen(); }
   else if (pressed.ok || pressed.atk || pressed.pause || pressed.rank || pressed['ui:close']) { close(); SFX.select(); }
 }
 function titleAct(i) {
@@ -2979,7 +2983,8 @@ function drawRankPanel() {
   if (NET.name) textC('⁠' + NET.name, 80 + lw, 163.6, { size: 7, thai: true, color: '#f6ead2', weight: 700 }); else textC('(ยังไม่ได้ตั้งชื่อ)', 80 + lw, 163.6, { size: 7, thai: true, color: '#8a7a6a', weight: 400 });
   if (e.me) { const rs = 'อันดับที่ ' + e.me.rank; textC(rs, 80, 173.1, { size: 7, thai: true, color: '#9be15d', weight: 400 }); ctx.font = `400 7px ${THAI}`; textC('· ' + netVal(b, e.me.value), 83 + ctx.measureText(rs).width, 173.1, { size: 7, color: '#9be15d', weight: 700 }); }
   btn('rkn', 248, 159, 72, 15); uiBtn(248, 159, 72, 15, false); textC('เปลี่ยนชื่อ (N)', 284, 166.5, { size: 6.5, align: 'center', thai: true, color: '#ffd7a0' });
-  if (NET.msg && Date.now() - NET.msgT < 3500) { const m = { ok: ['เปลี่ยนชื่อแล้ว', '#9be15d'], bad: ['ชื่อนี้ใช้ไม่ได้ (2-16 ตัวอักษร ห้ามคำหยาบ)', '#ff8a7a'], off: ['ต่อระบบอันดับไม่ได้ ลองใหม่อีกครั้ง', '#ff8a7a'] }[NET.msg]; text(m[0], 244, 170, { size: 6, align: 'right', thai: true, color: m[1], weight: 400 }); }
+  if (NET.msg && Date.now() - NET.msgT < 3500) { const m = { ok: ['เปลี่ยนชื่อแล้ว', '#9be15d'], bad: ['ชื่อนี้ใช้ไม่ได้', '#ff8a7a'], off: ['ต่อไม่ได้ ลองใหม่', '#ff8a7a'] }[NET.msg]; ctx.font = `700 7px ${THAI}`; const nx = 80 + lw + (NET.name ? ctx.measureText(NET.name).width : ctx.measureText(tr('(ยังไม่ได้ตั้งชื่อ)')).width) + 6; ctx.font = `400 6px ${THAI}`; const mw = ctx.measureText(tr(m[0])).width;
+    if (nx + mw <= 244) textC(m[0], nx, 163.6, { size: 6, thai: true, color: m[1], weight: 400 }); else textC(m[0], 244, 163.6, { size: 6, align: 'right', thai: true, color: m[1], weight: 400 }); }
   if (nameEdit) {
     rect(0, 0, W, H, '#05050ac0'); if (!nineBox('dialog', 92, 70, 216, 88, 16, 9)) panel(96, 74, 208, 80, '#1b120cf4', '#f2a93b');
     uiBtn(110, 92, 180, 22, false);
@@ -3137,6 +3142,14 @@ function drawHelp() {
 let uiRegions = [];
 function localFrac(e, el) { const r = el.getBoundingClientRect(); if (document.body.classList.contains('tp-rot')) return [(e.clientY - r.top) / r.height, (r.right - e.clientX) / r.width]; return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; }
 function btn(id, x, y, w, h) { uiRegions.push({ id, x, y, w, h }); }
+/* phones only open the keyboard when focus() runs inside the tap itself, so the rename button focuses the name field right here */
+document.addEventListener('mousedown', e => { if (nameEdit && e.target.id !== 'nameIn') e.preventDefault(); }, true); /* the mouse event a tap sends afterwards would move focus back to the canvas */
+cv.addEventListener('pointerup', e => {
+  const lf = localFrac(e, cv), x = lf[0] * W, y = lf[1] * H;
+  const hit = uiRegions.slice().reverse().find(b => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h);
+  if (!nameEdit && hit && hit.id === 'rkn' && !help) nameOpen();
+  else if (nameEdit && !(hit && (hit.id === 'nok' || hit.id === 'ncan'))) { try { const el = document.getElementById('nameIn'), n = el.value.length; el.focus(); el.setSelectionRange(n, n); } catch (x) {} }
+});
 cv.addEventListener('pointerdown', e => {
   const lf = localFrac(e, cv); const x = lf[0] * W, y = lf[1] * H;
   const hit = uiRegions.slice().reverse().find(b => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h);
@@ -3216,7 +3229,13 @@ function tpRotFit(rot) { /* Safari/LINE: 100vh includes the area under the brows
 }
 function tpSync() {
   if (!TOUCH_DEV) return;
-  const land = innerWidth >= innerHeight;
+  const land = innerWidth >= innerHeight || nameEdit; /* while typing a name, lay the game flat at the top so the phone keyboard never covers it (X/FB in-app browsers don't resize for the keyboard) */
+  document.body.classList.toggle('tp-name', nameEdit); const nz = nameEdit && nameZ; document.body.classList.toggle('tp-namez', nz);
+  { /* upright phone: zoom in on the name box and centre it in the space above the keyboard */
+    const sc = document.querySelector('.screen'), vv = window.visualViewport;
+    if (nz) { const k = 1.75, wd = innerWidth, hd = wd * 9 / 16, avail = innerHeight < nameH0 * 0.8 ? innerHeight : vv && vv.height < innerHeight * 0.9 ? vv.height : innerHeight * 0.56;
+      sc.style.transformOrigin = '0 0'; sc.style.transform = `translate(${wd / 2 * (1 - k)}px, ${avail / 2 - 114 / 225 * hd * k}px) scale(${k})`; }
+    else if (sc.style.transform) sc.style.transform = sc.style.transformOrigin = ''; }
   document.body.classList.toggle('tp-on', true); tpOnTxt = true; document.body.classList.toggle('tp-rot', !land); tpRotFit(!land);
   const mode = help ? 'menu' : (scene === 'stage' || scene === 'gameover') ? 'act' : scene === 'tavern' ? 'tav' : scene === 'title' ? 'title' : scene === 'map' ? 'map' : 'menu';
   if ((titlePanel && scene === 'title') || (mapRank && scene === 'map')) document.body.dataset.tpp = '1'; else delete document.body.dataset.tpp;
