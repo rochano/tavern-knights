@@ -2,7 +2,10 @@
 <html lang="th">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="description" content="Tavern Knights: สามอัศวินต้มยำกุ้ง เกมแอ็กชันเลื่อนฉากพิกเซล 16-bit ผสมเกมบริหารร้านเหล้า เล่นฟรีบนเบราว์เซอร์ ไม่ต้องติดตั้ง สลับอัศวิน 3 คน สู้ราชาเห็ด แล้วกลับมาเปิดร้านกะดึก">
 <link rel="canonical" href="https://tavern-knights.pages.dev/">
 <meta name="robots" content="index,follow,max-image-preview:large">
@@ -55,11 +58,11 @@
   "potentialAction": { "@type": "PlayAction", "target": "https://tavern-knights.pages.dev/" }
 }
 </script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-WV2GZHVWD6"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-WV2GZHVWD6');</script>
 <link rel="alternate" hreflang="th" href="https://tavern-knights.pages.dev/">
 <link rel="alternate" hreflang="en" href="https://tavern-knights.pages.dev/?lang=en">
 <link rel="alternate" hreflang="x-default" href="https://tavern-knights.pages.dev/">
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-WV2GZHVWD6"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-WV2GZHVWD6');</script>
 </head>
 <body>
 <div id="tk-loader" role="status" aria-live="polite">
@@ -78,7 +81,7 @@
 .tkl-txt{margin:12px 0 0;font-size:16px;color:#cbb8a4}
 </style>
 <script>
-(function(){var EN=(function(){try{var q=new URLSearchParams(location.search).get('lang');if(q)return q==='en';var v=localStorage.getItem('tk-lang');if(v)return v==='en';}catch(e){}return !/^th/i.test(navigator.language||'th');})(),LD=EN?'Loading game ':'กำลังโหลดเกม ',RD=EN?'Ready!':'พร้อมแล้ว!';var L=["art/000068ed4e9e.webp", "art/0031f48f5f66.webp", "art/003ce3dd268f.webp", "art/02a34b717380.webp", "art/0372e7c6b70c.webp", "art/055b316f97a6.webp", "art/06c848fe0a22.webp", "art/08bd5ffeb7b3.webp", "art/093efa188024.webp", "art/0a0594b996fe.webp", "art/0bda727062c3.webp", "art/0cdd9d727127.webp", "art/0d0aa4e630ca.webp", "art/106a395106e2.webp", "art/122c310616f6.webp", "art/12829c42bde2.webp", "art/175a789a72ad.webp", "art/181d43739390.webp", "art/19e0382ecc32.webp", "art/19e45df9e780.webp", "art/1a243998eb0f.webp", "art/1b41e708e760.webp", "art/1b614503ed5a.webp", "art/1bb86c24759f.webp", "art/1d66222b82a1.webp", "art/1da7b2f1021c.webp", "art/1dd1a1db4c14.webp", "art/1de7f53ed7d5.webp", "art/2076edbe904a.webp", "art/2100aa268b25.webp", "art/21868f4f8e05.webp", "art/218a9b83e984.webp", "art/21f3017ae152.webp", "art/22074b9c9c1f.webp", "art/2506aba9af43.webp", "art/2880a045d900.webp", "art/28a6c5a024c6.webp", "art/28d39ede963c.webp", "art/2b24eeb1b647.webp", "art/2b3200d4e528.webp", "art/2b824c58c597.webp", "art/2cbe197c4aaf.webp", "art/2fec1f9ad44c.webp", "art/30085e64c62d.webp", "art/331290a1e7d4.webp", "art/33e3afbce049.webp", "art/3551cc2ed4bd.webp", "art/36ab70487458.webp", "art/37585b85db1a.webp", "art/37aa4d4e44b4.webp", "art/3843b6e9a209.webp", "art/386b5cb1c4d6.webp", "art/38948f2a721c.webp", "art/39d952631a19.webp", "art/3c1b88dad134.webp", "art/3c214057ee3d.webp", "art/3c278279e5c4.webp", "art/3cc96cf4901a.webp", "art/3e06801ff9e9.webp", "art/3e3d98d3206c.webp", "art/3f05c5ee9e9f.webp", "art/3f24e2506648.webp", "art/3f4158abf723.webp", "art/404d86490f83.webp", "art/412cee0ecc51.webp", "art/416cd4469bd2.webp", "art/41cf174a47d6.webp", "art/4213276dd97d.webp", "art/435224a57109.webp", "art/43de0bc3498e.webp", "art/4526973d512e.webp", "art/47a623b8d4ef.webp", "art/481cb509c537.webp", "art/488080744d0f.webp", "art/4a8021fc9033.webp", "art/4c1b37d84f42.webp", "art/4c5078272bc3.webp", "art/4cdc2626734b.webp", "art/4d0862ffac8d.webp", "art/4fd96ff91644.webp", "art/513a479ba1d3.webp", "art/524ffe4e6d95.webp", "art/559c329846ee.jpg", "art/55d67ed13c86.jpg", "art/561a337b3609.webp", "art/5656002627ce.webp", "art/5696ded86c74.webp", "art/587f0d3bb0d2.webp", "art/5928ccd840a5.webp", "art/5a6a4277036a.webp", "art/5ad65ab530a8.webp", "art/5b504b2c348a.webp", "art/5bab3fd979f4.webp", "art/5be5f7e07ecc.webp", "art/5be9cbb147c5.webp", "art/5e4a21191131.webp", "art/5e560fcda323.webp", "art/5fbe838eda1a.webp", "art/62f1ad4fbec4.webp", "art/63f110d7b395.webp", "art/6704d233fed8.webp", "art/679d70d51fbd.webp", "art/689f8264aa38.webp", "art/6972664d1dbc.webp", "art/69e6d6159f84.webp", "art/6b41ce314003.webp", "art/6b81e02ce78f.webp", "art/6b8209ef698d.webp", "art/6c4cce0bf846.webp", "art/6de6171bdaa1.webp", "art/6e7c374915d9.webp", "art/6e880c2d7090.webp", "art/6f15639c754d.webp", "art/706ae2a86ff2.webp", "art/7153fc9bd96b.webp", "art/71b58c52b949.webp", "art/73185bb01f97.webp", "art/756796dfd9d4.webp", "art/75ef005e2128.webp", "art/7798eb5dcad8.webp", "art/793df7fc9418.webp", "art/7bd29faefd84.webp", "art/7bffbcf0c249.webp", "art/7d25217a61db.webp", "art/7df5b2c3a9c8.webp", "art/7e8230ca3bdc.webp", "art/7f34d6996c53.webp", "art/7f67d14469ab.webp", "art/7f6d45704aea.webp", "art/802d70083fb8.webp", "art/80a8f6ddd1e2.webp", "art/81afde6e541e.webp", "art/829f769a8b7b.webp", "art/86d11c6847e6.webp", "art/8888cd1f3f75.webp", "art/89c8a60f1e12.webp", "art/8c8fe07d8b16.webp", "art/8cb96aa110a8.webp", "art/8fa63bc34a04.webp", "art/9015e6ecf9d4.webp", "art/9034676c257d.webp", "art/91695c65291a.webp", "art/92f35ea4ea79.webp", "art/97358ffa9202.webp", "art/97be5adaeba2.webp", "art/97f217a03440.jpg", "art/99228046f73c.webp", "art/99a9bc6ce2cd.webp", "art/99b0ba4aeb21.webp", "art/9ad3b17fe256.webp", "art/9b0129000b92.webp", "art/9c447fcc6c3a.webp", "art/9cb928fce51e.webp", "art/9dcc1d3010a5.webp", "art/a013df411c98.webp", "art/a232cbd6c486.webp", "art/a2f6f33f0f58.webp", "art/a34cfe4cd7ad.webp", "art/a46905011e86.webp", "art/a49659e360ac.webp", "art/aadac84ba6ca.webp", "art/ab31563c9cd7.webp", "art/ab601985c7f6.webp", "art/abde28010105.webp", "art/ac7fb1099ba6.webp", "art/aec7977a44fb.webp", "art/aeecd899e485.webp", "art/afe474c62429.webp", "art/b0777dc957fa.webp", "art/b1560977b03e.webp", "art/b16db0e3d121.jpg", "art/b3785fecb1df.webp", "art/b3d2646a6d72.webp", "art/b50143f38d01.webp", "art/b8436e571fe0.webp", "art/b9941fed2618.webp", "art/ba5a88fdd76b.webp", "art/bae8b58087be.webp", "art/bb0d5088bfe2.webp", "art/bc351c5b635b.webp", "art/bce6f377e2ea.webp", "art/bd7096c1c0c1.webp", "art/c02b941eead2.webp", "art/c0812131f573.webp", "art/c102a872d5b6.webp", "art/c17cd52387df.webp", "art/c1b7e426a158.webp", "art/c1f0789c2f2d.webp", "art/c34d5b0aa1c8.webp", "art/c37fa948ff02.webp", "art/c41ef0463297.webp", "art/c5d5bf067b09.webp", "art/c5ead8f134cf.webp", "art/c65876c02fe4.webp", "art/c6eea071c9ae.webp", "art/c7e235f505a8.webp", "art/c90043622a84.webp", "art/c9a2a79c6893.webp", "art/cacd056f7347.webp", "art/cc0a84924379.webp", "art/cdc9aa19e1af.webp", "art/cf3dedc27e63.webp", "art/cf5a1de7dacc.webp", "art/d0225e39a95b.webp", "art/d103df37cc09.webp", "art/d16acf9b6fcf.webp", "art/d1e5a5f18dac.webp", "art/d2de4441406f.webp", "art/d4302180b5ff.webp", "art/d54c9cc636e6.webp", "art/d75f468d8f75.webp", "art/dab6ab50e68b.webp", "art/dd5563be9ccd.webp", "art/de1f914458f3.webp", "art/df1c1b86f187.webp", "art/e00cdaeb7edf.webp", "art/e03f59366877.webp", "art/e0c680b8d956.webp", "art/e110c2a2b577.webp", "art/e17858243ed6.webp", "art/e3137ca66386.webp", "art/e52008b0da78.webp", "art/e68b2aba5419.webp", "art/e78174948a44.webp", "art/e7e9ba4b6809.webp", "art/ece74a782f2c.webp", "art/ecfbc9eaad64.webp", "art/ee9f33c9cd83.webp", "art/eeb012cc0cce.webp", "art/f1237e09a557.jpg", "art/f20ba449da5c.webp", "art/f2f1e550485c.webp", "art/f37aef6cbe64.webp", "art/f42a86a34fca.webp", "art/f54a61e45172.webp", "art/f727dfb2a778.webp", "art/f9c804f35da3.webp", "art/f9fd734cc78a.webp", "art/fa8cf186a454.webp", "art/faeb13208a7e.webp", "art/fb06c901d351.webp", "art/fb5f6e83fe44.webp", "art/fbdbd7fd3474.webp", "art/fc5e9d8adc46.webp", "art/ff6f7b78a147.webp"],n=0,t=L.length,el=document.getElementById('tk-loader'),f=document.getElementById('tkl-fill'),x=document.getElementById('tkl-txt'),gone=false;
+(function(){var EN=(function(){try{var q=new URLSearchParams(location.search).get('lang');if(q)return q==='en';var v=localStorage.getItem('tk-lang');if(v)return v==='en';}catch(e){}return !/^th/i.test(navigator.language||'th');})(),LD=EN?'Loading game ':'กำลังโหลดเกม ',RD=EN?'Ready!':'พร้อมแล้ว!';var L=["art/000068ed4e9e.webp", "art/0031f48f5f66.webp", "art/003ce3dd268f.webp", "art/02a34b717380.webp", "art/0372e7c6b70c.webp", "art/055b316f97a6.webp", "art/06c848fe0a22.webp", "art/08bd5ffeb7b3.webp", "art/093efa188024.webp", "art/0a0594b996fe.webp", "art/0bda727062c3.webp", "art/0cdd9d727127.webp", "art/0d0aa4e630ca.webp", "art/106a395106e2.webp", "art/122c310616f6.webp", "art/12829c42bde2.webp", "art/175a789a72ad.webp", "art/181d43739390.webp", "art/19e0382ecc32.webp", "art/19e45df9e780.webp", "art/1a243998eb0f.webp", "art/1b41e708e760.webp", "art/1b614503ed5a.webp", "art/1bb86c24759f.webp", "art/1d49f6e542e5.webp", "art/1d66222b82a1.webp", "art/1da7b2f1021c.webp", "art/1dd1a1db4c14.webp", "art/1de7f53ed7d5.webp", "art/2076edbe904a.webp", "art/2100aa268b25.webp", "art/21868f4f8e05.webp", "art/218a9b83e984.webp", "art/21f3017ae152.webp", "art/22074b9c9c1f.webp", "art/2506aba9af43.webp", "art/2880a045d900.webp", "art/28a6c5a024c6.webp", "art/28d39ede963c.webp", "art/2b24eeb1b647.webp", "art/2b3200d4e528.webp", "art/2b824c58c597.webp", "art/2cbe197c4aaf.webp", "art/2fec1f9ad44c.webp", "art/30085e64c62d.webp", "art/331290a1e7d4.webp", "art/33e3afbce049.webp", "art/3551cc2ed4bd.webp", "art/35f3fa8159e8.webp", "art/36ab70487458.webp", "art/37585b85db1a.webp", "art/37aa4d4e44b4.webp", "art/3843b6e9a209.webp", "art/386b5cb1c4d6.webp", "art/38948f2a721c.webp", "art/39d952631a19.webp", "art/3c1b88dad134.webp", "art/3c214057ee3d.webp", "art/3c278279e5c4.webp", "art/3cc96cf4901a.webp", "art/3e06801ff9e9.webp", "art/3e3d98d3206c.webp", "art/3f05c5ee9e9f.webp", "art/3f24e2506648.webp", "art/3f4158abf723.webp", "art/404d86490f83.webp", "art/412cee0ecc51.webp", "art/416cd4469bd2.webp", "art/41cf174a47d6.webp", "art/4213276dd97d.webp", "art/435224a57109.webp", "art/43de0bc3498e.webp", "art/4526973d512e.webp", "art/47a623b8d4ef.webp", "art/481cb509c537.webp", "art/488080744d0f.webp", "art/4a8021fc9033.webp", "art/4c1b37d84f42.webp", "art/4c5078272bc3.webp", "art/4cdc2626734b.webp", "art/4d0862ffac8d.webp", "art/4fd96ff91644.webp", "art/513a479ba1d3.webp", "art/524ffe4e6d95.webp", "art/559c329846ee.jpg", "art/55d67ed13c86.jpg", "art/561a337b3609.webp", "art/5656002627ce.webp", "art/5696ded86c74.webp", "art/587f0d3bb0d2.webp", "art/5928ccd840a5.webp", "art/5987157def42.webp", "art/5a6a4277036a.webp", "art/5ad65ab530a8.webp", "art/5b41ee0111f4.webp", "art/5b504b2c348a.webp", "art/5bab3fd979f4.webp", "art/5be5f7e07ecc.webp", "art/5be9cbb147c5.webp", "art/5e4a21191131.webp", "art/5e560fcda323.webp", "art/5f1580632b25.webp", "art/5fbe838eda1a.webp", "art/62f1ad4fbec4.webp", "art/63f110d7b395.webp", "art/6704d233fed8.webp", "art/679d70d51fbd.webp", "art/689f8264aa38.webp", "art/6972664d1dbc.webp", "art/69e6d6159f84.webp", "art/6b41ce314003.webp", "art/6b81e02ce78f.webp", "art/6b8209ef698d.webp", "art/6c4cce0bf846.webp", "art/6d49bb9cbb72.webp", "art/6de6171bdaa1.webp", "art/6e7c374915d9.webp", "art/6e880c2d7090.webp", "art/6f15639c754d.webp", "art/706ae2a86ff2.webp", "art/7153fc9bd96b.webp", "art/71b58c52b949.webp", "art/73185bb01f97.webp", "art/756796dfd9d4.webp", "art/75ef005e2128.webp", "art/7798eb5dcad8.webp", "art/793df7fc9418.webp", "art/7bd29faefd84.webp", "art/7bffbcf0c249.webp", "art/7d25217a61db.webp", "art/7df5b2c3a9c8.webp", "art/7e8230ca3bdc.webp", "art/7f34d6996c53.webp", "art/7f67d14469ab.webp", "art/7f6d45704aea.webp", "art/802d70083fb8.webp", "art/80a8f6ddd1e2.webp", "art/81afde6e541e.webp", "art/829f769a8b7b.webp", "art/86d11c6847e6.webp", "art/8888cd1f3f75.webp", "art/89c8a60f1e12.webp", "art/8c8fe07d8b16.webp", "art/8cb96aa110a8.webp", "art/8fa63bc34a04.webp", "art/9015e6ecf9d4.webp", "art/9034676c257d.webp", "art/91695c65291a.webp", "art/92f35ea4ea79.webp", "art/97358ffa9202.webp", "art/97be5adaeba2.webp", "art/97f217a03440.jpg", "art/99228046f73c.webp", "art/99a9bc6ce2cd.webp", "art/99b0ba4aeb21.webp", "art/9ad3b17fe256.webp", "art/9b0129000b92.webp", "art/9c447fcc6c3a.webp", "art/9cb928fce51e.webp", "art/9dcc1d3010a5.webp", "art/a013df411c98.webp", "art/a177c75724f2.webp", "art/a232cbd6c486.webp", "art/a2f6f33f0f58.webp", "art/a34cfe4cd7ad.webp", "art/a46905011e86.webp", "art/a49659e360ac.webp", "art/aadac84ba6ca.webp", "art/ab31563c9cd7.webp", "art/ab601985c7f6.webp", "art/abde28010105.webp", "art/ac7fb1099ba6.webp", "art/aec7977a44fb.webp", "art/aeecd899e485.webp", "art/afe474c62429.webp", "art/b0777dc957fa.webp", "art/b1560977b03e.webp", "art/b16db0e3d121.jpg", "art/b3785fecb1df.webp", "art/b3d2646a6d72.webp", "art/b50143f38d01.webp", "art/b8436e571fe0.webp", "art/b9941fed2618.webp", "art/ba5a88fdd76b.webp", "art/bae8b58087be.webp", "art/bb0d5088bfe2.webp", "art/bc351c5b635b.webp", "art/bce6f377e2ea.webp", "art/bd7096c1c0c1.webp", "art/c02b941eead2.webp", "art/c0812131f573.webp", "art/c102a872d5b6.webp", "art/c17cd52387df.webp", "art/c1b7e426a158.webp", "art/c1f0789c2f2d.webp", "art/c34d5b0aa1c8.webp", "art/c37fa948ff02.webp", "art/c41ef0463297.webp", "art/c5d5bf067b09.webp", "art/c5ead8f134cf.webp", "art/c65876c02fe4.webp", "art/c6eea071c9ae.webp", "art/c7e235f505a8.webp", "art/c90043622a84.webp", "art/c9a2a79c6893.webp", "art/cacd056f7347.webp", "art/cc0a84924379.webp", "art/cdc9aa19e1af.webp", "art/cf2bcf9cc425.webp", "art/cf3dedc27e63.webp", "art/cf5a1de7dacc.webp", "art/d0225e39a95b.webp", "art/d0df181ca6fe.webp", "art/d103df37cc09.webp", "art/d16acf9b6fcf.webp", "art/d1e5a5f18dac.webp", "art/d2de4441406f.webp", "art/d4302180b5ff.webp", "art/d54c9cc636e6.webp", "art/d75f468d8f75.webp", "art/dab6ab50e68b.webp", "art/dd5563be9ccd.webp", "art/de1f914458f3.webp", "art/df1c1b86f187.webp", "art/e00cdaeb7edf.webp", "art/e03f59366877.webp", "art/e0c680b8d956.webp", "art/e110c2a2b577.webp", "art/e17858243ed6.webp", "art/e3137ca66386.webp", "art/e52008b0da78.webp", "art/e68b2aba5419.webp", "art/e78174948a44.webp", "art/e7e9ba4b6809.webp", "art/ece74a782f2c.webp", "art/ecfbc9eaad64.webp", "art/ee9f33c9cd83.webp", "art/eeb012cc0cce.webp", "art/f1237e09a557.jpg", "art/f20ba449da5c.webp", "art/f2f1e550485c.webp", "art/f37aef6cbe64.webp", "art/f42a86a34fca.webp", "art/f54a61e45172.webp", "art/f6d3526c2f94.webp", "art/f727dfb2a778.webp", "art/f9c804f35da3.webp", "art/f9fd734cc78a.webp", "art/fa8cf186a454.webp", "art/faeb13208a7e.webp", "art/fb06c901d351.webp", "art/fb1025919639.webp", "art/fb5f6e83fe44.webp", "art/fbdbd7fd3474.webp", "art/fc5e9d8adc46.webp", "art/ff6f7b78a147.webp"],n=0,t=L.length,el=document.getElementById('tk-loader'),f=document.getElementById('tkl-fill'),x=document.getElementById('tkl-txt'),gone=false;
 x.textContent=LD+'0%';function upd(){var p=Math.round(n/t*100);f.style.width='calc('+p+'% + 12px)';x.textContent=LD+p+'%';if(n>=t)finish();}
 function finish(){if(gone)return;gone=true;x.textContent=RD;setTimeout(function(){el.classList.add('done');setTimeout(function(){el.remove()},400)},150);}
 L.forEach(function(u){var i=new Image();i.onload=i.onerror=function(){n++;upd();};i.src=u;});
@@ -121,6 +124,37 @@ canvas{width:100%;height:100%;display:block;image-rendering:pixelated;touch-acti
 .touch button.hot{background:#3b2a12;border-color:var(--amber)}
 .touch button:active{transform:translateY(1px);background:#33243a}
 .touch-on .touch{display:flex}
+
+/* mobile landscape overlay controls (art: E6 buttons, sheet-D round arrows, sheet-D icons) */
+#tpad,#rotate{display:none}
+.touch-on .touch{display:none!important}
+body.tp-on #tpad{display:block}
+#tpad{position:fixed;inset:0;pointer-events:none;z-index:6;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#tpad *{pointer-events:auto;touch-action:none}
+.tp-dpad{position:absolute;left:calc(2.5vh + env(safe-area-inset-left,0px));bottom:3vh;width:42vh;height:42vh;opacity:.82}
+.tp-dpad i{position:absolute;width:15vh;height:15vh;background:center/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 2px 2px #0008);transition:transform .05s}
+.tp-dpad i.u{left:13.5vh;top:0}.tp-dpad i.d{left:13.5vh;bottom:0}.tp-dpad i.l{left:0;top:13.5vh}.tp-dpad i.r{right:0;top:13.5vh}
+.tp-dpad i.on{transform:scale(.88);filter:brightness(1.35) drop-shadow(0 0 4px #ffd76a)}
+.tp-acts{position:absolute;right:calc(2.5vh + env(safe-area-inset-right,0px));bottom:3vh;width:58vh;height:46vh}
+.tp-b{position:absolute;box-sizing:border-box;margin:0;padding:0;border:0;background:center/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 2px 2px #000a);opacity:.88;cursor:pointer;transition:transform .05s}
+.tp-b span{position:absolute;left:50%;bottom:-1.2vh;transform:translateX(-50%);font-family:var(--thai);font-weight:600;font-size:max(10px,2.5vh);color:#f6ead2;text-shadow:0 1px 0 #000,0 0 3px #000,0 0 3px #000;white-space:nowrap;pointer-events:none}
+.tp-b.on{transform:scale(.88);opacity:1;filter:brightness(1.25) drop-shadow(0 0 5px #ffd76a)}
+.tp-atk{right:0;bottom:1vh;width:22vh;height:22vh}
+.tp-sp{right:23vh;bottom:1vh;width:16vh;height:16vh}
+.tp-ult{right:3vh;bottom:25vh;width:16vh;height:16vh}
+.tp-next{right:21vh;bottom:20vh;width:14vh;height:14vh}
+.tp-sup{right:40vh;bottom:1vh;width:14vh;height:14vh}
+.tp-pause{left:calc(1.5vh + env(safe-area-inset-left,0px));top:1.5vh;width:11vh;height:11vh}
+.tp-full{left:calc(14vh + env(safe-area-inset-left,0px));top:1.5vh;width:11vh;height:11vh}
+.tp-full.hide{display:none}
+body[data-tp=tav] .tp-ult,body[data-tp=tav] .tp-sup{display:none}
+body[data-tp=menu] #tpad{display:none}
+body.tp-rot #rotate{display:flex}
+#rotate{position:fixed;inset:0;z-index:9;background:#0c0a10f2;align-items:center;justify-content:center;padding:24px}
+#rotate .rot-box{border-style:solid;border-width:22px 20px;border-color:transparent;border-image-slice:22 20 fill;border-image-width:22px 20px;image-rendering:pixelated;padding:6px 10px;text-align:center;max-width:320px;font-family:var(--thai);color:#f6ead2}
+#rotate i{display:block;width:84px;height:84px;margin:0 auto 6px;background:center/contain no-repeat;image-rendering:pixelated;animation:tkrot 2.2s ease-in-out infinite}
+#rotate span{font-size:17px}
+@keyframes tkrot{0%,25%{transform:rotate(0)}55%,100%{transform:rotate(-90deg)}}
 @media (max-width:420px){.pad{grid-template-columns:repeat(3,44px)}.btns{grid-template-columns:repeat(3,56px)}.sub{display:none}}
 </style>
 
@@ -139,6 +173,20 @@ canvas{width:100%;height:100%;display:block;image-rendering:pixelated;touch-acti
 
   <div class="stage"><div class="screen"><canvas id="game" width="1600" height="900" tabindex="0" aria-label="Tavern Knights game screen"></canvas></div></div>
 
+
+  <div id="tpad" aria-hidden="true">
+    <div class="tp-dpad" id="tpDpad"><i class="u" data-d="up"></i><i class="l" data-d="left"></i><i class="r" data-d="right"></i><i class="d" data-d="down"></i></div>
+    <div class="tp-acts">
+      <button type="button" class="tp-b tp-atk" data-k="atk"><span></span></button>
+      <button type="button" class="tp-b tp-sp" data-k="sp"><span></span></button>
+      <button type="button" class="tp-b tp-ult" data-k="ult"><span></span></button>
+      <button type="button" class="tp-b tp-next" data-k="next"><span></span></button>
+      <button type="button" class="tp-b tp-sup" data-k="sup"><span></span></button>
+    </div>
+    <button type="button" class="tp-b tp-pause" data-k="pause" aria-label="pause"></button>
+    <button type="button" class="tp-b tp-full hide" id="tpFull" aria-label="fullscreen"></button>
+  </div>
+  <div id="rotate"><div class="rot-box"><i id="rotIc"></i><span id="rotTxt">หมุนมือถือเป็นแนวนอนเพื่อเล่น</span></div></div>
   <div class="touch" id="touch">
     <div class="pad">
       <span></span><button data-k="up"><b>▲</b>กระโดด</button><span></span>
@@ -296,7 +344,7 @@ const I18N_EN = {
 'ฉากจบ / เครดิต': 'Ending / Credits', 'ฉากจบ': 'Ending',
 'คุณชนะราชาเห็ดมาแล้ว # รอบ ฉากจบจะปลดล็อกเมื่อปราบ Archmage Malacor ที่ด่าน # (ยังไม่มีในต้นแบบนี้)': 'You have beaten King Shroomba # times. The ending unlocks after defeating Archmage Malacor in stage # (not in this prototype yet).',
 'ฉากจบจะปลดล็อกเมื่อปราบ Archmage Malacor ที่ด่าน 6 (ยังไม่มีในต้นแบบนี้)': 'The ending unlocks after defeating Archmage Malacor in stage 6 (not in this prototype yet).',
-'เครดิต': 'Credits', 'ทีมพัฒนา: Rochano Developer Teams': 'Developed by: Rochano Developer Teams',
+'เครดิต': 'Credits', 'หมุนมือถือเป็นแนวนอนเพื่อเล่น': 'Turn your phone sideways to play', 'ทีมพัฒนา: Rochano Developer Teams': 'Developed by: Rochano Developer Teams',
 'ออกแบบเกม ตัวละคร และฉาก: Rochano Developer Teams': 'Game, character and scene design: Rochano Developer Teams',
 'ต้นแบบที่เล่นได้: สร้างร่วมกับ Claude': 'Playable prototype: built with Claude',
 'ตกลง': 'OK', 'เสียง': 'Sound', 'เลือกเมนู': 'Select',
@@ -1869,6 +1917,7 @@ function keyLabel(k, cx, cy, size, opt) {
 }
 function controlStrip() { controlStripCustom(null); }
 function controlStripCustom(custom) {
+  if (document.body.classList.contains('tp-on')) return;
   if (!(uiArtReady && UI_BIG.frame_dark && (slice3(UI_BIG.frame_dark, -6, 212, W + 12, 13, 44), true))) rect(0, 213, W, 12, '#05080cd8');
   const items = custom ? custom : scene === 'tavern'
     ? [['← →', 'เดิน'], ['1 2 3', 'สลับคน'], ['J / คลิก', 'ทำงาน'], ['K / คลิกขวา', 'สกิล'], ['Esc', 'หยุด/ออก'], ['H', 'วิธีเล่น']]
@@ -2820,6 +2869,59 @@ document.getElementById('btnHelp').addEventListener('click', () => { help = help
 /* on-screen touch buttons show only on touch-screen devices (no option for it) */
 document.body.classList.toggle('touch-on', matchMedia('(pointer: coarse)').matches);
 
+/* ---- mobile landscape controls ---- */
+const TOUCH_DEV = matchMedia('(pointer: coarse)').matches;
+const tpEl = document.getElementById('tpad');
+{
+  const big = UI_ART_SRC.big, ic = UI_ART_SRC.icons;
+  tpEl.querySelectorAll('.tp-dpad i').forEach(i => { i.style.backgroundImage = `url(${[].concat(big['ar_' + i.dataset.d])[0]})`; });
+  const TB = {"atk": "art/1d49f6e542e5.webp", "sp": "art/5b41ee0111f4.webp", "ult": "art/d0df181ca6fe.webp", "bowl": "art/fb1025919639.webp", "swap": "art/6d49bb9cbb72.webp", "crew": "art/5f1580632b25.webp", "harp": "art/5987157def42.webp", "close": "art/cf2bcf9cc425.webp", "pause": "art/a177c75724f2.webp", "rotate": "art/35f3fa8159e8.webp", "full": "art/f6d3526c2f94.webp"};
+  tpEl.querySelector('.tp-pause').style.backgroundImage = `url(${TB.pause})`; tpEl.querySelector('.tp-full').style.backgroundImage = `url(${TB.full})`;
+  tpEl.querySelector('.tp-next').style.backgroundImage = `url(${TB.swap})`; tpEl.querySelector('.tp-ult').style.backgroundImage = `url(${TB.ult})`; tpEl.querySelector('.tp-sup').style.backgroundImage = `url(${TB.crew})`;
+  document.querySelector('#rotate .rot-box').style.borderImageSource = `url(${PXF_SRC.e6_window})`; document.getElementById('rotIc').style.backgroundImage = `url(${TB.rotate})`;
+  window.__TB = TB;
+  const tb = document.getElementById('tpad');
+  tb.querySelectorAll('.tp-b').forEach(b => {
+    const a = b.dataset.k; if (!a) return; const on = v => b.classList.toggle('on', v);
+    b.addEventListener('pointerdown', e => { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (_) {} press(a); on(true); });
+    const up = e => { e.preventDefault(); release(a); on(false); };
+    b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('lostpointercapture', () => { release(a); on(false); });
+    b.addEventListener('contextmenu', e => e.preventDefault());
+  });
+  // d-pad: one touch zone, direction from finger position (diagonals only in action stages)
+  const dp = document.getElementById('tpDpad'), cur = { up: false, down: false, left: false, right: false }; let pid = null;
+  const set = want => { for (const d in cur) { if (want[d] && !cur[d]) press(d); else if (!want[d] && cur[d]) release(d); cur[d] = !!want[d]; dp.querySelector(`[data-d=${d}]`).classList.toggle('on', cur[d]); } };
+  const aim = e => { const r = dp.getBoundingClientRect(), dx = (e.clientX - r.left) / r.width * 2 - 1, dy = (e.clientY - r.top) / r.height * 2 - 1, w = {};
+    if (Math.hypot(dx, dy) < 0.22) return set(w);
+    if (document.body.dataset.tp === 'act') { if (dx < -0.38) w.left = 1; if (dx > 0.38) w.right = 1; if (dy < -0.38) w.up = 1; if (dy > 0.38) w.down = 1; }
+    else if (Math.abs(dx) > Math.abs(dy)) w[dx < 0 ? 'left' : 'right'] = 1; else w[dy < 0 ? 'up' : 'down'] = 1;
+    set(w); };
+  dp.addEventListener('pointerdown', e => { e.preventDefault(); pid = e.pointerId; try { dp.setPointerCapture(pid); } catch (_) {} aim(e); });
+  dp.addEventListener('pointermove', e => { if (e.pointerId === pid) aim(e); });
+  const end = e => { if (e.pointerId !== pid) return; pid = null; set({}); };
+  dp.addEventListener('pointerup', end); dp.addEventListener('pointercancel', end);
+  // first touch: try fullscreen + landscape lock (Android); iPhone keeps the browser bar
+  const fb = document.getElementById('tpFull'), canFs = !!document.documentElement.requestFullscreen;
+  const goFs = () => { const el = document.documentElement; if (!document.fullscreenElement && el.requestFullscreen) el.requestFullscreen({ navigationUI: 'hide' }).then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {})).catch(() => {}); };
+  const fsUpd = () => fb.classList.toggle('hide', !canFs || !!document.fullscreenElement); document.addEventListener('fullscreenchange', fsUpd); fsUpd();
+  fb.addEventListener('pointerdown', e => { e.preventDefault(); goFs(); });
+  if (TOUCH_DEV) window.addEventListener('pointerdown', function fs() { window.removeEventListener('pointerdown', fs, true); const el = document.documentElement; if (!document.fullscreenElement && el.requestFullscreen) el.requestFullscreen({ navigationUI: 'hide' }).then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {})).catch(() => {}); }, true);
+}
+let tpKey = '';
+function tpSync() {
+  if (!TOUCH_DEV) return;
+  const land = innerWidth >= innerHeight;
+  document.body.classList.toggle('tp-on', land); document.body.classList.toggle('tp-rot', !land);
+  const mode = help ? 'menu' : (scene === 'stage' || scene === 'gameover') ? 'act' : scene === 'tavern' ? 'tav' : 'menu';
+  const key = mode + LANG + (mode === 'tav' && T ? T.active : ''); if (key === tpKey) return; tpKey = key; document.body.dataset.tp = mode;
+  const TB = window.__TB, Q = s => tpEl.querySelector(s);
+  const lab = (sel, img, txt) => { const b = Q(sel); if (img) b.style.backgroundImage = `url(${img})`; b.querySelector('span').textContent = tr(txt); };
+  if (mode === 'tav') { const who = T ? T.active : 0; lab('.tp-atk', TB.bowl, 'ทำงาน'); lab('.tp-sp', who === 2 ? TB.harp : TB.sp, 'สกิล'); lab('.tp-next', null, 'สลับคน'); }
+  else { lab('.tp-atk', TB.atk, 'โจมตี'); lab('.tp-sp', TB.sp, 'ท่าพิเศษ'); lab('.tp-next', null, 'สลับตัว'); }
+  lab('.tp-ult', null, 'ท่าประสาน'); lab('.tp-sup', null, 'ลูกทีม');
+  document.getElementById('rotTxt').textContent = tr('หมุนมือถือเป็นแนวนอนเพื่อเล่น');
+}
+
 /* ================================================================== LOOP */
 const STEP = 1 / 60;
 let last = performance.now(), acc = 0;
@@ -2856,6 +2958,7 @@ function frame(now) {
   while (acc >= STEP) { update(STEP); acc -= STEP; }
   draw();
   bgmSync();
+  tpSync();
   requestAnimationFrame(frame);
 }
 window.__tk = { sfxBuf: SFX_BUF, makeEnemy, get help() { return help; }, set help(v) { help = v; }, set scene(v) { scene = v; }, get scene() { return scene; }, get S() { return S; }, get T() { return T; }, startStage, startTavern, finishStage, step: n => { for (let i = 0; i < n; i++) update(STEP); draw(); }, press, release, pressed, keys, save: () => save };
