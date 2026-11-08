@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Tavern Knights</string>
+    <string name="title_activity_main">Tavern Knights</string>
+    <string name="package_name">dev.rochano.tavernknights</string>
+    <string name="custom_url_scheme">dev.rochano.tavernknights</string>
+</resources>

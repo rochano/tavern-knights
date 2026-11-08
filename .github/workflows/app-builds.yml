@@ -1,0 +1,82 @@
+# Builds the store versions of the game from apps/. Run it from the Actions tab ("Run workflow").
+# Outputs (Actions run > Artifacts):
+#   android-debug-apk   install on a phone to test
+#   android-release-aab upload to Google Play (signed when the ANDROID_* secrets are set)
+#   steam-windows / steam-linux / steam-macos  folders to upload to Steam with SteamPipe
+#   ios-simulator-build compile check only; the real iOS upload is done from Xcode on a Mac
+name: App builds
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+defaults:
+  run:
+    working-directory: apps
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: apps/package-lock.json }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - run: npm ci
+      - run: npm run cap:sync -- android
+      - name: Build debug APK and release AAB
+        working-directory: apps/android
+        run: ./gradlew --no-daemon assembleDebug bundleRelease
+      - name: Sign AAB with the upload key (only when secrets exist)
+        if: ${{ env.KS != '' }}
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        working-directory: apps/android
+        run: |
+          echo "$KS" | base64 -d > upload.jks
+          jarsigner -keystore upload.jks -storepass "$KS_PASS" -keypass "$KEY_PASS" \
+            app/build/outputs/bundle/release/app-release.aab "$KEY_ALIAS"
+          rm upload.jks
+      - uses: actions/upload-artifact@v4
+        with: { name: android-debug-apk, path: apps/android/app/build/outputs/apk/debug/*.apk }
+      - uses: actions/upload-artifact@v4
+        with: { name: android-release-aab, path: apps/android/app/build/outputs/bundle/release/*.aab }
+
+  desktop:
+    strategy:
+      matrix:
+        include:
+          - { os: windows-latest, target: win, name: steam-windows }
+          - { os: ubuntu-latest, target: linux, name: steam-linux }
+          - { os: macos-latest, target: mac, name: steam-macos }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: apps/package-lock.json }
+      - run: npm ci
+      - run: npm run steam:${{ matrix.target }}
+        env: { CSC_IDENTITY_AUTO_DISCOVERY: 'false' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: |
+            apps/dist/
+            !apps/dist/*.yml
+
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: apps/package-lock.json }
+      - run: npm ci
+      - run: npm run cap:sync -- ios
+      - name: Compile for the simulator (no signing)
+        working-directory: apps/ios/App
+        run: xcodebuild -project App.xcodeproj -scheme App -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build

@@ -1,0 +1,14 @@
+{
+  "appId": "dev.rochano.tavernknights",
+  "appName": "Tavern Knights",
+  "webDir": "www",
+  "backgroundColor": "#1a1210",
+  "ios": {
+    "contentInset": "never",
+    "allowsLinkPreview": false,
+    "scrollEnabled": false
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}
