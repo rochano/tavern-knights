@@ -131,32 +131,35 @@ canvas{width:100%;height:100%;display:block;image-rendering:pixelated;touch-acti
 body.tp-on #tpad{display:block}
 #tpad{position:fixed;inset:0;pointer-events:none;z-index:6;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 #tpad *{pointer-events:auto;touch-action:none}
-.tp-dpad{position:absolute;left:calc(2.5vmin + env(safe-area-inset-left,0px));bottom:3vmin;width:42vmin;height:42vmin;opacity:.82}
+.tp-dpad{position:absolute;left:calc(2vmin + env(safe-area-inset-left,0px));bottom:2vmin;width:30vmin;height:30vmin;opacity:.6}
 .tp-dpad{background:center/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 2px 3px #000a)}
 .tp-dpad i{display:none!important}
-.tp-knob{position:absolute;left:50%;top:50%;width:18vmin;height:18vmin;margin:-9vmin 0 0 -9vmin;background:center/contain no-repeat;image-rendering:pixelated;pointer-events:none!important;transition:transform .09s ease-out;filter:drop-shadow(0 3px 2px #000b)}
+.tp-knob{position:absolute;left:50%;top:50%;width:13vmin;height:13vmin;margin:-6.5vmin 0 0 -6.5vmin;background:center/contain no-repeat;image-rendering:pixelated;pointer-events:none!important;transition:transform .09s ease-out;filter:drop-shadow(0 3px 2px #000b)}
 .tp-knob.on{transition:none}
 .tp-dpad x{position:absolute;width:15vmin;height:15vmin;background:center/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 2px 2px #0008);transition:transform .05s}
 .tp-dpad i.u{left:13.5vmin;top:0}.tp-dpad i.d{left:13.5vmin;bottom:0}.tp-dpad i.l{left:0;top:13.5vmin}.tp-dpad i.r{right:0;top:13.5vmin}
 .tp-dpad i.on{transform:scale(.88);filter:brightness(1.35) drop-shadow(0 0 4px #ffd76a)}
-.tp-acts{position:absolute;right:calc(2.5vmin + env(safe-area-inset-right,0px));bottom:3vmin;width:58vmin;height:46vmin}
-.tp-b{position:absolute;box-sizing:border-box;margin:0;padding:0;border:0;background:center/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 2px 2px #000a);opacity:.88;cursor:pointer;transition:transform .05s}
-.tp-b span{position:absolute;left:50%;bottom:-1.2vmin;transform:translateX(-50%);font-family:var(--thai);font-weight:600;font-size:max(10px,2.5vmin);color:#f6ead2;text-shadow:0 1px 0 #000,0 0 3px #000,0 0 3px #000;white-space:nowrap;pointer-events:none}
+.tp-acts{position:absolute;right:calc(2vmin + env(safe-area-inset-right,0px));bottom:2vmin;width:42vmin;height:34vmin}
+.tp-b{position:absolute;box-sizing:border-box;margin:0;padding:0;border:0;background:center/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 2px 2px #000a);opacity:.62;cursor:pointer;transition:transform .05s}
+.tp-b span{position:absolute;left:50%;bottom:-1.2vmin;transform:translateX(-50%);font-family:var(--thai);font-weight:600;font-size:max(9px,2.1vmin);color:#f6ead2;text-shadow:0 1px 0 #000,0 0 3px #000,0 0 3px #000;white-space:nowrap;pointer-events:none}
 .tp-b.on{transform:scale(.88);opacity:1;filter:brightness(1.25) drop-shadow(0 0 5px #ffd76a)}
-.tp-atk{right:0;bottom:1vmin;width:22vmin;height:22vmin}
-.tp-sp{right:23vmin;bottom:1vmin;width:16vmin;height:16vmin}
-.tp-ult{right:3vmin;bottom:25vmin;width:16vmin;height:16vmin}
-.tp-next{right:21vmin;bottom:20vmin;width:14vmin;height:14vmin}
-.tp-sup{right:40vmin;bottom:1vmin;width:14vmin;height:14vmin}
-.tp-pause{left:calc(1.5vmin + env(safe-area-inset-left,0px));top:1.5vmin;width:11vmin;height:11vmin}
-.tp-full{left:calc(14vmin + env(safe-area-inset-left,0px));top:1.5vmin;width:11vmin;height:11vmin}
+.tp-atk{right:0;bottom:1vmin;width:16vmin;height:16vmin}
+.tp-sp{right:17vmin;bottom:1vmin;width:11.5vmin;height:11.5vmin}
+.tp-ult{right:2vmin;bottom:18.5vmin;width:11.5vmin;height:11.5vmin}
+.tp-next{right:15.5vmin;bottom:14.5vmin;width:10vmin;height:10vmin}
+.tp-sup{right:29.5vmin;bottom:1vmin;width:10vmin;height:10vmin}
+.tp-pause{left:calc(1.5vmin + env(safe-area-inset-left,0px));top:1.5vmin;width:9vmin;height:9vmin}
+.tp-full{left:calc(11.5vmin + env(safe-area-inset-left,0px));top:1.5vmin;width:9vmin;height:9vmin}
 .tp-full.hide{display:none}
 body[data-tp=tav] .tp-ult,body[data-tp=tav] .tp-sup{display:none}
 body[data-tp=menu] #tpad{display:none}
 body[data-tp=title] .tp-sp,body[data-tp=title] .tp-ult,body[data-tp=title] .tp-next,body[data-tp=title] .tp-sup,body[data-tp=title] .tp-pause,body[data-tp=title] .tp-full{display:none}
 body[data-tp=title] .tp-back{display:none}
 body[data-tp=title][data-tpp] .tp-back{display:block}
-.tp-back{right:25vmin;bottom:2vmin;width:16vmin;height:16vmin;display:none}
+.tp-back{right:18vmin;bottom:2vmin;width:12vmin;height:12vmin;display:none}
+body.tp-on,body.tp-on .wrap{touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none}
+body.tp-on header{display:none!important}
+html:has(body.tp-on){overscroll-behavior:none;touch-action:none}
 body.tp-rot .wrap{position:fixed;top:0;left:100vw;width:100vh;height:100vw;transform-origin:0 0;transform:rotate(90deg)}
 body.tp-rot #tpad{display:block}
 #rotate{position:fixed;inset:0;z-index:9;background:#0c0a10f2;align-items:center;justify-content:center;padding:24px}
@@ -1457,7 +1460,9 @@ function updateStage(dt) {
   if (!S.bossOn && p.x > ARENA + 60) { S.bossOn = true; spawnBoss(); S.banner = { text: 'KING SHROOMBA', sub: 'ราชาเห็ดสปอร์พิษ', t: 2.2, boss: true }; say('ราชาเห็ด', 'ใครกล้าบุกป่าเห็ดของข้า! จงกลายเป็นปุ๋ยซะ!', 3); }
 
   /* camera */
-  const target = S.bossOn ? ARENA : clamp(p.x - 150 + p.face * 20, 0, LEVEL_W - W);
+  const camMin = document.body.classList.contains('tp-on') ? -110 : 0; /* touch: keep the knight clear of the joystick */
+  const target = S.bossOn ? ARENA : clamp(p.x - 150 + p.face * 20, camMin, LEVEL_W - W);
+  if (S.t < 0.05 && camMin < 0 && S.camX === 0) S.camX = target;
   S.camX += (target - S.camX) * Math.min(1, dt * (S.bossOn ? 4 : 6));
   if (!S.bossOn) S.camX = Math.max(S.camX, Math.min(target, S.camX));
 
@@ -2885,6 +2890,7 @@ document.body.classList.toggle('touch-on', matchMedia('(pointer: coarse)').match
 
 /* ---- mobile landscape controls ---- */
 const TOUCH_DEV = matchMedia('(pointer: coarse)').matches;
+if (TOUCH_DEV) { const stop = e => { if (e.cancelable) e.preventDefault(); }; document.addEventListener('touchmove', stop, { passive: false }); document.addEventListener('gesturestart', stop, { passive: false }); document.addEventListener('dblclick', stop, { passive: false }); let lastT = 0; document.addEventListener('touchend', e => { const n = Date.now(); if (n - lastT < 350 && e.cancelable) e.preventDefault(); lastT = n; }, { passive: false }); }
 const tpEl = document.getElementById('tpad');
 {
   const big = UI_ART_SRC.big, ic = UI_ART_SRC.icons;
