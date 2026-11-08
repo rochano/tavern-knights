@@ -355,7 +355,9 @@ function applyLangDom() {
   const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n;
   while ((n = w.nextNode())) { if (n.parentNode && /^(SCRIPT|STYLE)$/.test(n.parentNode.nodeName)) continue; if (!_domTh.has(n)) { if (!_TH.test(n.nodeValue)) continue; _domTh.set(n, n.nodeValue); } const o = _domTh.get(n); n.nodeValue = LANG === 'th' ? o : tr(o.trim()) === o.trim() ? o : o.replace(o.trim(), tr(o.trim())); }
 }
-function setLang(l) { LANG = l; _trC.clear(); try { localStorage.setItem('tk-lang', l); } catch (e) {} applyLangDom(); if (typeof btnMute !== 'undefined') btnMute.textContent = tr('เสียง: ') + tr(muted ? 'ปิด' : 'เปิด'); if (typeof btnReset !== 'undefined') btnReset.textContent = tr('ล้างเซฟ'); }
+// analytics: sends game events to Google Analytics (gtag) when the page has it; no-op otherwise
+function track(name, params) { try { const p = Object.assign({ lang: LANG }, params || {}); if (window.gtag) window.gtag('event', name, p); (window.__track = window.__track || []).push([name, p]); } catch (e) {} }
+function setLang(l) { if (l !== LANG) track('language_change', { to: l }); LANG = l; _trC.clear(); try { localStorage.setItem('tk-lang', l); } catch (e) {} applyLangDom(); if (typeof btnMute !== 'undefined') btnMute.textContent = tr('เสียง: ') + tr(muted ? 'ปิด' : 'เปิด'); if (typeof btnReset !== 'undefined') btnReset.textContent = tr('ล้างเซฟ'); }
 ctx.imageSmoothingEnabled = false;
 
 const FONT = '"Pixelify Sans","Courier New",monospace';
@@ -974,6 +976,7 @@ function dmgMul() { return (1 + 0.2 * save.up.blade + (save.up.legend ? 0.5 : 0)
 
 let S = null;
 function startStage(checkpoint) {
+  track(checkpoint ? 'stage_retry' : 'stage_start', { stage: 1 });
   const prevLoot = S && checkpoint ? S.loot : null, prevKills = S && checkpoint ? S.kills : 0, prevWall = S && checkpoint ? S.wall.broken : false, prevVault = S && checkpoint ? S.vaultOpened : false;
   S = {
     t: 0, camX: 0, paused: false,
@@ -1146,6 +1149,7 @@ function bossDefeated(b) {
   const ember = b.burn > 0;
   if (ember) S.loot.ember++;
   S.end = { t: 0, ember };
+  track('boss_defeated', { stage: 1, boss: 'king_shroomba', ember: ember ? 1 : 0, time_s: Math.round(S.t) });
   for (let n = 0; n < 60; n++) S.parts.push({ x: b.x + b.w / 2, y: b.y + b.h / 2, vx: rnd(-220, 220), vy: rnd(-260, 40), life: 1.2, max: 1.2, col: pick(['#a056c9', '#f1e3ff', '#ffd35a', '#ff6b2c']), size: 4, grav: true });
 }
 
@@ -1902,6 +1906,7 @@ const ARROWS = ['up', 'down', 'left', 'right'];
 const ARROW_GLYPH = { up: '↑', down: '↓', left: '←', right: '→' };
 let T = null;
 function startTavern() {
+  track('tavern_start');
   T = {
     t: 0, dur: 80, sel: 6, active: 2, kpos: HOME.map(h => STATIONS[h].x), seats: [0, 1, 2, 3].map(() => ({ cust: null, dirty: false, cleanT: 0 })),
     gold: 0, served: 0, angry: 0, kicked: 0, beers: [], dishes: [], bowls: 4, pile: 0, pour: null, cook: null, harpCd: 0, harpT: 0, robber: null, fire: null,
@@ -2110,6 +2115,7 @@ function finishCook() {
 let night = null;
 function endTavern() {
   T.over = true; T.overT = 0;
+  track('tavern_end', { gold: T.gold, served: T.served, angry: T.angry });
   const stars = clamp(Math.round((T.served * 1 - T.angry * 1.5) / 4), 0, 5);
   save.gold += T.gold; save.best = Math.max(save.best, T.gold); persist();
   night = { gold: T.gold, served: T.served, angry: T.angry, kicked: T.kicked, stars, usedGlow: T.usedGlow };
@@ -2351,6 +2357,7 @@ function updateAlchemy(dt) {
     if (why) { SFX.fail(); alcMsg = { str: why, t: 1.6, col: '#ff8a7a' }; return; }
     for (const k in r.need) save.ing[k] -= r.need[k];
     save.gold -= recipeGold(r); r.apply(); persist(); alcFx = 1.2; SFX.ult();
+    track('craft', { item: r.id, kind: r.kind });
     alcMsg = { str: (r.kind === 'Cook' ? 'ปรุงสำเร็จ: ' : 'คราฟต์สำเร็จ: ') + r.th, t: 1.8, col: '#9be15d' };
   }
 }
@@ -2627,6 +2634,7 @@ let scene = 'title', titleT = 0;
 const TITLE_MENU = [[560, 513, 832, 547], [570, 553, 812, 588], [580, 592, 802, 624], [470, 630, 937, 666], [470, 672, 932, 708]].map(b => b.map(v => v * 400 / 1376));
 let titleSel = 0, titlePanel = null, optSel = 0;
 function titleAct(i) {
+  track('title_menu', { item: ['start', 'options', 'about', 'credits', 'tavern_mode'][i] || i });
   SFX.select();
   if (i === 0) { scene = 'map'; mapSel = 0; }
   else if (i === 1) { titlePanel = 'options'; optSel = 0; }
