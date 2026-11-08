@@ -444,7 +444,12 @@ const TOUCH_TXT = {
 };
 let tpOnTxt = false;
 function touchT(s) { if (!tpOnTxt || typeof s !== 'string') return s; const r = TOUCH_TXT[s]; if (r !== undefined) return r; return s.startsWith('J/คลิก: ') ? 'แตะ: ' + s.slice(8) : s; }
-{ const ft = ctx.fillText.bind(ctx), mt = ctx.measureText.bind(ctx); ctx.fillText = (s, x, y, m) => m === undefined ? ft(tr(touchT(s)), x, y) : ft(tr(touchT(s)), x, y, m); ctx.measureText = s => mt(tr(touchT(s))); }
+{ const ft = ctx.fillText.bind(ctx), mt = ctx.measureText.bind(ctx);
+  // align by hand: some mobile in-app browsers (iOS Facebook/LINE webviews) ignore canvas textAlign, which left-aligned centred menus
+  ctx.fillText = (s, x, y, m) => { const t = tr(touchT(s)), a = ctx.textAlign;
+    if (a === 'center' || a === 'right' || a === 'end') { let w = mt(t).width; if (m !== undefined) w = Math.min(w, m); ctx.textAlign = 'left'; x -= a === 'center' ? w / 2 : w; if (m === undefined) ft(t, x, y); else ft(t, x, y, m); ctx.textAlign = a; return; }
+    if (m === undefined) ft(t, x, y); else ft(t, x, y, m); };
+  ctx.measureText = s => mt(tr(touchT(s))); }
 const _domTh = new WeakMap();
 function applyLangDom() {
   document.documentElement.lang = LANG;
@@ -2786,14 +2791,14 @@ function updateTitle(dt) {
 }
 // title words drawn per language over the text-free title art (the painted Thai plate/menu were inpainted out)
 function outlineText(str, x, y, size, fill, stroke, lw, weight) {
-  ctx.save(); ctx.font = `${weight || 700} ${size}px ${THAI}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.lineJoin = 'round'; ctx.lineWidth = lw; ctx.strokeStyle = stroke; ctx.strokeText(str, x, y);
+  ctx.save(); ctx.font = `${Math.min(600, weight || 600)} ${size}px ${THAI}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = stroke; const r = lw / 2; for (let k = 0; k < 16; k++) { const an = k * Math.PI / 8; ctx.fillText(str, x + Math.cos(an) * r, y + Math.sin(an) * r); }
   ctx.fillStyle = fill; ctx.fillText(str, x, y); ctx.restore();
 }
 function drawTitleWords() {
   const en = LANG === 'en';
   const sub = en ? 'Three Tom Yum Knights' : 'สามอัศวินต้มยำกุ้ง';
-  let sz = en ? 17 : 21; ctx.font = `700 ${sz}px ${THAI}`; while (ctx.measureText(sub).width > 146 && sz > 9) { sz -= 0.5; ctx.font = `700 ${sz}px ${THAI}`; }
+  let sz = en ? 17 : 21; ctx.font = `600 ${sz}px ${THAI}`; while (ctx.measureText(sub).width > 146 && sz > 9) { sz -= 0.5; ctx.font = `600 ${sz}px ${THAI}`; }
   const g = ctx.createLinearGradient(0, 43, 0, 60); g.addColorStop(0, '#fff3b0'); g.addColorStop(0.5, '#ffc93c'); g.addColorStop(1, '#e8861e');
   outlineText(sub, 199, en ? 52 : 51, sz, g, '#3a1d0c', 3, 700);
   const labels = en ? ['Start Game', 'Options', 'About', 'Ending / Credits', 'Tavern Mode'] : ['เริ่มเกม', 'ตัวเลือก', 'เกี่ยวกับ', 'ฉากจบ / เครดิต', 'โหมดบริหารร้าน'];
