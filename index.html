@@ -164,6 +164,7 @@ body[data-tp=map][data-tpp] .tp-atk,body[data-tp=map][data-tpp] .tp-sp{display:n
 body[data-tp=title][data-tpp] .tp-back{display:block}
 body[data-tpn] #tpad{display:none!important}
 body.tp-name .stage{align-items:flex-start}
+body.tp-namez .stage{overflow:hidden}body.tp-namez .screen{transform:scale(1.75);transform-origin:50% 28%} /* upright phone: zoom in on the name box so it fills the space above the keyboard */
 .tp-back{right:18vmin;bottom:2vmin;width:12vmin;height:12vmin;display:none}
 body.tp-on,body.tp-on .wrap{touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none}
 body.tp-on header{display:none!important}
@@ -3218,7 +3219,7 @@ function tpRotFit(rot) { /* Safari/LINE: 100vh includes the area under the brows
 function tpSync() {
   if (!TOUCH_DEV) return;
   const land = innerWidth >= innerHeight || nameEdit; /* while typing a name, lay the game flat at the top so the phone keyboard never covers it (X/FB in-app browsers don't resize for the keyboard) */
-  document.body.classList.toggle('tp-name', nameEdit);
+  document.body.classList.toggle('tp-name', nameEdit); document.body.classList.toggle('tp-namez', nameEdit && innerWidth < innerHeight);
   document.body.classList.toggle('tp-on', true); tpOnTxt = true; document.body.classList.toggle('tp-rot', !land); tpRotFit(!land);
   const mode = help ? 'menu' : (scene === 'stage' || scene === 'gameover') ? 'act' : scene === 'tavern' ? 'tav' : scene === 'title' ? 'title' : scene === 'map' ? 'map' : 'menu';
   if ((titlePanel && scene === 'title') || (mapRank && scene === 'map')) document.body.dataset.tpp = '1'; else delete document.body.dataset.tpp;
