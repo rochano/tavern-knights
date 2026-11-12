@@ -12,6 +12,7 @@ Tavern Knights follows three down-on-their-luck knights who secretly run The Tip
 - Ultimate: Ultimate Tavern Combo, a giant boiling tom yum pot that clears the screen
 - Tavern night shift: rhythm cooking with arrow keys, pouring beer, serving, washing dishes, thieves, VIP guests, kitchen fires
 - Save: progress is stored in the player's browser
+- Online leaderboard: weekly and all-time rankings for stage score, stage time and tavern gold
 - Controls: arrows/WASD move, Up/Space jump, J/Z attack, K/X special, L/V ultimate, 1-3 swap knight, C call crew, H help, Esc pause
 
 ## Links
@@ -21,3 +22,10 @@ Tavern Knights follows three down-on-their-luck knights who secretly run The Tip
 
 ## Languages
 - Thai and English. The game picks the language from the browser; switch in Options > Language, or open https://tavern-knights.pages.dev/?lang=en
+
+## FAQ
+- Is Tavern Knights free? Yes, completely free in the browser, no download or account.
+- Does it work on mobile? Yes, with touch controls; keyboard and mouse on a computer is the most comfortable.
+- Which languages? Thai and English.
+- Who made it? Rochano Developer Teams, an independent game team.
+- What games is it like? 90s arcade beat 'em ups combined with a tavern-management and rhythm-cooking mini-game.
