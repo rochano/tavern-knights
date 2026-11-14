@@ -60,6 +60,8 @@
 </script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-WV2GZHVWD6"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-WV2GZHVWD6');</script>
+<script src="https://gstats.pages.dev/sdk/analytics.js" defer></script>
+<script>window.addEventListener('DOMContentLoaded',function(){try{if(!window.gstats)return;gstats.init({key:'pk_4NJMHKWlQCNuBUO48qvYaWsO',host:'https://gstats.pages.dev'});(window.__track||[]).forEach(function(e){gstats.capture(e[0],e[1])});gstats.__ready=true}catch(e){}});</script>
 <link rel="alternate" hreflang="th" href="https://tavern-knights.pages.dev/">
 <link rel="alternate" hreflang="en" href="https://tavern-knights.pages.dev/?lang=en">
 <link rel="alternate" hreflang="x-default" href="https://tavern-knights.pages.dev/">
@@ -507,8 +509,8 @@ function applyLangDom() {
   const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n;
   while ((n = w.nextNode())) { if (n.parentNode && /^(SCRIPT|STYLE)$/.test(n.parentNode.nodeName)) continue; if (!_domTh.has(n)) { if (!_TH.test(n.nodeValue)) continue; _domTh.set(n, n.nodeValue); } const o = _domTh.get(n); n.nodeValue = LANG === 'th' ? o : tr(o.trim()) === o.trim() ? o : o.replace(o.trim(), tr(o.trim())); }
 }
-// analytics: sends game events to Google Analytics (gtag) when the page has it; no-op otherwise
-function track(name, params) { try { const p = Object.assign({ lang: LANG }, params || {}); if (window.gtag) window.gtag('event', name, p); (window.__track = window.__track || []).push([name, p]); } catch (e) {} }
+// analytics: sends game events to Google Analytics (gtag) and gstats when loaded; events before gstats loads are replayed from __track
+function track(name, params) { try { const p = Object.assign({ lang: LANG }, params || {}); if (window.gtag) window.gtag('event', name, p); if (window.gstats && window.gstats.__ready) window.gstats.capture(name, p); (window.__track = window.__track || []).push([name, p]); } catch (e) {} }
 /* ------------------------------------------------ online ranking (phase 1) */
 // Talks to functions/api (Cloudflare Pages Function + D1). Same origin on the web (develop -> staging DB, main -> production DB);
 // the store apps (app:// or capacitor://) use production. Everything fails soft: with no network or no database NET.on
