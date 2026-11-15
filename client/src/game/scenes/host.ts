@@ -19,7 +19,7 @@ export interface DrawKit {
   readonly H: number;
   /** canvas px per world unit */
   readonly RES: number;
-  readonly ENV: ImgTable<'cellar' | 'cellar2' | 'map'>;
+  readonly ENV: ImgTable<'cellar' | 'cellar2' | 'map' | 'title' | 'title_clean' | 'tavern' | 'tav2'>;
   readonly UI_BIG: ImgTable<'dialog' | 'frame_dark' | 'frame_blue'>;
   readonly fxArtReady: boolean;
   readonly uiArtReady: boolean;
