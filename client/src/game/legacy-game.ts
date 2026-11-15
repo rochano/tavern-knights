@@ -1,229 +1,14 @@
-<!doctype html>
-<html lang="th">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="description" content="Tavern Knights: สามอัศวินต้มยำกุ้ง เกมแอ็กชันเลื่อนฉากพิกเซล 16-bit ผสมเกมบริหารร้านเหล้า เล่นฟรีบนเบราว์เซอร์ ไม่ต้องติดตั้ง สลับอัศวิน 3 คน สู้ราชาเห็ด แล้วกลับมาเปิดร้านกะดึก">
-<link rel="canonical" href="https://tavern-knights.pages.dev/">
-<meta name="robots" content="index,follow,max-image-preview:large">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Tavern Knights">
-<meta property="og:title" content="Tavern Knights: สามอัศวินต้มยำกุ้ง">
-<meta property="og:description" content="เกมแอ็กชันพิกเซล 16-bit ผสมเกมบริหารร้านเหล้า เล่นฟรีบนเบราว์เซอร์">
-<meta property="og:url" content="https://tavern-knights.pages.dev/">
-<meta property="og:image" content="https://tavern-knights.pages.dev/img/og.jpg">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:locale" content="th_TH">
-<meta property="og:locale:alternate" content="en_US">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Tavern Knights: สามอัศวินต้มยำกุ้ง">
-<meta name="twitter:description" content="16-bit pixel action side-scroller + tavern management. Free in your browser.">
-<meta name="twitter:image" content="https://tavern-knights.pages.dev/img/og.jpg">
-<link rel="icon" href="img/e6_btn_s.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap">
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "VideoGame",
-  "name": "Tavern Knights: สามอัศวินต้มยำกุ้ง",
-  "alternateName": "Tavern Knights",
-  "url": "https://tavern-knights.pages.dev/",
-  "image": "https://tavern-knights.pages.dev/img/og.jpg",
-  "screenshot": [
-    "https://tavern-knights.pages.dev/img/stage.jpg",
-    "https://tavern-knights.pages.dev/img/ult.jpg",
-    "https://tavern-knights.pages.dev/img/tavern.jpg"
-  ],
-  "description": "เกมแอ็กชันเลื่อนฉากพิกเซล 16-bit ผสมเกมบริหารร้านเหล้า อัศวินตกอับ 3 คนสู้มอนสเตอร์ในป่าเห็ดพิษ แล้วกลับมาเปิดร้าน The Tipsy Dragon กะดึก",
-  "genre": ["Action", "Side-scroller", "Beat 'em up", "Management", "Rhythm"],
-  "gamePlatform": ["Web browser", "PC"],
-  "applicationCategory": "Game",
-  "operatingSystem": "Any (web browser)",
-  "inLanguage": ["th", "en"],
-  "playMode": "SinglePlayer",
-  "isAccessibleForFree": true,
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "THB" },
-  "author": { "@type": "Organization", "name": "Rochano Developer Teams" },
-  "character": [
-    { "@type": "Person", "name": "Arthur" },
-    { "@type": "Person", "name": "Rosemary" },
-    { "@type": "Person", "name": "Percival" }
-  ],
-  "potentialAction": { "@type": "PlayAction", "target": "https://tavern-knights.pages.dev/" }
-}
-</script>
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-WV2GZHVWD6"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-WV2GZHVWD6');</script>
-<link rel="alternate" hreflang="th" href="https://tavern-knights.pages.dev/">
-<link rel="alternate" hreflang="en" href="https://tavern-knights.pages.dev/?lang=en">
-<link rel="alternate" hreflang="x-default" href="https://tavern-knights.pages.dev/">
-</head>
-<body>
-<div id="tk-loader" role="status" aria-live="polite">
- <div class="tkl-box"><p class="tkl-name">Tavern Knights</p><p class="tkl-sub">สามอัศวินต้มยำกุ้ง</p>
- <div class="tkl-bar"><div class="tkl-fill" id="tkl-fill"></div></div><p class="tkl-txt" id="tkl-txt">กำลังโหลดเกม 0%</p></div>
-</div>
-<style>
-/* Loading screen: frame and bar are the game's E6 wood art */
-#tk-loader{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#160f1c;transition:opacity .35s;font-family:"Mitr","Sarabun",system-ui,sans-serif;color:#f6ead2}
-#tk-loader.done{opacity:0;pointer-events:none}
-.tkl-box{width:min(420px,calc(100vw - 32px));border-style:solid;border-width:40px 36px;border-image:url(img/e6_window.png) 22 20 fill / 40px 36px stretch;image-rendering:pixelated;text-align:center;padding:4px 6px}
-.tkl-name{margin:0;font-size:28px;font-weight:600;color:#ffd76a;letter-spacing:.02em}
-.tkl-sub{margin:0 0 14px;font-size:18px;color:#f6ead2}
-.tkl-bar{height:30px;border-style:solid;border-width:6px 10px;border-image:url(img/e6_btn_n.png) 6 10 fill / 6px 10px stretch;image-rendering:pixelated;position:relative}
-.tkl-fill{position:absolute;left:-6px;top:-4px;bottom:-4px;width:0;border-style:solid;border-width:6px 10px;border-image:url(img/e6_btn_s.png) 6 10 fill / 6px 10px stretch;image-rendering:pixelated;transition:width .15s}
-.tkl-txt{margin:12px 0 0;font-size:16px;color:#cbb8a4}
-</style>
-<script>
-(function(){var EN=(function(){try{var q=new URLSearchParams(location.search).get('lang');if(q)return q==='en';var v=localStorage.getItem('tk-lang');if(v)return v==='en';}catch(e){}return !/^th/i.test(navigator.language||'th');})(),LD=EN?'Loading game ':'กำลังโหลดเกม ',RD=EN?'Ready!':'พร้อมแล้ว!';var L=["art/000068ed4e9e.webp", "art/0031f48f5f66.webp", "art/003ce3dd268f.webp", "art/00a8f99e9997.webp", "art/0232da02ce3e.webp", "art/028aa087ed87.webp", "art/02a34b717380.webp", "art/0372e7c6b70c.webp", "art/03c3632c6373.webp", "art/048e148394c3.webp", "art/055b316f97a6.webp", "art/06c848fe0a22.webp", "art/07ab264c5025.webp", "art/07eed0a7f29b.webp", "art/08bd5ffeb7b3.webp", "art/093efa188024.webp", "art/09cd7d9449c9.webp", "art/0a0594b996fe.webp", "art/0aed31fb1fab.webp", "art/0b7c573dab5f.webp", "art/0bda727062c3.webp", "art/0beff53f5f83.webp", "art/0c5a8837e78f.webp", "art/0cdd9d727127.webp", "art/0d0aa4e630ca.webp", "art/0d5f6d89cd5c.webp", "art/0e478646cba1.webp", "art/106a395106e2.webp", "art/10a124c545ef.webp", "art/10ad53c15394.webp", "art/122c310616f6.webp", "art/12829c42bde2.webp", "art/162b6e4ff9dc.webp", "art/175a789a72ad.webp", "art/17b52d1dd910.webp", "art/1810493f8207.webp", "art/181d43739390.webp", "art/199c4428304c.webp", "art/19e0382ecc32.webp", "art/19e45df9e780.webp", "art/1a243998eb0f.webp", "art/1b41e708e760.webp", "art/1b614503ed5a.webp", "art/1bb86c24759f.webp", "art/1cb91e0dbace.webp", "art/1d49f6e542e5.webp", "art/1d66222b82a1.webp", "art/1da7b2f1021c.webp", "art/1dd1a1db4c14.webp", "art/1de7f53ed7d5.webp", "art/1ebfad5ebe40.webp", "art/1fbf9b9f3434.webp", "art/2020d736a93c.webp", "art/202b9dcde076.webp", "art/2076edbe904a.webp", "art/2099746c4518.webp", "art/20b12e112451.webp", "art/20b632c97698.webp", "art/2100aa268b25.webp", "art/2122d44f9919.webp", "art/21868f4f8e05.webp", "art/218a9b83e984.webp", "art/21f3017ae152.webp", "art/22074b9c9c1f.webp", "art/229b6170159d.webp", "art/24f7157dd4f8.webp", "art/2506aba9af43.webp", "art/255915e4bdfd.webp", "art/25b3a6d4ff6d.webp", "art/25bcf1b96d48.webp", "art/2880a045d900.webp", "art/28a6c5a024c6.webp", "art/28bbdc169136.webp", "art/28d39ede963c.webp", "art/2b24eeb1b647.webp", "art/2b3200d4e528.webp", "art/2b824c58c597.webp", "art/2cbe197c4aaf.webp", "art/2cc1ad4a231c.webp", "art/2f8571dc129e.webp", "art/2fec1f9ad44c.webp", "art/30085e64c62d.webp", "art/31ab7bb93e68.webp", "art/331290a1e7d4.webp", "art/33e3afbce049.webp", "art/3551cc2ed4bd.webp", "art/35f3fa8159e8.webp", "art/36ab70487458.webp", "art/3724f6dfcb63.webp", "art/37585b85db1a.webp", "art/37aa4d4e44b4.webp", "art/3843b6e9a209.webp", "art/386b5cb1c4d6.webp", "art/38948f2a721c.webp", "art/38e18ccec490.webp", "art/39981ae658c7.webp", "art/39d952631a19.webp", "art/3b4248c48a74.webp", "art/3b4d1a07b887.webp", "art/3bbc941019bd.webp", "art/3c1b88dad134.webp", "art/3c214057ee3d.webp", "art/3c278279e5c4.webp", "art/3cc96cf4901a.webp", "art/3e06801ff9e9.webp", "art/3e3d98d3206c.webp", "art/3f05c5ee9e9f.webp", "art/3f24e2506648.webp", "art/3f4158abf723.webp", "art/404d86490f83.webp", "art/412cee0ecc51.webp", "art/416cd4469bd2.webp", "art/41cf174a47d6.webp", "art/4213276dd97d.webp", "art/435224a57109.webp", "art/43de0bc3498e.webp", "art/440329a7de6e.webp", "art/4526973d512e.webp", "art/478e2ca570d9.webp", "art/47a623b8d4ef.webp", "art/480725af69f4.webp", "art/481cb509c537.webp", "art/488080744d0f.webp", "art/48a24c2717a7.webp", "art/4a8021fc9033.webp", "art/4c1b37d84f42.webp", "art/4c5078272bc3.webp", "art/4c54bf6aebb1.webp", "art/4c5c454b29b5.webp", "art/4cdc2626734b.webp", "art/4d0862ffac8d.webp", "art/4dd2e5a6ccb4.webp", "art/4eaedc2dfbd3.webp", "art/4fd96ff91644.webp", "art/5010b78d4ae1.webp", "art/512b1d0c4893.webp", "art/513a479ba1d3.webp", "art/52323a7b164e.webp", "art/524ffe4e6d95.webp", "art/54ee5043c83b.webp", "art/559c329846ee.jpg", "art/55d67ed13c86.jpg", "art/55f4a000d34d.webp", "art/561a337b3609.webp", "art/5637149a8930.webp", "art/5656002627ce.webp", "art/5696ded86c74.webp", "art/587f0d3bb0d2.webp", "art/590aa3c8b774.webp", "art/5928ccd840a5.webp", "art/595661e454f1.webp", "art/5987157def42.webp", "art/5a6a4277036a.webp", "art/5ad65ab530a8.webp", "art/5b41ee0111f4.webp", "art/5b504b2c348a.webp", "art/5bab3fd979f4.webp", "art/5be5f7e07ecc.webp", "art/5be9cbb147c5.webp", "art/5dad9eb7fc51.webp", "art/5e4a21191131.webp", "art/5e560fcda323.webp", "art/5f1580632b25.webp", "art/5fbe838eda1a.webp", "art/60a340d0e2d4.webp", "art/619109891447.webp", "art/62f1ad4fbec4.webp", "art/63c7e08ba0b5.webp", "art/63da26d244b7.webp", "art/63f110d7b395.webp", "art/652ff6d95c6a.webp", "art/6704d233fed8.webp", "art/679d70d51fbd.webp", "art/6815a26dadde.webp", "art/689f8264aa38.webp", "art/6935219e5346.webp", "art/6972664d1dbc.webp", "art/69bef1442a51.webp", "art/69e6d6159f84.webp", "art/6b41ce314003.webp", "art/6b81e02ce78f.webp", "art/6b8209ef698d.webp", "art/6c4cce0bf846.webp", "art/6d49bb9cbb72.webp", "art/6de6171bdaa1.webp", "art/6de9f5272c70.webp", "art/6e7c374915d9.webp", "art/6e880c2d7090.webp", "art/6f0afa4cf3d9.webp", "art/6f15639c754d.webp", "art/706ae2a86ff2.webp", "art/7153fc9bd96b.webp", "art/71b58c52b949.webp", "art/73185bb01f97.webp", "art/756796dfd9d4.webp", "art/75ef005e2128.webp", "art/7798eb5dcad8.webp", "art/77a3b58ab11e.webp", "art/77c74762ca5b.webp", "art/793df7fc9418.webp", "art/79a92f2bba9f.webp", "art/7bd29faefd84.webp", "art/7bffbcf0c249.webp", "art/7c42ff820afe.webp", "art/7c471d7d58c2.webp", "art/7d25217a61db.webp", "art/7df5b2c3a9c8.webp", "art/7e37ff8cac34.jpg", "art/7e8230ca3bdc.webp", "art/7f34d6996c53.webp", "art/7f67d14469ab.webp", "art/7f6d45704aea.webp", "art/7fa4d1163ddb.webp", "art/802d70083fb8.webp", "art/80a8f6ddd1e2.webp", "art/81afde6e541e.webp", "art/820f28765c60.webp", "art/829f769a8b7b.webp", "art/8315221a7cc2.webp", "art/83a8b86f763d.webp", "art/83d893280c19.webp", "art/85ee034a6092.webp", "art/86d11c6847e6.webp", "art/8888cd1f3f75.webp", "art/88d408978b29.webp", "art/89c8a60f1e12.webp", "art/8ab3b44f6493.webp", "art/8ae4c71aeb88.webp", "art/8c8fe07d8b16.webp", "art/8cb96aa110a8.webp", "art/8d2d0d34962d.webp", "art/8ee2682a6734.webp", "art/8f48dfcbd9df.webp", "art/8f9584ef90b4.webp", "art/8fa63bc34a04.webp", "art/9015e6ecf9d4.webp", "art/901825f617e7.webp", "art/9034676c257d.webp", "art/91695c65291a.webp", "art/92aaf026019a.webp", "art/92f35ea4ea79.webp", "art/93c1a1e8efeb.webp", "art/96f39c9473b5.webp", "art/97358ffa9202.webp", "art/97be5adaeba2.webp", "art/97f217a03440.jpg", "art/99228046f73c.webp", "art/99a9bc6ce2cd.webp", "art/99b0ba4aeb21.webp", "art/9ad3b17fe256.webp", "art/9b0129000b92.webp", "art/9c0d96dcc7e8.webp", "art/9c447fcc6c3a.webp", "art/9cb928fce51e.webp", "art/9d6f0c59feae.webp", "art/9dcc1d3010a5.webp", "art/9f29dca377fd.webp", "art/a013df411c98.webp", "art/a0d51e0837f4.webp", "art/a11737cfa5d2.webp", "art/a15889d93d6e.webp", "art/a177c75724f2.webp", "art/a232cbd6c486.webp", "art/a2f6f33f0f58.webp", "art/a34cfe4cd7ad.webp", "art/a46905011e86.webp", "art/a49659e360ac.webp", "art/a5d5784d1ac9.webp", "art/a5d7be1c2582.webp", "art/a8a36f7ffc49.webp", "art/a932a9a83205.webp", "art/aadac84ba6ca.webp", "art/ab31563c9cd7.webp", "art/ab601985c7f6.webp", "art/abde28010105.webp", "art/abf200ce579c.webp", "art/ac752e5f8208.webp", "art/ac7fb1099ba6.webp", "art/aec7977a44fb.webp", "art/aeecd899e485.webp", "art/af8896a6c043.webp", "art/afe474c62429.webp", "art/b048d465f0df.webp", "art/b0777dc957fa.webp", "art/b123ddcade32.webp", "art/b1560977b03e.webp", "art/b16db0e3d121.jpg", "art/b183582dd749.webp", "art/b3785fecb1df.webp", "art/b3d2646a6d72.webp", "art/b4b08e93bd4c.webp", "art/b50143f38d01.webp", "art/b8436e571fe0.webp", "art/b8dc08eaf25f.webp", "art/b9941fed2618.webp", "art/ba42fd4db1d5.webp", "art/ba5a88fdd76b.webp", "art/bae8b58087be.webp", "art/bb0d5088bfe2.webp", "art/bb3fac20cb91.webp", "art/bc351c5b635b.webp", "art/bce4093e1402.webp", "art/bce6f377e2ea.webp", "art/bd7096c1c0c1.webp", "art/bf977badb320.webp", "art/c02b941eead2.webp", "art/c0812131f573.webp", "art/c102a872d5b6.webp", "art/c17cd52387df.webp", "art/c194255e2d8b.webp", "art/c1b7e426a158.webp", "art/c1f0789c2f2d.webp", "art/c30f55a39719.webp", "art/c34d5b0aa1c8.webp", "art/c37fa948ff02.webp", "art/c41ef0463297.webp", "art/c5d5bf067b09.webp", "art/c5ead8f134cf.webp", "art/c65876c02fe4.webp", "art/c6eea071c9ae.webp", "art/c7e235f505a8.webp", "art/c870119aa480.webp", "art/c90043622a84.webp", "art/c9a2a79c6893.webp", "art/cacd056f7347.webp", "art/cbd5026c5df5.webp", "art/cc0a84924379.webp", "art/cc139d034af8.webp", "art/cc7ccda2e412.webp", "art/ccf6cfeb25a1.webp", "art/cdc9aa19e1af.webp", "art/cf2bcf9cc425.webp", "art/cf3dedc27e63.webp", "art/cf5a1de7dacc.webp", "art/d0225e39a95b.webp", "art/d0df181ca6fe.webp", "art/d0e85749e3a2.webp", "art/d103df37cc09.webp", "art/d15f9f5cd9c2.webp", "art/d16acf9b6fcf.webp", "art/d1e5a5f18dac.webp", "art/d2741ee1d2dd.webp", "art/d2de4441406f.webp", "art/d4302180b5ff.webp", "art/d482926083d7.webp", "art/d54c9cc636e6.webp", "art/d75f468d8f75.webp", "art/d7d45f6b4c53.webp", "art/d96311e37317.webp", "art/dab6ab50e68b.webp", "art/dbee00f2101f.webp", "art/dd5563be9ccd.webp", "art/dd9b1039e151.webp", "art/de1f914458f3.webp", "art/dea4974beee0.webp", "art/df1c1b86f187.webp", "art/e00cdaeb7edf.webp", "art/e00f928fc177.webp", "art/e03f59366877.webp", "art/e0c680b8d956.webp", "art/e10ed2331f30.webp", "art/e110c2a2b577.webp", "art/e1334fc47e2c.webp", "art/e17858243ed6.webp", "art/e3137ca66386.webp", "art/e3dd97756c6e.webp", "art/e4d02d9ca348.webp", "art/e52008b0da78.webp", "art/e54967f7cc08.webp", "art/e6448512c78c.webp", "art/e68b2aba5419.webp", "art/e78174948a44.webp", "art/e7e1a09c685e.webp", "art/e7e9ba4b6809.webp", "art/e8e624096b7e.webp", "art/e91e676b9815.webp", "art/ece74a782f2c.webp", "art/ecfbc9eaad64.webp", "art/ee704d8eca7d.webp", "art/ee9f33c9cd83.webp", "art/eeb012cc0cce.webp", "art/efd9c022cf7d.webp", "art/f1237e09a557.jpg", "art/f20ba449da5c.webp", "art/f2f1e550485c.webp", "art/f37aef6cbe64.webp", "art/f42a86a34fca.webp", "art/f5017ba712f9.webp", "art/f54a61e45172.webp", "art/f6d3526c2f94.webp", "art/f727dfb2a778.webp", "art/f74f18b803b4.webp", "art/f8188a35c366.webp", "art/f9c804f35da3.webp", "art/f9fd734cc78a.webp", "art/fa8cf186a454.webp", "art/faeb13208a7e.webp", "art/fb06c901d351.webp", "art/fb1025919639.webp", "art/fb5f6e83fe44.webp", "art/fbdbd7fd3474.webp", "art/fc2150e3bdde.webp", "art/fc5e9d8adc46.webp", "art/feb143b98afc.webp", "art/ff6f7b78a147.webp"],n=0,t=L.length,el=document.getElementById('tk-loader'),f=document.getElementById('tkl-fill'),x=document.getElementById('tkl-txt'),gone=false;
-x.textContent=LD+'0%';function upd(){var p=Math.round(n/t*100);f.style.width='calc('+p+'% + 12px)';x.textContent=LD+p+'%';if(n>=t)finish();}
-function finish(){if(gone)return;gone=true;x.textContent=RD;setTimeout(function(){el.classList.add('done');setTimeout(function(){el.remove()},400)},150);}
-L.forEach(function(u){var i=new Image();i.onload=i.onerror=function(){n++;upd();};i.src=u;});
-setTimeout(finish,25000);})();
-</script>
-<title>Tavern Knights: สามอัศวินต้มยำกุ้ง | เล่นฟรีบนเว็บ เกมแอ็กชันพิกเซล</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Mitr:wght@400;600&display=swap">
-<style>
-/* Layout: one screen, no scroll. Slim header plate, the 16:9 game screen fills what is left, touch pad under it on touch devices. */
-:root{
-  --bg:#160f1c; --panel:#221727; --line:#3a2a40; --wood:#6b432a; --wood-dark:#2b1b14;
-  --amber:#f2a93b; --foam:#f6ead2; --muted:#bba8ba;
-  --display:"Pixelify Sans","Courier New",monospace; --thai:"Mitr","Noto Sans Thai",system-ui,sans-serif;
-  color-scheme:dark;
-}
-html,body{height:100%;margin:0;background:#000;color:var(--foam);overflow:hidden}
-body{font-family:var(--thai);box-sizing:border-box;padding:0}
-.wrap{height:100%;display:flex;flex-direction:column;gap:0;margin:0;position:relative}
-header{position:absolute;top:6px;right:8px;z-index:5;display:flex;align-items:center;gap:8px;opacity:0;transition:opacity .25s;pointer-events:none}
-header.show,header:hover,header:has(:focus-visible){opacity:1;pointer-events:auto}
-.brand{display:none!important}
-.brand{display:flex;align-items:baseline;gap:10px;min-width:0;overflow:hidden;white-space:nowrap}
-h1{font-family:var(--display);font-weight:700;font-size:20px;margin:0;color:var(--amber);letter-spacing:.02em}
-.sub{color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis}
-.tools{display:flex;gap:6px;flex:none}
-button.tool{font-family:var(--thai);font-size:12px;background:rgba(34,23,39,.85);color:var(--foam);border:1px solid var(--line);border-bottom-width:3px;border-radius:5px;padding:3px 9px;cursor:pointer}
-button.tool:hover{border-color:var(--amber)}
-button:focus-visible,canvas:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
-.stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;container-type:size}
-#nameIn::selection{background:transparent;color:transparent}
-#nameIn{position:absolute;left:27.5%;top:40.9%;width:45%;height:9.8%;box-sizing:border-box;display:none;margin:0;padding:0;border:0;outline:none;background:transparent;opacity:0;font-size:16px;color:transparent;caret-color:transparent;z-index:3;-webkit-user-select:text;user-select:text;touch-action:auto}
-.screen{position:relative;width:min(100cqw,calc(100cqh * 16 / 9));aspect-ratio:16/9;max-width:100%;background:#000;overflow:hidden}
-canvas{width:100%;height:100%;display:block;image-rendering:pixelated;touch-action:none}
-.touch{flex:none;display:none;justify-content:space-between;align-items:center;gap:10px;user-select:none;-webkit-user-select:none}
-.pad{display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(2,46px);gap:5px}
-.btns{display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(2,46px);gap:5px}
-.touch button{font-family:var(--thai);font-size:12px;line-height:1.1;background:var(--panel);color:var(--foam);border:1px solid var(--line);border-bottom-width:3px;border-radius:9px;touch-action:none;padding:0}
-.touch button b{display:block;font-family:var(--display);font-size:15px}
-.touch button.hot{background:#3b2a12;border-color:var(--amber)}
-.touch button:active{transform:translateY(1px);background:#33243a}
-.touch-on .touch{display:flex}
+// @ts-nocheck
+// Tavern Knights game code, moved from the old single-file index.html (migration phase 3).
+// It runs as one module for now; scenes are split out into typed modules one at a time.
+// Everything on screen is drawn on the canvas from the Gemini art sheets.
 
-/* mobile landscape overlay controls (art: E6 buttons, sheet-D round arrows, sheet-D icons) */
-#tpad,#rotate{display:none}
-.touch-on .touch{display:none!important}
-body.tp-on #tpad{display:block}
-#tpad{position:fixed;inset:0;pointer-events:none;z-index:6;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
-#tpad *{pointer-events:auto;touch-action:none}
-.tp-dpad{position:absolute;left:calc(2vmin + env(safe-area-inset-left,0px));bottom:2vmin;width:30vmin;height:30vmin;opacity:.6}
-.tp-dpad{background:center/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 2px 3px #000a)}
-.tp-dpad i{display:none!important}
-.tp-knob{position:absolute;left:50%;top:50%;width:13vmin;height:13vmin;margin:-6.5vmin 0 0 -6.5vmin;background:center/contain no-repeat;image-rendering:pixelated;pointer-events:none!important;transition:transform .09s ease-out;filter:drop-shadow(0 3px 2px #000b)}
-.tp-knob.on{transition:none}
-.tp-dpad x{position:absolute;width:15vmin;height:15vmin;background:center/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 2px 2px #0008);transition:transform .05s}
-.tp-dpad i.u{left:13.5vmin;top:0}.tp-dpad i.d{left:13.5vmin;bottom:0}.tp-dpad i.l{left:0;top:13.5vmin}.tp-dpad i.r{right:0;top:13.5vmin}
-.tp-dpad i.on{transform:scale(.88);filter:brightness(1.35) drop-shadow(0 0 4px #ffd76a)}
-.tp-acts{position:absolute;right:calc(2vmin + env(safe-area-inset-right,0px));bottom:2vmin;width:42vmin;height:34vmin}
-.tp-b{position:absolute;box-sizing:border-box;margin:0;padding:0;border:0;background:center/contain no-repeat;image-rendering:pixelated;filter:drop-shadow(0 2px 2px #000a);opacity:.62;cursor:pointer;transition:transform .05s}
-.tp-b span{position:absolute;left:50%;bottom:-1.2vmin;transform:translateX(-50%);font-family:var(--thai);font-weight:600;font-size:max(9px,2.1vmin);color:#f6ead2;text-shadow:0 1px 0 #000,0 0 3px #000,0 0 3px #000;white-space:nowrap;pointer-events:none}
-.tp-b.on{transform:scale(.88);opacity:1;filter:brightness(1.25) drop-shadow(0 0 5px #ffd76a)}
-.tp-atk{right:0;bottom:1vmin;width:16vmin;height:16vmin}
-.tp-sp{right:17vmin;bottom:1vmin;width:11.5vmin;height:11.5vmin}
-.tp-ult{right:2vmin;bottom:18.5vmin;width:11.5vmin;height:11.5vmin}
-.tp-next{right:15.5vmin;bottom:14.5vmin;width:10vmin;height:10vmin}
-.tp-sup{right:29.5vmin;bottom:1vmin;width:10vmin;height:10vmin}
-.tp-pause{left:calc(1.5vmin + env(safe-area-inset-left,0px));top:1.5vmin;width:9vmin;height:9vmin}
-.tp-full{left:calc(11.5vmin + env(safe-area-inset-left,0px));top:1.5vmin;width:9vmin;height:9vmin}
-.tp-full.hide{display:none}
-body[data-tp=tav] .tp-ult,body[data-tp=tav] .tp-sup{display:none}
-body[data-tp=menu] #tpad{display:none}
-body[data-tp=title] .tp-sp,body[data-tp=title] .tp-ult,body[data-tp=title] .tp-next,body[data-tp=title] .tp-sup,body[data-tp=title] .tp-pause,body[data-tp=title] .tp-full{display:none}
-body[data-tp=title] .tp-back{display:none}
-body[data-tp=map] .tp-ult,body[data-tp=map] .tp-next,body[data-tp=map] .tp-sup,body[data-tp=map] .tp-pause,body[data-tp=map] .tp-full,body[data-tp=map] .tp-back{display:none}
-body[data-tp=map][data-tpp] .tp-acts .tp-back{display:block}
-body[data-tp=map] .tp-atk{bottom:9.5vmin;width:13vmin;height:13vmin;right:1.5vmin}body[data-tp=map] .tp-sp{bottom:9.5vmin;right:16vmin}
-body[data-tp=map][data-tpp] .tp-atk,body[data-tp=map][data-tpp] .tp-sp{display:none}
-body[data-tp=title][data-tpp] .tp-back{display:block}
-body[data-tpn] #tpad{display:none!important}
-body.tp-name .stage{align-items:flex-start}
-body.tp-namez .stage{overflow:hidden}
-.tp-back{right:18vmin;bottom:2vmin;width:12vmin;height:12vmin;display:none}
-body.tp-on,body.tp-on .wrap{touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none}
-body.tp-on header{display:none!important}
-html:has(body.tp-on){overscroll-behavior:none;touch-action:none}
-body.tp-rot .wrap{position:fixed;top:0;left:100vw;left:100dvw;width:100vh;width:100dvh;height:100vw;height:100dvw;transform-origin:0 0;transform:rotate(90deg)}
-body.tp-rot:not([data-tp=menu]) #tpad{display:block}
-#rotate{position:fixed;inset:0;z-index:9;background:#0c0a10f2;align-items:center;justify-content:center;padding:24px}
-#rotate .rot-box{border-style:solid;border-width:22px 20px;border-color:transparent;border-image-slice:22 20 fill;border-image-width:22px 20px;image-rendering:pixelated;padding:6px 10px;text-align:center;max-width:320px;font-family:var(--thai);color:#f6ead2}
-#rotate i{display:block;width:84px;height:84px;margin:0 auto 6px;background:center/contain no-repeat;image-rendering:pixelated;animation:tkrot 2.2s ease-in-out infinite}
-#rotate span{font-size:17px}
-@keyframes tkrot{0%,25%{transform:rotate(0)}55%,100%{transform:rotate(-90deg)}}
-@media (max-width:420px){.pad{grid-template-columns:repeat(3,44px)}.btns{grid-template-columns:repeat(3,56px)}.sub{display:none}}
-</style>
+let started = false;
 
-<div class="wrap">
-  <header>
-    <div class="brand">
-      <h1>Tavern Knights</h1>
-      <span class="sub">สามอัศวินต้มยำกุ้ง · prototype</span>
-    </div>
-    <div class="tools">
-      <button class="tool" id="btnHelp" type="button">วิธีเล่น (H)</button>
-      <button class="tool" id="btnMute" type="button">เสียง: เปิด</button>
-      <button class="tool" id="btnReset" type="button">ล้างเซฟ</button>
-    </div>
-  </header>
-
-  <div class="stage"><div class="screen"><canvas id="game" width="1600" height="900" tabindex="0" aria-label="Tavern Knights game screen"></canvas><input id="nameIn" type="text" maxlength="16" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" aria-label="name"></div></div>
-
-
-  <div id="tpad" aria-hidden="true">
-    <div class="tp-dpad" id="tpDpad"><i class="u" data-d="up"></i><i class="l" data-d="left"></i><i class="r" data-d="right"></i><i class="d" data-d="down"></i><b class="tp-knob" id="tpKnob"></b></div>
-    <div class="tp-acts">
-      <button type="button" class="tp-b tp-atk" data-k="atk"><span></span></button>
-      <button type="button" class="tp-b tp-sp" data-k="sp"><span></span></button>
-      <button type="button" class="tp-b tp-ult" data-k="ult"><span></span></button>
-      <button type="button" class="tp-b tp-next" data-k="next"><span></span></button>
-      <button type="button" class="tp-b tp-sup" data-k="sup"><span></span></button>
-      <button type="button" class="tp-b tp-back" data-k="pause"><span></span></button>
-    </div>
-    <button type="button" class="tp-b tp-pause" data-k="pause" aria-label="pause"></button>
-    <button type="button" class="tp-b tp-full hide" id="tpFull" aria-label="fullscreen"></button>
-  </div>
-  <div id="rotate"><div class="rot-box"><i id="rotIc"></i><span id="rotTxt">หมุนมือถือเป็นแนวนอนเพื่อเล่น</span></div></div>
-  <div class="touch" id="touch">
-    <div class="pad">
-      <span></span><button data-k="up"><b>▲</b>กระโดด</button><span></span>
-      <button data-k="left"><b>◀</b></button><button data-k="down"><b>▼</b></button><button data-k="right"><b>▶</b></button>
-    </div>
-    <div class="btns">
-      <button data-k="atk" class="hot"><b>J</b>โจมตี</button><button data-k="sp"><b>K</b>ท่าพิเศษ</button><button data-k="ult"><b>L</b>ประสาน</button>
-      <button data-k="next"><b>⇄</b>สลับตัว</button><button data-k="sup"><b>C</b>ผู้ช่วย</button><button data-k="ok"><b>▶</b>เริ่ม/ตกลง</button>
-    </div>
-  </div>
-</div>
-
-<script>
-(() => {
-'use strict';
+/** Starts the game on the #game canvas. Call once, after the game screen's markup is in the page. */
+export function startGame(): void {
+if (started) return;
+started = true;
 const W = 400, H = 225, GROUND = 190;
 const cv = document.getElementById('game');
 const ctx = cv.getContext('2d');
@@ -249,7 +34,7 @@ const I18N_EN = {
 'ท่านหญิงแมรีโกลด์มาแล้ว จ่ายสองเท่า อย่าให้รอนาน!': 'Lady Marigold is here! She pays double, don\'t keep her waiting!',
 // DOM
 'โจมตี': 'Attack', 'ท่าพิเศษ': 'Special', 'ประสาน': 'Combo', 'สลับตัว': 'Swap', 'ผู้ช่วย': 'Crew', 'เริ่ม/ตกลง': 'Start/OK',
-'กระโดด': 'Jump', 'วิธีเล่น (H)': 'How to play (H)', 'เสียง: ': 'Sound: ', 'ปิด': 'Off', 'เปิด': 'On',
+'กระโดด': 'Jump', 'วิธีเล่น (H)': 'How to play (H)', 'คู่มือ': 'Guides', 'เสียง: ': 'Sound: ', 'ปิด': 'Off', 'เปิด': 'On',
 'ล้างแล้ว': 'Cleared', 'ล้างเซฟ': 'Reset save', 'กดอีกครั้งเพื่อยืนยัน': 'Click again to confirm',
 'สามอัศวินต้มยำกุ้ง · prototype': 'Three Tom Yum Knights · prototype',
 // stage
@@ -269,6 +54,16 @@ const I18N_EN = {
 'พลัง: ': 'ATK: ', 'ดาบ Tier ': 'Sword Tier ', 'บัฟต้มยำ ATK+30%': 'Tom Yum buff ATK+30%',
 'เวลา: ': 'Time: ', 'คะแนน: ': 'Score: ', 'ลูกทีม: ': 'Crew: ',
 'ด่านที่ 1: ป่าเห็ดพิษ': 'Stage 1: Poison Mushroom Forest',
+'ด่านที่ 2: ดันเจี้ยนไวน์โบราณ': 'Stage 2: Ancient Wine Dungeon', 'ดันเจี้ยนไวน์โบราณ · Ancient Wine Dungeon': 'Ancient Wine Dungeon',
+'เคลียร์ด่านที่ 2!': 'Stage 2 Clear!', 'บารอนฟอนบาร์เรล': 'Baron von Barrel', 'บารอนแห่งถังไวน์': 'Lord of the Wine Barrels',
+'ใครบังอาจย่องเข้าห้องเก็บไวน์ของข้า! ชิมนี่ซะ!': 'Who dares sneak into my wine cellar? Have a taste of this!', 'ไวน์ร้อยปีของข้า... เสียของหมดเลย!': 'My hundred-year wine... all wasted!',
+'ตุ่น': 'Mole', 'พิกซี่': 'Pixie', 'ขุดดินเป็นงานถนัดของข้าเอง!': 'Digging is my specialty!', 'จับมือไว้นะ! บินแล้ว~': 'Hold on tight! Up we go~', 'ถึงแล้ว! ตรงนี้มีหีบลับด้วยนะ~': 'Here we are! There is a secret chest up here~',
+'กด C เรียกตุ่นมาขุดกองดิน!': 'Press C: the Mole digs through the dirt!', 'กองดินขวางทาง... ต้องพาตุ่นมา (เลือกที่แผนที่โลก)': 'Dirt blocks the way... bring the Mole (pick on the world map)',
+'กด C เรียกพิกซี่พาบินขึ้นชั้นบน!': 'Press C: the Pixie flies you up!', 'ชั้นบนสูงเกินกระโดด... ต้องพาพิกซี่มา': 'Too high to jump... bring the Pixie',
+'ไม่มีอะไรให้ลูกทีมช่วยตรงนี้': 'Nothing for the crew to do here', 'ไวน์เหนียว! เดินช้าลง': 'Sticky wine! Slowed down', '-15 ตกหลุม!': '-15 Fell in!', 'หีบบนชั้นลับ! +SP': 'Secret shelf chest! +SP',
+'100-Year Vintage Cork': '100-Year Vintage Cork', 'อุโมงค์ลับ (ตุ่น)': 'Secret tunnel (Mole)', 'เจอ! Truffle + Cork': 'Found! Truffle + Cork', 'Cork เพิ่ม!': 'Extra Cork!', 'พลาด (ปราบตอนติดน้ำแข็ง)': 'Missed (defeat while frozen)',
+'เคลียร์ด่าน 1 ก่อนนะ': 'Clear Stage 1 first', 'ด่าน 2 มีในฉบับเต็ม': 'Stage 2 is in the full version', 'มีในฉบับเต็ม · Full version': 'Full version only',
+'พิกซี่ มีในฉบับเต็ม': 'Pixie is in the full version', 'ตุ่น มีในฉบับเต็ม': 'Mole is in the full version', 'บินพาขึ้นที่สูง (ด่าน 2)': 'Flies you up high (Stage 2)',
 'ปราบราชาเห็ดสำเร็จ!': 'King Shroomba defeated!',
 'ดรอปลับ: Ember Spore (ปราบตอนติดไฟ!)': 'Secret drop: Ember Spore (defeated while burning!)',
 'ได้รับ: Shroom Crown': 'Got: Shroom Crown',
@@ -497,8 +292,8 @@ function applyLangDom() {
   const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n;
   while ((n = w.nextNode())) { if (n.parentNode && /^(SCRIPT|STYLE)$/.test(n.parentNode.nodeName)) continue; if (!_domTh.has(n)) { if (!_TH.test(n.nodeValue)) continue; _domTh.set(n, n.nodeValue); } const o = _domTh.get(n); n.nodeValue = LANG === 'th' ? o : tr(o.trim()) === o.trim() ? o : o.replace(o.trim(), tr(o.trim())); }
 }
-// analytics: sends game events to Google Analytics (gtag) when the page has it; no-op otherwise
-function track(name, params) { try { const p = Object.assign({ lang: LANG }, params || {}); if (window.gtag) window.gtag('event', name, p); (window.__track = window.__track || []).push([name, p]); } catch (e) {} }
+// analytics: sends game events to Google Analytics (gtag) and gstats when loaded; events before gstats loads are replayed from __track
+function track(name, params) { try { const p = Object.assign({ lang: LANG }, params || {}); if (window.gtag) window.gtag('event', name, p); if (window.gstats && window.gstats.__ready) window.gstats.capture(name, p); (window.__track = window.__track || []).push([name, p]); } catch (e) {} }
 /* ------------------------------------------------ online ranking (phase 1) */
 // Talks to functions/api (Cloudflare Pages Function + D1). Same origin on the web (develop -> staging DB, main -> production DB);
 // the store apps (app:// or capacitor://) use production. Everything fails soft: with no network or no database NET.on
@@ -602,7 +397,7 @@ function bgmWant() {
   if (scene === 'title' && titlePanel === 'credits') return 'ending';
   if (scene === 'results') return 'ending';
   if (scene === 'title' || scene === 'map') return 'title';
-  if (scene === 'stage') { if (S && S.boss) return S.boss.dead ? null : 'boss'; return 'stage1'; }
+  if (scene === 'stage') { if (S && S.boss) return S.boss.dead ? null : 'boss'; return S && S.n === 2 ? 'stage2' : 'stage1'; }
   if (scene === 'alchemy') return 'stage2';
   if (scene === 'tavern') return 'tavern';
   return null;
@@ -757,6 +552,19 @@ function flip(c) { const f = document.createElement('canvas'); f.width = c.width
 const LW = c => c.lw || c.width, LH = c => c.lh || c.height;
 function dimg(img, x, y, w, h) { if (w === undefined && img.ox) { x -= img.ox; y -= img.oy; } ctx.drawImage(img, x, y, w === undefined ? LW(img) : w, h === undefined ? LH(img) : h); }
 const tintCache = new WeakMap();
+/* Full version switch: the free web demo (tavern-knights.pages.dev) only has Stage 1. Store/Steam builds set window.TK_FULL = true; the develop site and localhost act as full so new stages can be tested. */
+const DEV_HOST = /^(localhost|127\.|develop\.)/.test(location.hostname);
+const FULL = window.TK_FULL === true || DEV_HOST;
+function stage2Open() { return FULL && (DEV_HOST || !!(save && save.stages && save.stages[1])); }
+/* temporary Stage 2 look: existing sheet art re-coloured with a canvas filter until the W1-W8 Art Kit sheets arrive */
+const recolCache = new Map();
+function recol(c, f) {
+  if (!c) return c; let m = recolCache.get(c); if (!m) { m = new Map(); recolCache.set(c, m); }
+  if (m.has(f)) return m.get(f);
+  const t = document.createElement('canvas'); t.width = c.width || c.naturalWidth; t.height = c.height || c.naturalHeight; t.lw = c.lw; t.lh = c.lh; t.padL = c.padL; t.ox = c.ox; t.oy = c.oy;
+  const g = t.getContext('2d'); g.filter = f; g.drawImage(c, 0, 0); g.filter = 'none';
+  m.set(f, t); return t;
+}
 function tinted(c, color) {
   let m = tintCache.get(c); if (!m) { m = new Map(); tintCache.set(c, m); }
   if (m.has(color)) return m.get(color);
@@ -1060,7 +868,14 @@ function enemyArtFor(e, frame) {
   else if (e.type === 'moth') k = e.flash > 0 ? 'moth_hurt' : (frame ? 'moth_down' : 'moth_up');
   else if (e.type === 'puff') k = e.puffT ? 'puff_inflate' : e.flash > 0 ? 'puff_ball' : (frame ? 'puff_walk' : 'puff_idle');
   else if (e.type === 'mimic') k = e.state === 'sleep' ? 'mimic_sleep' : (frame ? 'mimic_hop' : 'mimic_mouth');
-  return k ? { key: k, spr: ENEMY_ART[k], hurt: /hurt|ball/.test(k) } : null;
+  let fl = null;
+  if (e.type === 'keg') { k = e.state === 'charge' || e.state === 'wind' ? 'mimic_mouth' : Math.abs(e.vx) > 4 ? (frame ? 'mimic_hop' : 'mimic_sleep') : 'mimic_sleep'; fl = 'sepia(0.5) brightness(0.95)'; }
+  else if (e.type === 'bat') { k = e.flash > 0 ? 'moth_hurt' : (frame ? 'moth_down' : 'moth_up'); fl = 'hue-rotate(60deg) saturate(1.3) brightness(0.9)'; }
+  else if (e.type === 'grape' || e.type === 'grapelet') { k = e.flash > 0 ? 'puff_ball' : e.squashT ? 'puff_inflate' : (frame ? 'puff_walk' : 'puff_idle'); fl = 'hue-rotate(200deg) saturate(1.5)'; }
+  else if (e.type === 'imp') { k = e.flash > 0 ? 'walker_hurt' : e.throwT ? 'walker_w2' : (Math.abs(e.vx) < 4 ? 'walker_idle' : (frame ? 'walker_w2' : 'walker_w1')); fl = 'hue-rotate(140deg) saturate(1.3)'; }
+  if (!k || !ENEMY_ART[k]) return null;
+  const spr = fl ? { l: recol(ENEMY_ART[k].l, fl), r: recol(ENEMY_ART[k].r, fl) } : ENEMY_ART[k];
+  return { key: k, spr, hurt: /hurt|ball/.test(k) };
 }
 const CREW_ART_SRC={"gorn_idle": "art/c90043622a84.webp", "gorn_chop": "art/0bda727062c3.webp", "cust_dwarf": "art/c102a872d5b6.webp", "cust_mug": "art/22074b9c9c1f.webp", "cust_elf": "art/587f0d3bb0d2.webp", "cust_archer": "art/000068ed4e9e.webp", "cust_merchant": "art/c0812131f573.webp", "cust_bard": "art/de1f914458f3.webp", "cust_noble": "art/3551cc2ed4bd.webp", "cust_lady": "art/b3d2646a6d72.webp", "rowdy": "art/706ae2a86ff2.webp", "vip": "art/122c310616f6.webp", "robber_a": "art/7d25217a61db.webp", "robber_b": "art/c9a2a79c6893.webp", "face_gorn": "art/cacd056f7347.webp", "face_bart": "art/e0c680b8d956.webp", "face_pixie": "art/e00cdaeb7edf.webp", "face_mole": "art/0a0594b996fe.webp"};
 /* crew, customers and robber cut from the user's Gemini sheet B (all face right: l = native, r = flipped) */
@@ -1187,12 +1002,13 @@ function knightMax() { return 100 + 25 * save.up.stew; }
 function dmgMul() { return (1 + 0.2 * save.up.blade + (save.up.legend ? 0.5 : 0)) * (S && S.buff ? 1.3 : 1); }
 
 let S = null;
-function startStage(checkpoint) {
-  track(checkpoint ? 'stage_retry' : 'stage_start', { stage: 1 });
+function startStage(checkpoint, n) {
+  n = n || (S && S.n) || 1;
+  track(checkpoint ? 'stage_retry' : 'stage_start', { stage: n });
   const prevS = checkpoint ? S : null;
   const prevLoot = S && checkpoint ? S.loot : null, prevKills = S && checkpoint ? S.kills : 0, prevWall = S && checkpoint ? S.wall.broken : false, prevVault = S && checkpoint ? S.vaultOpened : false;
   S = {
-    t: 0, camX: 0, paused: false,
+    n, t: 0, camX: 0, paused: false, pits: [], shelf: null,
     p: { x: 40, y: GROUND - 36, w: 18, h: 36, vx: 0, vy: 0, face: 1, onGround: true, inv: 0, atkT: 0, atkCd: 0, combo: 0, comboT: 0, special: null, swapCd: 0, anim: 0, lunge: 0, kbT: 0 },
     knights: KNIGHTS.map(() => ({ hp: knightMax(), max: knightMax(), down: false })), active: 0,
     gauge: save.up.brew ? 50 : 0,
@@ -1211,12 +1027,14 @@ function startStage(checkpoint) {
     sup: { bart: save.tools && save.tools.bell ? 3 : 2, bartCd: 0, gorn: null },
     ult: null, banner: null, end: null, speech: null, score: 0, hint: null, checkpoint: !!checkpoint, poolT: 0,
   };
-  S.net = prevS ? prevS.net : NET.start('stage'); S.netT0 = prevS ? (prevS.netT0 || 0) + prevS.t : 0;
+  S.net = n !== 1 ? null : prevS ? prevS.net : NET.start('stage'); S.netT0 = prevS ? (prevS.netT0 || 0) + prevS.t : 0;
   if (save.buff && !checkpoint) { S.buff = true; save.buff = false; persist(); S.gauge = Math.min(100, S.gauge + 50); }
   if (save.drink && !checkpoint) { save.drink = false; persist(); S.gauge = 100; }
+  if (n === 2) layoutStage2(!!checkpoint, prevWall, prevVault);
   if (!S.wall.broken) S.solids.push(S.wall);
   const E = (type, x, y) => S.enemies.push(makeEnemy(type, x, y));
-  if (checkpoint) {
+  if (n === 2) { if (checkpoint) { S.p.x = ARENA - 120; S.camX = ARENA - 260; } }
+  else if (checkpoint) {
     S.p.x = ARENA - 120; S.camX = ARENA - 260;
   } else {
     [250, 520, 700, 990, 1100, 1660, 1830, 2160, 2320, 2520].forEach(x => E('sporeling', x));
@@ -1228,8 +1046,38 @@ function startStage(checkpoint) {
     if (!S.vaultOpened) S.pickups.push({ type: 'chest', x: 1330, y: 174, w: 24, h: 16, bob: 0 });
   }
   scene = 'stage';
-  S.banner = { text: checkpoint ? 'Back to the throne!' : 'STAGE 1', sub: checkpoint ? 'King Shroomba awaits' : 'ป่าเห็ดพิษ · Poison Mushroom Forest', t: 2.2 };
+  S.banner = n === 2 ? { text: checkpoint ? 'Back to the cellar!' : 'STAGE 2', sub: checkpoint ? 'Baron von Barrel awaits' : 'ดันเจี้ยนไวน์โบราณ · Ancient Wine Dungeon', t: 2.2 }
+    : { text: checkpoint ? 'Back to the throne!' : 'STAGE 1', sub: checkpoint ? 'King Shroomba awaits' : 'ป่าเห็ดพิษ · Poison Mushroom Forest', t: 2.2 };
 }
+
+/* ================================================================ STAGE 2: Ancient Wine Dungeon
+   pits you jump over, sticky wine puddles, a dirt mound only the Mole can dig (vault),
+   a high cellar shelf only the Pixie can reach, and the boss Baron von Barrel */
+function layoutStage2(checkpoint, prevWall, prevVault) {
+  S.platforms = [
+    { x: 300, y: 150, w: 64 }, { x: 430, y: 122, w: 56 }, { x: 800, y: 146, w: 72 }, { x: 930, y: 118, w: 64 },
+    { x: 1540, y: 150, w: 72 }, { x: 2140, y: 150, w: 72 }, { x: 2290, y: 120, w: 64 }, { x: 2440, y: 146, w: 72 },
+  ];
+  S.shelf = { x: 1730, y: 70, w: 96, got: prevVault && S.shelf ? S.shelf.got : false };
+  S.platforms.push(S.shelf);
+  S.pits = [{ x: 600, w: 46 }, { x: 1040, w: 50 }, { x: 2010, w: 50 }];
+  S.pools = [{ x: 700, w: 60 }, { x: 1640, w: 64 }, { x: 2560, w: 60 }];
+  S.loot = Object.assign({ cork: 0 }, S.loot);
+  if (checkpoint) return;
+  S.enemies = [];
+  const E = (type, x, y) => S.enemies.push(makeEnemy(type, x, y));
+  [260, 520, 880, 1150, 1700, 1900, 2240, 2500].forEach(x => E('keg', x));
+  [480, 980, 1600, 2180, 2420].forEach(x => E('bat', x, rnd(78, 108)));
+  [760, 1480, 2330].forEach(x => E('grape', x));
+  [1120, 1960, 2600].forEach(x => E('imp', x));
+  const P = (type, x, y) => S.pickups.push({ type, x, y, w: 16, h: 16, bob: Math.random() * 6 });
+  S.pickups = [];
+  P('glowcap', 326, 130); P('beer', 452, 100); P('chili', 824, 124); P('glowcap', 954, 96); P('ale', 1564, 128); P('beer', 1300, 116); P('chili', 2164, 128); P('beer', 2314, 98); P('glowcap', 2466, 124); P('ale', 2640, 170);
+  if (!S.vaultOpened) S.pickups.push({ type: 'chest', x: 1330, y: 174, w: 24, h: 16, bob: 0 });
+  S.pickups.push({ type: 'shelfchest', x: S.shelf.x + 36, y: S.shelf.y - 16, w: 24, h: 16, bob: 0 });
+}
+function overPit(x, w) { return S.pits.some(pt => x + w / 2 > pt.x + 2 && x + w / 2 < pt.x + pt.w - 2); }
+function pitAhead(e, d) { const fx = d > 0 ? e.x + e.w + 6 : e.x - 6; return S.pits.some(pt => fx > pt.x && fx < pt.x + pt.w); }
 
 function makeEnemy(type, x, y) {
   const base = { type, x, y: 0, vx: 0, vy: 0, face: -1, hp: 20, max: 20, w: 20, h: 22, t: Math.random() * 2, flash: 0, burn: 0, slow: 0, freeze: 0, kbT: 0, dead: false, cd: rnd(0.5, 2), state: 'idle', anim: 0, active: false, contact: 8 };
@@ -1237,7 +1085,12 @@ function makeEnemy(type, x, y) {
   if (type === 'moth') Object.assign(base, { hp: 14, max: 14, w: 20, h: 12, homeY: y, contact: 7 });
   if (type === 'puff') Object.assign(base, { hp: 34, max: 34, w: 22, h: 16, heavyish: true, contact: 6 });
   if (type === 'mimic') Object.assign(base, { hp: 60, max: 60, w: 24, h: 20, state: 'sleep', contact: 12 });
-  base.y = type === 'moth' ? y : GROUND - base.h;
+  if (type === 'keg') Object.assign(base, { hp: 30, max: 30, w: 22, h: 22, contact: 10 });
+  if (type === 'bat') Object.assign(base, { hp: 16, max: 16, w: 20, h: 12, homeY: y, contact: 8 });
+  if (type === 'grape') Object.assign(base, { hp: 28, max: 28, w: 20, h: 18, contact: 8 });
+  if (type === 'grapelet') Object.assign(base, { hp: 8, max: 8, w: 12, h: 10, contact: 5, cd: rnd(0.3, 0.8) });
+  if (type === 'imp') Object.assign(base, { hp: 22, max: 22, w: 18, h: 20, contact: 7, cd: rnd(1, 2) });
+  base.y = type === 'moth' || type === 'bat' ? y : GROUND - base.h;
   return base;
 }
 
@@ -1349,6 +1202,8 @@ function killEnemy(e) {
   S.kills++; S.score += e.type === 'mimic' ? 500 : 100; S.fx = S.fx || []; S.fx.push({ type: 'boom', x: e.x + e.w / 2, y: e.y + e.h / 2, t: 0.6 });
   for (let n = 0; n < 12; n++) S.parts.push({ x: e.x + e.w / 2, y: e.y + e.h / 2, vx: rnd(-120, 120), vy: rnd(-140, 20), life: 0.6, max: 0.6, col: pick(['#a056c9', '#f1e3ff', '#7ad37a', '#c9b34e']), size: 3, grav: true });
   const r = Math.random();
+  if (e.type === 'grape') [-1, 0, 1].forEach(d => { const g = makeEnemy('grapelet', e.x + 4 + d * 8); g.active = true; g.vy = -180; g.vx = d * 60; g.kbT = 0.25; S.enemies.push(g); });
+  if (e.type === 'grapelet') return;
   if (e.type === 'mimic') { [0, 1, 2].forEach(i => S.pickups.push({ type: 'glowcap', x: e.x + i * 10, y: e.y - 10, w: 16, h: 16, vy: -150, bob: 0, drop: true })); S.pickups.push({ type: 'beer', x: e.x + 4, y: e.y - 20, w: 16, h: 16, vy: -180, drop: true, bob: 0 }); }
   else if (r < 0.28) S.pickups.push({ type: 'beer', x: e.x, y: e.y - 6, w: 16, h: 16, vy: -150, drop: true, bob: 0 });
   else if (r < 0.48) S.pickups.push({ type: 'glowcap', x: e.x, y: e.y - 6, w: 16, h: 16, vy: -150, drop: true, bob: 0 });
@@ -1374,6 +1229,16 @@ function gameOver() { scene = 'gameover'; overT = 0; }
 let overT = 0;
 
 function bossDefeated(b) {
+  if (S.n === 2) {
+    addShake(8); SFX.boom();
+    S.loot.cork++; S.score += 6000; say('บารอนฟอนบาร์เรล', 'ไวน์ร้อยปีของข้า... เสียของหมดเลย!', 2.5);
+    const frozen = b.freeze > 0 || b.slow > 0;
+    if (frozen) S.loot.cork++;
+    S.end = { t: 0, ember: frozen };
+    track('boss_defeated', { stage: 2, boss: 'baron_von_barrel', ember: frozen ? 1 : 0, time_s: Math.round(S.t) });
+    for (let n = 0; n < 60; n++) S.parts.push({ x: b.x + b.w / 2, y: b.y + b.h / 2, vx: rnd(-220, 220), vy: rnd(-260, 40), life: 1.2, max: 1.2, col: pick(['#8a2040', '#c8304a', '#ffd35a', '#a0703a']), size: 4, grav: true });
+    return;
+  }
   addShake(8); SFX.boom();
   S.loot.crown++; S.score += 5000; say('ราชาเห็ด', 'ไม่นะ... มงกุฎของข้า...', 2.5);
   const ember = b.burn > 0;
@@ -1384,11 +1249,62 @@ function bossDefeated(b) {
 }
 
 function spawnBoss() {
+  if (S.n === 2) { S.boss = { type: 'boss', x: ARENA + 280, y: -100, w: 70, h: 66, vx: 0, vy: 0, face: -1, hp: 560, max: 560, heavy: true, flash: 0, burn: 0, slow: 0, freeze: 0, kbT: 0, dead: false, state: 'intro', t: 2.2, contact: 14, hops: 0, onGround: false, squash: 0, bounces: 0 }; S.enemies.push(S.boss); return; }
   S.boss = { type: 'boss', x: ARENA + 280, y: -100, w: 76, h: 70, vx: 0, vy: 0, face: -1, hp: 460, max: 460, heavy: true, flash: 0, burn: 0, slow: 0, freeze: 0, kbT: 0, dead: false, state: 'intro', t: 2.2, contact: 14, hops: 0, onGround: false, squash: 0 };
   S.enemies.push(S.boss);
 }
 
+function updateBaron(b, dt) {
+  const p = S.p, f = b.freeze > 0 ? 0 : b.slow > 0 ? 0.55 : 1, phase2 = b.hp < b.max * 0.5;
+  b.vy += 900 * dt; b.y += b.vy * dt; b.x += b.vx * dt * (f || 0);
+  b.squash = Math.max(0, b.squash - dt * 3);
+  if (b.y + b.h >= GROUND) {
+    if (!b.onGround && b.vy > 200) {
+      addShake(b.state === 'intro' ? 6 : 5); SFX.boom(); b.squash = 1;
+      if (b.state === 'air') [-1, 1].forEach(d => S.projs.push({ type: 'wave', owner: 'e', x: b.x + b.w / 2 - 8 + d * 30, y: GROUND - 14, w: 16, h: 14, vx: d * (phase2 ? 200 : 160), vy: 0, dmg: 12, life: 2.2 }));
+    }
+    b.y = GROUND - b.h; b.vy = 0; b.onGround = true; if (b.state !== 'roll') b.vx = 0;
+  } else b.onGround = false;
+  if (b.state === 'roll' && (b.x <= ARENA + 4 || b.x >= ARENA + W - b.w - 4)) { b.vx = -b.vx; b.bounces--; addShake(4); SFX.boom(); b.x = clamp(b.x, ARENA + 5, ARENA + W - b.w - 5); if (b.bounces <= 0) { b.state = 'idle'; b.vx = 0; b.t = phase2 ? 0.7 : 1.1; } }
+  b.x = clamp(b.x, ARENA + 4, ARENA + W - b.w - 4);
+  b.contact = b.state === 'roll' ? 18 : 14;
+  if (f === 0) return;
+  b.t -= dt * f;
+  if (b.state !== 'air' && b.state !== 'roll') b.face = p.x + 9 < b.x + b.w / 2 ? -1 : 1;
+  switch (b.state) {
+    case 'intro': if (b.t <= 0 && b.onGround) { b.state = 'idle'; b.t = 0.8; } break;
+    case 'idle':
+      if (b.t <= 0) {
+        const kegs = S.enemies.filter(e => !e.dead && e.type === 'keg').length, r = Math.random();
+        if (r < 0.34) { b.state = 'curl'; b.t = 0.55; }
+        else if (r < 0.66) { b.state = 'spray'; b.t = 0.6; }
+        else if (r < 0.86 || !phase2 || kegs >= 2) { b.state = 'crouch'; b.t = phase2 ? 0.3 : 0.45; b.hops = phase2 ? 2 : 1; }
+        else { b.state = 'summon'; b.t = 0.6; }
+      }
+      break;
+    case 'curl': if (b.t <= 0) { b.state = 'roll'; b.vx = b.face * (phase2 ? 290 : 240); b.bounces = phase2 ? 3 : 2; SFX.special(); } break;
+    case 'roll': if (Math.random() < 0.5) S.parts.push({ x: b.x + b.w / 2 - b.face * 30, y: GROUND - 3, vx: -b.vx * 0.2, vy: rnd(-40, -10), life: 0.4, max: 0.4, col: '#8a7a6a', size: 3 }); break;
+    case 'crouch':
+      if (b.t <= 0) { b.state = 'air'; b.vy = -430; b.onGround = false; const tx = clamp(p.x + 9 - b.w / 2, ARENA + 4, ARENA + W - b.w - 4); b.vx = (tx - b.x) / 0.95; SFX.jump(); }
+      break;
+    case 'air':
+      if (b.onGround) { b.hops--; if (b.hops > 0) { b.state = 'crouch'; b.t = 0.2; } else { b.state = 'idle'; b.t = phase2 ? 0.55 : 0.9; } }
+      break;
+    case 'spray':
+      if (b.t <= 0) {
+        const n = phase2 ? 9 : 6;
+        for (let i = 0; i < n; i++) S.projs.push({ type: 'wine', owner: 'e', x: b.x + b.w / 2 + b.face * 20, y: b.y + b.h * 0.55, w: 9, h: 9, vx: b.face * (110 + i * 26), vy: -120 - (i % 3) * 50, grav: 420, dmg: 10, life: 3 });
+        noise(0.25, 0.06); b.state = 'idle'; b.t = phase2 ? 0.6 : 1.0;
+      }
+      break;
+    case 'summon':
+      if (b.t <= 0) { [-1, 1].forEach(d => { const e = makeEnemy('keg', clamp(b.x + b.w / 2 + d * 70, ARENA + 10, ARENA + W - 30)); e.active = true; e.vy = -200; S.enemies.push(e); }); SFX.special(); b.state = 'idle'; b.t = 0.9; }
+      break;
+  }
+}
+
 function updateBoss(b, dt) {
+  if (S.n === 2) { updateBaron(b, dt); return; }
   const p = S.p, f = b.freeze > 0 ? 0 : b.slow > 0 ? 0.55 : 1, phase2 = b.hp < b.max * 0.5;
   b.vy += 900 * dt; b.y += b.vy * dt; b.x += b.vx * dt * (f || 0);
   b.squash = Math.max(0, b.squash - dt * 3);
@@ -1452,7 +1368,30 @@ function updateEnemy(e, dt) {
   if (e.type === 'sporeling') {
     if (e.kbT <= 0) { e.vx = Math.abs(dx) < 230 ? Math.sign(dx) * 42 * f : 0; e.x += e.vx * dt; if (e.vx) e.face = Math.sign(e.vx); }
     e.vy += 900 * dt; e.y += e.vy * dt; if (e.y + e.h > GROUND) { e.y = GROUND - e.h; e.vy = 0; }
-  } else if (e.type === 'moth') {
+  } else if (e.type === 'keg') {
+    e.cd -= dt * f;
+    if (e.kbT <= 0) {
+      if (e.state === 'charge') { e.chT -= dt; if (e.chT <= 0 || pitAhead(e, e.vx)) { e.state = 'idle'; e.cd = rnd(1.4, 2.2); e.vx = 0; } }
+      else if (e.state === 'wind') { e.chT -= dt * f; e.vx = 0; if (e.chT <= 0) { e.state = 'charge'; e.vx = e.face * 175; e.chT = 0.75; } }
+      else { e.vx = Math.abs(dx) < 230 ? Math.sign(dx) * 36 * f : 0; if (e.vx) e.face = Math.sign(e.vx); if (Math.abs(dx) < 120 && Math.abs(p.y - e.y) < 40 && e.cd <= 0 && f > 0) { e.state = 'wind'; e.chT = 0.4; e.face = Math.sign(dx) || 1; } }
+      if (pitAhead(e, e.vx)) e.vx = 0;
+      e.x += e.vx * dt * (e.state === 'charge' ? f : 1);
+    }
+    e.contact = e.state === 'charge' ? 14 : 10;
+    e.vy += 900 * dt; e.y += e.vy * dt; if (e.y + e.h > GROUND && !overPit(e.x, e.w)) { e.y = GROUND - e.h; e.vy = 0; }
+  } else if (e.type === 'grape' || e.type === 'grapelet') {
+    e.cd -= dt * f; const onG = e.y + e.h >= GROUND - 0.5;
+    if (onG && e.kbT <= 0) { e.vx = 0; if (e.cd <= 0 && f > 0 && Math.abs(dx) < 240) { const d = Math.sign(dx) || 1; if (!pitAhead(e, d)) { e.vy = e.type === 'grape' ? -250 : -190; e.vx = d * (e.type === 'grape' ? 70 : 85); e.face = d; } e.cd = e.type === 'grape' ? rnd(0.9, 1.3) : rnd(0.5, 0.8); e.squashT = 0.15; } }
+    if (e.kbT <= 0) e.x += e.vx * dt * f;
+    e.squashT = Math.max(0, (e.squashT || 0) - dt);
+    e.vy += 900 * dt; e.y += e.vy * dt; if (e.y + e.h > GROUND && !overPit(e.x, e.w)) { if (e.vy > 120) e.squashT = 0.15; e.y = GROUND - e.h; e.vy = 0; }
+  } else if (e.type === 'imp') {
+    e.cd -= dt * f; e.face = Math.sign(dx) || 1;
+    if (e.kbT <= 0) { const want = Math.abs(dx) < 110 ? -1 : Math.abs(dx) > 190 ? 1 : 0; e.vx = want * Math.sign(dx) * 40 * f; if (pitAhead(e, e.vx)) e.vx = 0; e.x += e.vx * dt; }
+    if (e.cd <= 0 && Math.abs(dx) < 260 && f > 0) { e.cd = rnd(2, 2.6); e.throwT = 0.3; const tt = 0.9; S.projs.push({ type: 'bottle', owner: 'e', x: ex - 4, y: e.y - 2, w: 8, h: 8, vx: dx / tt, vy: -250, grav: 500, dmg: 10, life: 3 }); }
+    if (e.throwT) e.throwT = Math.max(0, e.throwT - dt);
+    e.vy += 900 * dt; e.y += e.vy * dt; if (e.y + e.h > GROUND && !overPit(e.x, e.w)) { e.y = GROUND - e.h; e.vy = 0; }
+  } else if (e.type === 'moth' || e.type === 'bat') {
     e.cd -= dt * f;
     if (e.state === 'idle') {
       if (e.kbT <= 0) { e.x += Math.sign(dx) * 26 * f * dt; e.y = e.homeY + Math.sin(e.t * 3) * 10; }
@@ -1476,7 +1415,8 @@ function updateEnemy(e, dt) {
     }
   }
   if (e.x < 0) e.x = 0;
-  if (S.bossOn && e.type === 'sporeling') e.x = clamp(e.x, ARENA, ARENA + W - e.w);
+  if (S.bossOn && (e.type === 'sporeling' || e.type === 'keg')) e.x = clamp(e.x, ARENA, ARENA + W - e.w);
+  if (e.y > H + 30 && !e.dead) { e.dead = true; S.kills++; S.score += 100; } /* fell into a pit */
 }
 
 function updateStage(dt) {
@@ -1515,17 +1455,29 @@ function updateStage(dt) {
   }
 
   /* movement */
-  const id = kid(), speed = id === 'rosemary' ? 122 : id === 'percival' ? 96 : 104;
+  const id = kid(), sticky = S.n === 2 && p.onGround && p.y + p.h >= GROUND - 1 && S.pools.some(pl => p.x + p.w > pl.x + 4 && p.x < pl.x + pl.w - 4);
+  const speed = (id === 'rosemary' ? 122 : id === 'percival' ? 96 : 104) * (sticky ? 0.45 : 1);
+  if (sticky && !S.stickyTold) { S.stickyTold = true; S.texts.push({ x: p.x + 9, y: p.y - 8, str: 'ไวน์เหนียว! เดินช้าลง', col: '#ff8aa0', life: 1.2 }); }
   let dir = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
   if (S.end) dir = 0;
   if (p.kbT > 0) { p.kbT -= dt; }
   else if (busy) { p.vx = p.face * 210; }
   else if (p.lunge > 0) { p.lunge -= dt; p.vx = p.face * 230; }
   else { p.vx = dir * speed * (p.atkT > 0 && p.onGround && id === 'percival' ? 0.3 : 1); if (dir) p.face = dir; }
-  if (pressed.up && p.onGround && !S.end) { p.vy = -335; p.onGround = false; SFX.jump(); }
+  if (pressed.up && p.onGround && !S.end && !S.lift) { p.vy = sticky ? -270 : -335; p.onGround = false; SFX.jump(); }
   if (!keys.up && p.vy < -140) p.vy = -140;
   p.vy = Math.min(p.vy + 900 * dt, 520);
-  moveBody(p, dt);
+  if (S.lift) { /* the Pixie carries the knight up to the high shelf */
+    const L = S.lift; L.t += dt; p.vx = 0; p.vy = 0; p.inv = Math.max(p.inv, 0.3);
+    const tx = S.shelf.x + 14, ty = S.shelf.y - p.h; p.x += (tx - p.x) * Math.min(1, dt * 2.5); p.y += (ty - 6 - p.y) * Math.min(1, dt * 2.2);
+    if (L.t > 1.4) { p.x = tx; p.y = ty; p.onGround = true; S.lift = null; say('พิกซี่', 'ถึงแล้ว! ตรงนี้มีหีบลับด้วยนะ~'); }
+  } else moveBody(p, dt);
+  if (S.n === 2 && p.y > H + 20) { /* fell into a pit */
+    const pt = S.pits.find(q => p.x + p.w / 2 > q.x - 20 && p.x + p.w / 2 < q.x + q.w + 20) || S.pits[0];
+    p.x = pt.x - 28; p.y = GROUND - p.h - 30; p.vx = 0; p.vy = 0; p.face = 1;
+    const k = activeK(); k.hp = Math.max(1, k.hp - 15); p.inv = 1.2; addShake(3); SFX.hurt();
+    S.texts.push({ x: p.x + 9, y: p.y - 8, str: '-15 ตกหลุม!', col: '#ff6b6b', life: 1 });
+  }
   const leftBound = S.bossOn ? ARENA : Math.max(0, S.camX - 4);
   const rightBound = S.bossOn ? ARENA + W : LEVEL_W;
   p.x = clamp(p.x, leftBound, rightBound - p.w);
@@ -1550,7 +1502,7 @@ function updateStage(dt) {
 
   /* poison pools */
   S.poolT -= dt;
-  if (p.onGround && p.y + p.h >= GROUND - 1 && S.pools.some(pl => p.x + p.w > pl.x + 4 && p.x < pl.x + pl.w - 4) && S.poolT <= 0) { S.poolT = 0.5; S.poisonT = 0.6; const k = activeK(); if (p.inv <= 0) { k.hp = Math.max(1, k.hp - 6); S.texts.push({ x: p.x + 9, y: p.y - 4, str: '-6 poison', col: '#9be15d', life: 0.6 }); SFX.hurt(); } }
+  if (S.n !== 2 && p.onGround && p.y + p.h >= GROUND - 1 && S.pools.some(pl => p.x + p.w > pl.x + 4 && p.x < pl.x + pl.w - 4) && S.poolT <= 0) { S.poolT = 0.5; S.poisonT = 0.6; const k = activeK(); if (p.inv <= 0) { k.hp = Math.max(1, k.hp - 6); S.texts.push({ x: p.x + 9, y: p.y - 4, str: '-6 poison', col: '#9be15d', life: 0.6 }); SFX.hurt(); } }
 
   /* hitboxes */
   for (const h of S.hits) {
@@ -1590,6 +1542,7 @@ function updateStage(dt) {
       if (pr.type === 'firewave' && Math.random() < 0.7) S.parts.push({ x: pr.x + rnd(0, pr.w), y: pr.y + rnd(0, pr.h), vx: -pr.vx * 0.1, vy: rnd(-60, -10), life: 0.35, max: 0.35, col: pick(['#ff6b2c', '#ffd35a', '#e2483b']), size: 3 });
     } else {
       if (overlap(pr, p)) { hurtPlayer(pr.dmg, pr.x); if (pr.type !== 'wave') pr.life = 0; }
+      if ((pr.type === 'bottle' || pr.type === 'wine') && pr.y + pr.h > GROUND && !overPit(pr.x, pr.w)) { pr.life = 0; for (let n = 0; n < (pr.type === 'bottle' ? 7 : 3); n++) S.parts.push({ x: pr.x + 4, y: GROUND - 3, vx: rnd(-60, 60), vy: rnd(-90, -20), life: 0.45, max: 0.45, col: pick(pr.type === 'bottle' ? ['#7ad37a', '#c8304a', '#e8fff0'] : ['#c8304a', '#8a2040']), size: 2, grav: true }); if (pr.type === 'bottle') noise(0.08, 0.05); }
       if (pr.type === 'spore' && pr.y + pr.h > GROUND) { pr.life = 0; for (let n = 0; n < 4; n++) S.parts.push({ x: pr.x + 5, y: GROUND - 3, vx: rnd(-40, 40), vy: rnd(-50, -10), life: 0.4, max: 0.4, col: '#c88ae8', size: 2 }); }
     }
   }
@@ -1597,9 +1550,11 @@ function updateStage(dt) {
 
   /* pickups */
   for (const it of S.pickups) {
-    if (it.drop) { it.vy += 700 * dt; it.y += it.vy * dt; if (it.y + it.h > GROUND) { it.y = GROUND - it.h; it.vy = 0; it.drop = false; } }
+    if (it.drop) { it.vy += 700 * dt; it.y += it.vy * dt; if (it.y + it.h > GROUND && !(S.pits.length && overPit(it.x, it.w))) { it.y = GROUND - it.h; it.vy = 0; it.drop = false; } if (it.y > H + 20) it.got = true; }
     it.bob += dt;
     if (it.got || !overlap(p, it)) continue;
+    if (it.type === 'shelfchest') { if (!S.shelf.got) { S.shelf.got = true; SFX.chest(); S.loot.glowcap += 2; S.loot.chili += 2; addGauge(40); S.score += 800; S.texts.push({ x: it.x + 12, y: it.y - 20, str: 'หีบบนชั้นลับ! +SP', col: '#e8c76a', life: 2, big: true }); } continue; }
+    if (it.type === 'chest' && S.n === 2) { if (!S.vaultOpened) { S.vaultOpened = true; SFX.chest(); it.got = true; S.loot.truffle++; S.loot.cork++; S.score += 800; S.texts.push({ x: it.x + 12, y: it.y - 20, str: '100-Year Vintage Cork!', col: '#e8c76a', life: 2, big: true }); SFX.ult(); } continue; }
     if (it.type === 'chest') { if (!S.vaultOpened) { S.vaultOpened = true; SFX.chest(); it.got = true; S.loot.truffle++; S.loot.glowcap += 2; S.texts.push({ x: it.x + 12, y: it.y - 20, str: 'Truffle of Ages!', col: '#e8c76a', life: 2, big: true }); SFX.ult(); } continue; }
     it.got = true; SFX.coin(); S.score += it.type === 'glowcap' ? 50 : 20;
     if (it.type === 'beer') { addGauge(save.tools.lucky ? 55 : 35); S.texts.push({ x: it.x + 8, y: it.y - 6, str: 'เบียร์วุ้น! +SP', col: '#ffd76a', life: 0.9 }); }
@@ -1607,7 +1562,7 @@ function updateStage(dt) {
     if (it.type === 'glowcap') { S.loot.glowcap++; S.texts.push({ x: it.x + 8, y: it.y - 6, str: '+1 Glowcap', col: '#7cf5c8', life: 0.9 }); }
     if (it.type === 'ale') { const k = activeK(); k.hp = Math.min(k.max, k.hp + 40); S.texts.push({ x: it.x + 8, y: it.y - 6, str: '+40 HP', col: '#ff9a7a', life: 0.9 }); }
   }
-  S.pickups = S.pickups.filter(it => !it.got || it.type === 'chest');
+  S.pickups = S.pickups.filter(it => !it.got || it.type === 'chest' || it.type === 'shelfchest');
 
   /* support crew */
   const g = S.sup.gorn;
@@ -1618,10 +1573,16 @@ function updateStage(dt) {
     else { g.x -= 260 * dt; if (g.x < S.camX - 60) S.sup.gorn = null; }
   }
   S.hint = null;
-  if (!S.wall.broken && Math.abs(p.x - S.wall.x) < 110 && !g) S.hint = save.crew.includes('gorn') ? 'กด C เรียกเชฟกอร์นมาทุบกำแพงร้าว!' : 'กำแพงร้าว... ต้องพาเชฟกอร์นมา (เลือกที่แผนที่โลก)';
+  if (S.n === 2) {
+    if (!S.wall.broken && Math.abs(p.x - S.wall.x) < 110 && !g) S.hint = save.crew.includes('mole') ? 'กด C เรียกตุ่นมาขุดกองดิน!' : 'กองดินขวางทาง... ต้องพาตุ่นมา (เลือกที่แผนที่โลก)';
+    else if (nearShelf() && !S.lift) S.hint = save.crew.includes('pixie') ? 'กด C เรียกพิกซี่พาบินขึ้นชั้นบน!' : 'ชั้นบนสูงเกินกระโดด... ต้องพาพิกซี่มา';
+  }
+  else if (!S.wall.broken && Math.abs(p.x - S.wall.x) < 110 && !g) S.hint = save.crew.includes('gorn') ? 'กด C เรียกเชฟกอร์นมาทุบกำแพงร้าว!' : 'กำแพงร้าว... ต้องพาเชฟกอร์นมา (เลือกที่แผนที่โลก)';
 
   /* boss trigger */
-  if (!S.bossOn && p.x > ARENA + 60) { S.bossOn = true; spawnBoss(); S.banner = { text: 'KING SHROOMBA', sub: 'ราชาเห็ดสปอร์พิษ', t: 2.2, boss: true }; say('ราชาเห็ด', 'ใครกล้าบุกป่าเห็ดของข้า! จงกลายเป็นปุ๋ยซะ!', 3); }
+  if (!S.bossOn && p.x > ARENA + 60) { S.bossOn = true; spawnBoss();
+    if (S.n === 2) { S.banner = { text: 'BARON VON BARREL', sub: 'บารอนแห่งถังไวน์', t: 2.2, boss: true }; say('บารอนฟอนบาร์เรล', 'ใครบังอาจย่องเข้าห้องเก็บไวน์ของข้า! ชิมนี่ซะ!', 3); }
+    else { S.banner = { text: 'KING SHROOMBA', sub: 'ราชาเห็ดสปอร์พิษ', t: 2.2, boss: true }; say('ราชาเห็ด', 'ใครกล้าบุกป่าเห็ดของข้า! จงกลายเป็นปุ๋ยซะ!', 3); } }
 
   /* camera */
   const camMin = document.body.classList.contains('tp-on') ? -110 : 0; /* touch: keep the knight clear of the joystick */
@@ -1641,7 +1602,7 @@ function moveBody(p, dt) {
   for (const s of S.solids) if (overlap(p, s)) { if (p.vx > 0) p.x = s.x - p.w; else if (p.vx < 0) p.x = s.x + s.w; }
   p.y += p.vy * dt;
   p.onGround = false;
-  if (p.y + p.h >= GROUND) { p.y = GROUND - p.h; p.vy = 0; p.onGround = true; }
+  if (p.y + p.h >= GROUND && !(S.pits.length && overPit(p.x, p.w)) && prevBottom <= GROUND + 4) { p.y = GROUND - p.h; p.vy = 0; p.onGround = true; }
   if (p.vy >= 0) for (const pl of S.platforms) if (p.x + p.w > pl.x + 2 && p.x < pl.x + pl.w - 2 && prevBottom <= pl.y + 1 && p.y + p.h >= pl.y) { p.y = pl.y - p.h; p.vy = 0; p.onGround = true; }
   for (const s of S.solids) if (overlap(p, s)) {
     if (p.vy >= 0 && prevBottom <= s.y + 2) { p.y = s.y - p.h; p.vy = 0; p.onGround = true; }
@@ -1649,14 +1610,19 @@ function moveBody(p, dt) {
   }
 }
 
+function nearShelf() { const p = S.p; return S.shelf && !S.shelf.got && p.y > S.shelf.y && p.x + p.w > S.shelf.x - 30 && p.x < S.shelf.x + S.shelf.w + 30; }
 function callSupport() {
   const p = S.p;
+  if (S.n === 2) {
+    if (!S.wall.broken && Math.abs(p.x - S.wall.x) < 110 && !S.sup.gorn && save.crew.includes('mole')) { S.sup.gorn = { x: S.camX - 30, t: 0, state: 'run', mole: true }; say('ตุ่น', 'ขุดดินเป็นงานถนัดของข้าเอง!'); SFX.select(); return; }
+    if (nearShelf() && !S.lift && save.crew.includes('pixie')) { S.lift = { t: 0 }; say('พิกซี่', 'จับมือไว้นะ! บินแล้ว~'); SFX.select(); return; }
+  } else
   if (!S.wall.broken && Math.abs(p.x - S.wall.x) < 110 && !S.sup.gorn && save.crew.includes('gorn')) {
     S.sup.gorn = { x: S.camX - 30, t: 0, state: 'run' };
     say('เชฟกอร์น', 'หลีกไป! พุงพลุ้ยมาแล้ว!'); SFX.select();
     return;
   }
-  if (!save.crew.includes('bart')) { S.texts.push({ x: p.x + 9, y: p.y - 10, str: 'ไม่ได้พาบาร์ตเฒ่ามา', col: '#bba8ba', life: 0.8 }); return; }
+  if (!save.crew.includes('bart')) { if (S.n === 2 && !save.crew.includes('bart')) { S.texts.push({ x: p.x + 9, y: p.y - 10, str: 'ไม่มีอะไรให้ลูกทีมช่วยตรงนี้', col: '#bba8ba', life: 0.8 }); return; } S.texts.push({ x: p.x + 9, y: p.y - 10, str: 'ไม่ได้พาบาร์ตเฒ่ามา', col: '#bba8ba', life: 0.8 }); return; }
   if (S.sup.bart > 0 && S.sup.bartCd <= 0) {
     S.sup.bart--; S.sup.bartCd = 4;
     S.pickups.push({ type: 'ale', x: p.x + p.face * 30, y: p.y - 40, w: 16, h: 16, vy: -120, drop: true, bob: 0 });
@@ -1668,7 +1634,8 @@ function breakWall() {
   S.wall.broken = true; S.solids = S.solids.filter(s => s !== S.wall);
   addShake(6); SFX.boom();
   for (let n = 0; n < 30; n++) S.parts.push({ x: S.wall.x + rnd(0, 16), y: S.wall.y + rnd(0, 40), vx: rnd(-40, 200), vy: rnd(-220, -40), life: 0.9, max: 0.9, col: pick(['#7b6a5e', '#a39282', '#4a3f38']), size: 3, grav: true });
-  S.texts.push({ x: S.wall.x + 40, y: S.wall.y - 10, str: 'Secret vault!', col: '#e8c76a', life: 1.6, big: true });
+  if (S.n === 2) for (let n = 0; n < 20; n++) S.parts.push({ x: S.wall.x + rnd(0, 16), y: S.wall.y + rnd(10, 40), vx: rnd(-60, 160), vy: rnd(-180, -40), life: 0.8, max: 0.8, col: pick(['#7a5a3a', '#5a3e28', '#9a7a52']), size: 3, grav: true });
+  S.texts.push({ x: S.wall.x + 40, y: S.wall.y - 10, str: S.n === 2 ? 'Secret tunnel!' : 'Secret vault!', col: '#e8c76a', life: 1.6, big: true });
 }
 
 function updateParticles(dt) {
@@ -1680,11 +1647,11 @@ function updateParticles(dt) {
 
 let results = null;
 function finishStage() {
-  for (const k in S.loot) save.ing[k] += S.loot[k];
+  for (const k in S.loot) save.ing[k] = (save.ing[k] || 0) + S.loot[k];
   save.runs++; persist();
   const stars = 1 + (S.t < 300 ? 1 : 0) + (S.ko === 0 ? 1 : 0), hearts = (S.vaultOpened ? 1 : 0) + (S.end.ember ? 1 : 0);
-  const prev = save.stages[1] || { stars: 0, hearts: 0 }; save.stages[1] = { stars: Math.max(prev.stars, stars), hearts: Math.max(prev.hearts, hearts) }; persist();
-  results = { time: S.t, kills: S.kills, loot: Object.assign({}, S.loot), vault: S.vaultOpened, ember: S.end.ember, t: 0, stars, hearts, score: S.score, net: NET.finish(S.net, { score: S.score, timeMs: Math.round(((S.netT0 || 0) + S.t) * 1000), kills: S.kills }) };
+  const prev = save.stages[S.n] || { stars: 0, hearts: 0 }; save.stages[S.n] = { stars: Math.max(prev.stars, stars), hearts: Math.max(prev.hearts, hearts) }; persist();
+  results = { n: S.n, time: S.t, kills: S.kills, loot: Object.assign({}, S.loot), vault: S.vaultOpened, ember: S.end.ember, t: 0, stars, hearts, score: S.score, net: S.net ? NET.finish(S.net, { score: S.score, timeMs: Math.round(((S.netT0 || 0) + S.t) * 1000), kills: S.kills }) : null };
   scene = 'results';
 }
 
@@ -1768,16 +1735,34 @@ function drawGround(camX) {
     else { rect(x, GROUND - 2, pl.w, 9, '#8a4ad8'); rect(x + 2, GROUND, pl.w - 4, 7, '#5a2a9a'); }
   }
 }
+/* temporary Stage 2 scenery: the alchemy cellar art (G6) darkened as a tiled far wall, stage props recoloured to stone and wine */
+const F_STONE = 'grayscale(1) sepia(0.28) brightness(0.62) contrast(1.1)', F_WINE = 'hue-rotate(70deg) saturate(1.5) brightness(0.8)', F_DIRT = 'sepia(0.9) saturate(1.3) brightness(0.8)';
+function drawDungeonBg(camX, t) {
+  rect(0, 0, W, H, '#140c10');
+  if (ENV.cellar2) { const im = recol(ENV.cellar2, 'brightness(0.42) saturate(0.7) sepia(0.25)'); tileX(im, 0.12, camX, -18, 400, 225); }
+  const fog = ctx.createLinearGradient(0, 90, 0, GROUND); fog.addColorStop(0, 'rgba(80,20,30,0)'); fog.addColorStop(1, 'rgba(110,30,40,0.28)'); ctx.fillStyle = fog; ctx.fillRect(0, 90, W, GROUND - 90);
+  if (ENV.cellar2) { const x0 = ARENA - camX - 20; if (x0 < W) { ctx.drawImage(recol(ENV.cellar2, 'brightness(0.6) saturate(1.2) hue-rotate(-12deg)'), Math.round(x0), -10, 440, 248); const gr = ctx.createLinearGradient(x0, 0, x0 + 60, 0); gr.addColorStop(0, '#140c10'); gr.addColorStop(1, 'rgba(20,12,16,0)'); ctx.fillStyle = gr; ctx.fillRect(x0, 0, 60, H); } }
+}
+function drawStageBg(n, camX, t) { if (n === 2) drawDungeonBg(camX, t); else drawForestBg(camX, t); }
+function drawDungeonGround(camX) {
+  ctx.fillStyle = '#16100e'; ctx.fillRect(0, GROUND, W, H - GROUND);
+  if (ENV.ground2) tileX(recol(ENV.ground2, F_STONE), 1, camX, GROUND - 7, 564, 40);
+  for (const pt of S.pits) { const x = pt.x - camX; if (x > W || x + pt.w < 0) continue;
+    const g = ctx.createLinearGradient(0, GROUND - 8, 0, H); g.addColorStop(0, '#0a0608'); g.addColorStop(1, '#000'); ctx.fillStyle = g; ctx.fillRect(Math.round(x), GROUND - 7, pt.w, H - GROUND + 7); }
+  for (const pl of S.pools) { const x = pl.x - camX; if (x > W || x + pl.w < 0 || !E7.pit) continue;
+    const im = recol(E7.pit, F_WINE), bw = pl.w + 8, bh = bw * im.height / im.width * POOL_SQ, bx = x - 4, by = GROUND - 3;
+    glow(x + pl.w / 2, GROUND, pl.w * 0.6, 'rgba(200,40,70,A)', 0.12); dimg(im, Math.round(bx * RES) / RES, by, bw, bh); }
+}
 function drawStageWorld() {
   const cx = Math.round(S.camX);
-  drawForestBg(cx, S.t);
-  drawGround(cx);
+  drawStageBg(S.n, cx, S.t);
+  if (S.n === 2) drawDungeonGround(cx); else drawGround(cx);
   ctx.save(); ctx.translate(-cx, 0);
   // arena markers
   if (!ENV.arena) { rect(ARENA - 6, GROUND - 60, 6, 60, '#2b1a2a'); rect(ARENA - 14, GROUND - 70, 22, 12, '#8a3a4a'); }
   // platforms
   for (const pl of S.platforms) { if (pl.x - cx > W || pl.x + pl.w - cx < 0) continue;
-    if (ENV.plat2) { const im = ENV.plat2, y = pl.y - 2, h = 16, cw = 7, mw = 13.75;
+    if (ENV.plat2) { const im = S.n === 2 ? recol(ENV.plat2, F_STONE) : ENV.plat2, y = pl.y - 2, h = 16, cw = 7, mw = 13.75;
       const nr = pl.w > 70 ? 2 : 1; for (let k = 0; k < nr; k++) { const rx = pl.x + pl.w * (k + 1) / (nr + 1) - 13.9; ctx.drawImage(im, 0, 60, 111, 59, rx, y + 15, 27.75, 14.75); }
       ctx.drawImage(im, 0, 0, 28, 64, pl.x - 2, y, cw, h); ctx.drawImage(im, 83, 0, 28, 64, pl.x + pl.w - 5, y, cw, h);
       for (let x = pl.x + 5; x < pl.x + pl.w - 5; x += mw) { const ww = Math.min(mw, pl.x + pl.w - 5 - x); ctx.drawImage(im, 28, 0, 55 * ww / mw, 64, x, y, ww, h); }
@@ -1789,7 +1774,7 @@ function drawStageWorld() {
   // mound
   const m = S.solids.find(s => s.kind === 'slab');
   if (ENV.plat2 && fxArtReady) { // vault roof = G3 mossy platform art; open alcove behind (no code-drawn room)
-    const im = ENV.plat2, y = m.y - 2, h = 16, cw = 7, mw = 13.75;
+    const im = S.n === 2 ? recol(ENV.plat2, F_STONE) : ENV.plat2, y = m.y - 2, h = 16, cw = 7, mw = 13.75;
     ctx.drawImage(im, 0, 0, 28, 64, m.x - 2, y, cw, h); ctx.drawImage(im, 83, 0, 28, 64, m.x + m.w - 5, y, cw, h);
     for (let x = m.x + 5; x < m.x + m.w - 5; x += mw) { const ww = Math.min(mw, m.x + m.w - 5 - x); ctx.drawImage(im, 28, 0, 55 * ww / mw, 64, x, y, ww, h); }
     for (let k = 0; k < 3; k++) ctx.drawImage(im, 0, 60, 111, 59, m.x + 30 + k * 60, y + 15, 27.75, 14.75);
@@ -1799,13 +1784,17 @@ function drawStageWorld() {
   rect(1256, 150, 168, 40, S.wall.broken ? '#0e2228' : '#1e3a42');
   if (S.wall.broken) { for (let x = 1262; x < 1420; x += 20) rect(x, 154, 2, 2, '#7cf5c8'); }
   }
-  if (fxArtReady) { const w = S.wall; fxB('wall_ok', 1432, GROUND + 1); if (!w.broken) fxB('wall_crack', w.x + w.w / 2, GROUND + 1); else fxB('rubble', w.x + w.w / 2, GROUND + 2); }
+  if (fxArtReady && S.n === 2) { const w = S.wall, ok = fxImg('wall_ok', 1), rb = fxImg('rubble', 1);
+    if (ok) { const im = recol(ok, F_STONE); ctx.drawImage(im, Math.round(1432 - LW(im) / 2), Math.round(GROUND + 1 - LH(im)), LW(im), LH(im)); }
+    if (rb) { const im = recol(rb, F_DIRT), k = w.broken ? 0.8 : 1.9; ctx.drawImage(im, Math.round(w.x + w.w / 2 - LW(im) * k / 2), Math.round(GROUND + 2 - LH(im) * k), LW(im) * k, LH(im) * k); } }
+  else if (fxArtReady) { const w = S.wall; fxB('wall_ok', 1432, GROUND + 1); if (!w.broken) fxB('wall_crack', w.x + w.w / 2, GROUND + 1); else fxB('rubble', w.x + w.w / 2, GROUND + 2); }
   else if (!S.wall.broken) {
     const w = S.wall; rect(w.x, w.y, w.w, w.h, '#6a8a90'); for (let y = w.y; y < w.y + w.h; y += 8) rect(w.x, y + 7, w.w, 1, '#3e5c66');
     ctx.strokeStyle = '#2a1e1a'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(w.x + 3, w.y + 4); ctx.lineTo(w.x + 9, w.y + 14); ctx.lineTo(w.x + 5, w.y + 22); ctx.lineTo(w.x + 12, w.y + 34); ctx.moveTo(w.x + 9, w.y + 14); ctx.lineTo(w.x + 14, w.y + 18); ctx.stroke();
   }
   // pickups
   for (const it of S.pickups) {
+    if (it.type === 'shelfchest') { if (fxArtReady) fxB(S.shelf.got ? 'chest_open' : 'chest', it.x + 12, it.y + 17); continue; }
     if (it.type === 'chest') {
       if (fxArtReady) { fxB(S.vaultOpened ? 'chest_open' : 'chest', it.x + 12, it.y + 17); continue; }
       if (S.wall.broken || true) { const open = S.vaultOpened; rect(it.x, it.y + (open ? 4 : 0), 24, open ? 12 : 16, '#1b1020'); rect(it.x + 1, it.y + 1 + (open ? 4 : 0), 22, (open ? 10 : 14), '#c08a3c'); rect(it.x + 1, it.y + 6, 22, 2, '#f2c94c'); if (!open) rect(it.x + 10, it.y + 5, 4, 5, '#f2c94c'); }
@@ -1827,7 +1816,8 @@ function drawStageWorld() {
     else if (f.type === 'spark') { const k = 1 - f.t / 0.3; ctx.strokeStyle = '#fff6c0'; ctx.lineWidth = 1.2; for (let n = 0; n < 8; n++) { const a = n * Math.PI / 4; ctx.beginPath(); ctx.moveTo(f.x + Math.cos(a) * (4 + k * 10), f.y + Math.sin(a) * (4 + k * 10)); ctx.lineTo(f.x + Math.cos(a) * (8 + k * 16), f.y + Math.sin(a) * (8 + k * 16)); ctx.stroke(); } }
     ctx.globalAlpha = 1; } S.fx = S.fx.filter(f => f.t > 0); }
   // gorn
-  if (S.sup.gorn) drawGorn(S.sup.gorn);
+  if (S.sup.gorn) { if (S.sup.gorn.mole) drawBustHelper('mole', 'MOLE', S.sup.gorn.x + 15, GROUND - 6, S.sup.gorn.state === 'smash' ? Math.sin(S.t * 40) * 2 : Math.abs(Math.sin(S.t * 14)) * -2, S.sup.gorn.state === 'leave'); else drawGorn(S.sup.gorn); }
+  if (S.lift) drawBustHelper('pixie', 'PIXIE', S.p.x + S.p.w / 2, S.p.y - 2, Math.sin(S.t * 12) * 2, false);
   if (S.corpse) { const c = S.corpse; c.t -= 1 / 60; const hasDead = heroReady && HERO_ATLAS[KNIGHTS[c.i].id + '_dead']; if (hasDead) { const ds = knightSprite(c.i, 'dead'); ctx.globalAlpha = clamp(c.t, 0, 1); ctx.drawImage(c.face > 0 ? ds.r : ds.l, Math.round(c.x + 9 - 50 - (ds.r.padL || 0)), Math.round(GROUND - (ds.r.lh - 1.5)), ds.r.lw, ds.r.lh); ctx.globalAlpha = 1; if (c.t <= 0) S.corpse = null; } else { const spr = knightSprite(c.i, 'stand'); const img = c.face > 0 ? spr.r : spr.l; ctx.save(); ctx.globalAlpha = clamp(c.t, 0, 1); ctx.translate(c.x + 9, GROUND - 6); ctx.rotate(-c.face * Math.PI / 2 * clamp((1.4 - c.t) * 4, 0, 1)); dimg(img, -18, -38); ctx.restore(); ctx.globalAlpha = 1; if (c.t <= 0) S.corpse = null; } }
   // player
   drawPlayer();
@@ -1867,13 +1857,14 @@ function drawEnemy(e) {
   else if (e.freeze > 0) img = tinted(img, '#a8ecffcc');
   else if (e.burn > 0 && Math.floor(S.t * 10) % 2) img = tinted(img, '#ff8a3d99');
   else if (e.slow > 0) img = tinted(img, '#7fd6ff66');
-  const dx = Math.round(e.x + e.w / 2 - LW(img) / 2), dy = Math.round(e.y + e.h - LH(img));
-  dimg(img, dx, dy);
+  const sc = e.type === 'grapelet' ? 0.55 : e.type === 'keg' ? 0.9 : 1;
+  const dx = Math.round(e.x + e.w / 2 - LW(img) * sc / 2), dy = Math.round(e.y + e.h - LH(img) * sc);
+  if (sc !== 1) dimg(img, dx, dy, LW(img) * sc, LH(img) * sc); else dimg(img, dx, dy);
   if (e.type === 'puff' && e.puffT && enemyArtReady) { const cl = ENEMY_ART.puff_cloud.l, k = 0.35 + e.puffT; ctx.globalAlpha = Math.min(1, e.puffT * 4); dimg(cl, e.x + e.w / 2 - LW(cl) * k / 2, e.y - LH(cl) * k * 0.7, LW(cl) * k, LH(cl) * k); ctx.globalAlpha = 1; }
   else if (e.type === 'puff' && e.puffT) { ctx.fillStyle = '#e8d8ff88'; ctx.beginPath(); ctx.arc(e.x + e.w / 2, e.y - 2, 6 + e.puffT * 10, 0, 7); ctx.fill(); }
   if (e.burn > 0 && Math.random() < 0.4) S.parts.push({ x: e.x + rnd(0, e.w), y: e.y + rnd(0, e.h), vx: 0, vy: -40, life: 0.3, max: 0.3, col: '#ff8a3d', size: 2 });
   const sts = [e.burn > 0 && 'st_fire', e.freeze > 0 && 'st_freeze', e.slow > 0 && 'st_slow'].filter(Boolean); sts.forEach((n, k) => dimg(icon(n, 1), e.x + e.w / 2 - sts.length * 4.5 + k * 9, e.y - 16));
-  if (e.hp < e.max && e.type !== 'mimic' || (e.type === 'mimic' && e.state !== 'sleep' && e.hp < e.max)) bar(e.x, e.y - 6, e.w, 3, e.hp / e.max, '#e2483b');
+  if (e.hp < e.max && e.type !== 'mimic' && e.type !== 'grapelet' || (e.type === 'mimic' && e.state !== 'sleep' && e.hp < e.max)) bar(e.x, e.y - 6, e.w, 3, e.hp / e.max, '#e2483b');
 }
 
 const bossCanvas = (() => {
@@ -1930,7 +1921,10 @@ function drawBoss(b) {
     else if (b.squash > 0.4) k = 'boss_slam';
     else if (b.state === 'crouch' || b.state === 'summon' || b.state === 'air') k = 'boss_fists';
     else if (Math.abs(b.vx) > 5 || b.state === 'intro') k = Math.floor(S.t * 4) % 2 ? 'boss_stomp' : 'boss_idle';
-    const spr = ENEMY_ART[k]; let im = b.face > 0 ? spr.l : spr.r;
+    if (S.n === 2) { if (b.state === 'curl' || b.state === 'roll') k = 'boss_fists'; else if (b.state === 'spray') k = 'boss_spit'; }
+    let spr = ENEMY_ART[k]; if (S.n === 2) spr = { l: recol(spr.l, 'sepia(1) saturate(2.2) hue-rotate(-15deg) brightness(0.85)'), r: recol(spr.r, 'sepia(1) saturate(2.2) hue-rotate(-15deg) brightness(0.85)') };
+    let im = b.face > 0 ? spr.l : spr.r;
+    if (S.n === 2 && b.state === 'roll') { ctx.save(); ctx.translate(Math.round(b.x + b.w / 2), Math.round(b.y + b.h / 2 + 4)); ctx.rotate(S.t * 14 * Math.sign(b.vx || 1)); const w = LW(im) * 0.75, h = LH(im) * 0.75; ctx.drawImage(b.flash > 0 ? tinted(im, '#ffffffaa') : im, -w / 2, -h / 2, w, h); ctx.restore(); return; }
     if (b.flash > 0) im = tinted(im, '#ffffffaa'); else if (b.freeze > 0) im = tinted(im, '#a8ecff99'); else if (b.burn > 0 && Math.floor(S.t * 10) % 2) im = tinted(im, '#ff8a3d77'); else if (angry) im = tinted(im, '#ff203822');
     const wob = b.state === 'spray' ? Math.sin(S.t * 50) * 1.5 : 0;
     const cxOff = k === 'boss_spit' ? (b.face > 0 ? 1 : -1) * (LW(im) - LW(ENEMY_ART.boss_idle.l)) / 2 : 0;
@@ -1947,6 +1941,11 @@ function drawBoss(b) {
 }
 
 function drawProj(pr) {
+  if (pr.type === 'bottle' || pr.type === 'wine') { /* temporary: reuse the poison-pool bubble art recoloured until card W7 arrives */
+    const im = E7.bub0 ? recol(E7.bub0, pr.type === 'bottle' ? 'hue-rotate(200deg) saturate(1.4)' : F_WINE) : null;
+    if (im) { const sz = pr.type === 'bottle' ? 11 : 9; ctx.save(); ctx.translate(pr.x + pr.w / 2, pr.y + pr.h / 2); ctx.rotate(S.t * 10); ctx.drawImage(im, -sz / 2, -sz / 2, sz, sz); ctx.restore(); }
+    return;
+  }
   if (fxArtReady) {
     const f = Math.sign(pr.vx) || 1;
     if (pr.type === 'bolt') { glow(pr.x + pr.w / 2, pr.y + pr.h / 2, 12, 'rgba(120,200,255,A)', 0.5); if (pr.vy) { ctx.save(); ctx.translate(pr.x + pr.w / 2, pr.y + pr.h / 2); ctx.rotate(Math.atan2(pr.vy, Math.abs(pr.vx)) * f); fxC('icebolt', -f * 4, 0, f); ctx.restore(); } else fxC('icebolt', pr.x + pr.w / 2 - f * 4, pr.y + pr.h / 2, f); return; }
@@ -1987,6 +1986,12 @@ function drawTomyumBowl(cx, by, sc) {
   ctx.beginPath(); ctx.arc(8, -18, 3.5, Math.PI * 1.2, Math.PI * 2.6); ctx.stroke();
   rect(-2, -21, 3, 3, '#c6e86a'); rect(-1.5, -20.5, 2, 2, '#f0ffd0'); rect(13, -20, 4, 1.5, '#e2182a'); rect(-18, -20, 2, 6, '#9be15d'); rect(15, -27, 2, 8, '#9be15d'); rect(3, -21, 4, 1.5, '#3cbf5a');
   ctx.restore();
+}
+/* temporary Pixie/Mole helpers in stages: their map bust art until stage sprites from card F1 are cut */
+function drawBustHelper(id, label, cx, by, bob, flipX) {
+  const bi = uiArtReady && UI_BIG['bust_' + id]; if (!bi) return;
+  const sz = 30; ctx.save(); ctx.translate(Math.round(cx), Math.round(by + bob)); if (flipX) ctx.scale(-1, 1); ctx.drawImage(bi, -sz / 2, -sz, sz, sz); ctx.restore();
+  text(label, cx, by - sz - 9 + bob, { align: 'center', size: 8, color: id === 'pixie' ? '#ffb0e0' : '#e8c79a' });
 }
 function drawGorn(g) {
   const x = Math.round(g.x), y = GROUND - 40, bump = g.state === 'smash' && g.t < 0.4 ? 6 : 0;
@@ -2030,22 +2035,22 @@ function drawStageHud() {
   if (S.buff) text('บัฟต้มยำ ATK+30%', 6, 73, { size: 7, thai: true, color: '#ff9a5a' });
   // right column
   const m = Math.floor(S.t / 60), sec = Math.floor(S.t % 60);
-  text('Mushroom Forest', 394, 4, { size: 10, align: 'right', weight: 700 });
+  text(S.n === 2 ? 'Wine Dungeon' : 'Mushroom Forest', 394, 4, { size: 10, align: 'right', weight: 700 });
   text('เวลา: ' + String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0'), 394, 17, { size: 8, align: 'right', thai: true, color: '#ffd76a' });
   text('คะแนน: ' + S.score, 394, 28, { size: 8, align: 'right', thai: true, color: '#ffd76a' });
   dimg(icon('glowcap', 1), 300, 41); textC('' + S.loot.glowcap, 310, 41 + LH(icon('glowcap', 1)) / 2, { size: 8 });
   dimg(icon('chili', 1), 322, 41); textC('' + S.loot.chili, 332, 41 + LH(icon('chili', 1)) / 2, { size: 8 });
-  dimg(icon('truffle', 1), 344, 41); textC('' + S.loot.truffle, 354, 41 + LH(icon('truffle', 1)) / 2, { size: 8 });
+  const rare = S.n === 2 ? 'cork' : 'truffle'; dimg(icon(rare, 1), 344, 41); textC('' + (S.loot[rare] || 0), 354, 41 + LH(icon(rare, 1)) / 2, { size: 8 });
   dimg(icon('ale', 1), 366, 41); textC('' + S.sup.bart, 376, 41 + LH(icon('ale', 1)) / 2, { size: 8, color: S.sup.bart ? '#f6ead2' : '#6a5a6a' });
   text('ลูกทีม: ' + crewLabel() + ' (C)', 394, 52, { size: 7, align: 'right', thai: true, color: '#bfe8ff' });
   // stage tag bottom-left
-  text('ด่านที่ 1: ป่าเห็ดพิษ', 6, 202, { size: 8, thai: true, color: '#f6ead2' });
+  text(S.n === 2 ? 'ด่านที่ 2: ดันเจี้ยนไวน์โบราณ' : 'ด่านที่ 1: ป่าเห็ดพิษ', 6, 202, { size: 8, thai: true, color: '#f6ead2' });
   if (!S.bossOn) { rect(6, 196, 90, 1.5, '#1b1020aa'); rect(6, 196, 90 * clamp(S.p.x / ARENA, 0, 1), 1.5, '#f2a93b'); }
   // hint
   if (S.hint) { const w = 236; panel(W / 2 - w / 2, 76, w, 16, '#173a2aee', '#9be15d'); text(S.hint, W / 2, 79.5, { size: 8, align: 'center', color: '#d8ffc0', thai: true }); }
   // boss gauge bottom-right
   if (S.boss && !S.boss.dead && S.boss.state !== 'intro') {
-    text('ราชาเห็ด', 394, 182, { size: 10, align: 'right', thai: true, weight: 600 });
+    text(S.n === 2 ? 'บารอนฟอนบาร์เรล' : 'ราชาเห็ด', 394, 182, { size: 10, align: 'right', thai: true, weight: 600 });
     if (!frameBar('frame_dark', 296, 194, 102, 16, S.boss.hp / S.boss.max, '#e2382c', '#ff8a7a')) { panel(300, 197, 96, 12, '#1b1020ee', '#c9a24a'); bar(302, 199, 92, 8, S.boss.hp / S.boss.max, '#e2382c', '#3a1010'); }
   }
   // speech box
@@ -2717,7 +2722,7 @@ function drawAlchemy() {
 let mapSel = 0, mapMsg = null;
 const STAGES = [
   { n: 1, th: 'ป่าเห็ดพิษ', sh: 'ป่าเห็ดพิษ', en: 'Poison Mushroom Forest', boss: 'King Shroomba (ราชาเห็ด)', x: 52, y: 138, open: true },
-  { n: 2, th: 'ดันเจี้ยนไวน์โบราณ', sh: 'ดันเจี้ยนไวน์', en: 'Ancient Wine Dungeon', boss: 'Baron von Barrel', x: 104, y: 92 },
+  { n: 2, th: 'ดันเจี้ยนไวน์โบราณ', sh: 'ดันเจี้ยนไวน์', en: 'Ancient Wine Dungeon', boss: 'Baron von Barrel', x: 104, y: 92, get open() { return stage2Open(); } },
   { n: 3, th: 'เหมืองเกลือ & ยอดเขากังหันลม', sh: 'ยอดเขากังหันลม', en: 'Salt Mine & Windmill Peak', boss: 'Gryphon Garum', x: 168, y: 46 },
   { n: 4, th: 'ท่าเรือซากราเคน', sh: 'ท่าเรือคราเคน', en: 'Kraken Wreck Harbor', boss: 'Chef Cthulhu', x: 232, y: 126 },
   { n: 5, th: 'หอคอยกระจกมิติ', sh: 'หอคอยกระจก', en: 'Mirror Dimension Tower', boss: 'Shadow Doppelgänger', x: 292, y: 72 },
@@ -2725,7 +2730,7 @@ const STAGES = [
 ];
 const CREW = [
   { id: 'gorn', th: 'เชฟกอร์น', role: 'ทุบกำแพงร้าว', open: true }, { id: 'bart', th: 'บาร์ตเฒ่า', role: 'ส่งเบียร์ฟื้นพลัง', open: true },
-  { id: 'pixie', th: 'พิกซี่', role: 'บินข้ามเหว (ด่าน 2)', open: false }, { id: 'mole', th: 'ตุ่น', role: 'ขุดอุโมงค์ (ด่าน 2)', open: false },
+  { id: 'pixie', th: 'พิกซี่', role: 'บินพาขึ้นที่สูง (ด่าน 2)', get open() { return stage2Open(); } }, { id: 'mole', th: 'ตุ่น', role: 'ขุดอุโมงค์ (ด่าน 2)', get open() { return stage2Open(); } },
 ];
 let parchment = null;
 function makeParchment() {
@@ -2769,7 +2774,7 @@ function crewFace(id, x, y, on) {
 }
 function crewLabel() { return save.crew.map(id => CREW.find(c => c.id === id).th).join('/') || '-'; }
 function toggleCrew(i) {
-  const c = CREW[i]; if (!c.open) { mapMsg = { str: c.th + ' จะเข้าร่วมในด่าน 2', t: 1.5 }; SFX.fail(); return; }
+  const c = CREW[i]; if (!c.open) { mapMsg = { str: FULL ? c.th + ' จะเข้าร่วมในด่าน 2' : c.th + ' มีในฉบับเต็ม', t: 1.5 }; SFX.fail(); return; }
   if (save.crew.includes(c.id)) save.crew = save.crew.filter(x => x !== c.id);
   else { if (save.crew.length >= 2) save.crew.shift(); save.crew.push(c.id); }
   persist(); SFX.select();
@@ -2788,8 +2793,8 @@ function updateMap(dt) {
   if (pressed['ui:alc'] || pressed.sp) { scene = 'alchemy'; alcSel = 0; return; }
   if (mapMsg) { mapMsg.t -= dt; if (mapMsg.t <= 0) mapMsg = null; }
   if (pressed.ok || pressed.atk) {
-    if (!STAGES[mapSel].open) { mapMsg = { str: 'ด่านนี้ยังไม่เปิด (กำลังสร้าง)', t: 1.5 }; SFX.fail(); return; }
-    startStage(false);
+    if (!STAGES[mapSel].open) { mapMsg = { str: mapSel === 1 ? (FULL ? 'เคลียร์ด่าน 1 ก่อนนะ' : 'ด่าน 2 มีในฉบับเต็ม') : 'ด่านนี้ยังไม่เปิด (กำลังสร้าง)', t: 1.5 }; SFX.fail(); return; }
+    startStage(false, STAGES[mapSel].n);
     if (!save.seen.stage) { help = 'stage'; save.seen.stage = true; persist(); }
   }
 }
@@ -2857,7 +2862,7 @@ function drawMap() {
   const st = STAGES[mapSel], rec = save.stages[st.n];
   text('ด่านที่ ' + st.n + ': ' + st.th, 12, 177, { size: 8.5, thai: true, color: '#f2a93b' });
   text('บอส: ' + st.boss, 12, 189, { size: 6.5, thai: true, color: '#cfc0b0' });
-  text(st.open ? (rec ? 'Clear Rank: ' + '★'.repeat(rec.stars) + '☆'.repeat(3 - rec.stars) + '  ความลับ ' + rec.hearts + '/2' : 'ยังไม่เคยเคลียร์') : 'ยังไม่เปิด · Coming soon', 12, 198, { size: 7, thai: true, color: st.open ? '#ffd76a' : '#8a7a6a' });
+  text(st.open ? (rec ? 'Clear Rank: ' + '★'.repeat(rec.stars) + '☆'.repeat(3 - rec.stars) + '  ความลับ ' + rec.hearts + '/2' : 'ยังไม่เคยเคลียร์') : st.n === 2 ? (FULL ? 'เคลียร์ด่าน 1 ก่อนนะ' : 'มีในฉบับเต็ม · Full version') : 'ยังไม่เปิด · Coming soon', 12, 198, { size: 7, thai: true, color: st.open ? '#ffd76a' : '#8a7a6a' });
   text('ลูกทีม (เลือก 2):', 160, 176, { size: 6.5, thai: true, color: '#bba8ba' });
   CREW.forEach((c, i) => { const x = 160 + i * 34, y = 185, on = save.crew.includes(c.id); btn('crew' + i, x - 1, y - 2, 28, 26); uiBtn(x, y - 1, 26, 18, on, '#f2a93b', '#3a2a20', '#140d0a', '#140d0a'); crewFace.small = true; crewFace(c.id, x + 5, y, c.open); crewFace.small = false; textC((i + 1) + ' ' + c.th, x + 13, y + 21, { size: 5.5, align: 'center', thai: true, weight: 400, color: c.open ? '#f6ead2' : '#6a5a4a', shadow: false }); });
   if (!tpOnTxt) { /* phones use the on-screen Go/Alchemy buttons instead */
@@ -3076,16 +3081,18 @@ function drawTitle() {
 }
 function updateResults(dt) { results.t += dt; if (results.t > 0.8 && (!results.net || results.net.state !== 'send' || results.t > 3) && anyConfirm()) { startTavern(); if (!save.seen.tavern) { help = 'tavern'; save.seen.tavern = true; persist(); } } }
 function drawResults() {
-  drawForestBg(results.t * 10, results.t);
+  drawStageBg(results.n || 1, results.t * 10, results.t);
   rect(0, 0, W, H, '#05141aaa');
   panel(60, 12, 280, 196, '#101820f2', '#f2a93b');
-  text('เคลียร์ด่านที่ 1!', W / 2, 21, { size: 14, align: 'center', color: '#f2a93b', thai: true, weight: 600 });
-  text('ป่าเห็ดพิษ · Poison Mushroom Forest', W / 2, 40, { size: 8, align: 'center', thai: true, weight: 400, color: '#bba8ba' });
+  const r2 = results.n === 2;
+  text(r2 ? 'เคลียร์ด่านที่ 2!' : 'เคลียร์ด่านที่ 1!', W / 2, 21, { size: 14, align: 'center', color: '#f2a93b', thai: true, weight: 600 });
+  text(r2 ? 'ดันเจี้ยนไวน์โบราณ · Ancient Wine Dungeon' : 'ป่าเห็ดพิษ · Poison Mushroom Forest', W / 2, 40, { size: 8, align: 'center', thai: true, weight: 400, color: '#bba8ba' });
   for (let k = 0; k < 3; k++) text('★', W / 2 - 20 + k * 20, 51, { size: 15, align: 'center', color: k < results.stars ? '#f2c94c' : '#3a3a40', shadow: k < results.stars });
   const m = Math.floor(results.time / 60), s = Math.floor(results.time % 60);
   const rows = [['เวลา', m + ':' + String(s).padStart(2, '0')], ['คะแนน', results.score], ['ปราบมอนสเตอร์', results.kills], ['Glowcap / พริก', '+' + results.loot.glowcap + ' / +' + results.loot.chili], ['Shroom Crown', '+' + results.loot.crown], ['ห้องลับ (เชฟกอร์น)', results.vault ? 'เจอ! Truffle of Ages' : 'พลาด'], ['ดรอปลับบอส', results.ember ? 'Ember Spore!' : 'พลาด (ปราบตอนติดไฟ)']];
+  if (r2) rows.splice(4, 3, ['100-Year Vintage Cork', '+' + (results.loot.cork || 0)], ['อุโมงค์ลับ (ตุ่น)', results.vault ? 'เจอ! Truffle + Cork' : 'พลาด'], ['ดรอปลับบอส', results.ember ? 'Cork เพิ่ม!' : 'พลาด (ปราบตอนติดน้ำแข็ง)']);
   rows.forEach(([a, b], i) => { text(a, 78, 72 + i * 13, { size: 8.5, thai: true, weight: 400 }); text(String(b), 322, 72 + i * 13, { size: 8.5, align: 'right', thai: true, color: /พลาด/.test(String(b)) ? '#7a6a6a' : '#ffd76a' }); });
-  const nl = netLine(results.net, ['stage1_score', 'stage1_time']);
+  const nl = results.net ? netLine(results.net, ['stage1_score', 'stage1_time']) : null;
   text(nl ? nl.str : 'กลับร้านกันเถอะ ลูกค้ากะดึกรออยู่!', W / 2, 165, { size: nl ? 9 : 8, align: 'center', thai: true, color: nl ? nl.col : '#bba8ba', weight: nl ? 700 : 400 });
   if (results.t > 0.8 && (!results.net || results.net.state !== 'send' || results.t > 3)) text('Enter / แตะ: เริ่มกะดึก', W / 2, 182, { size: 10, align: 'center', thai: true, color: Math.floor(results.t * 2) % 2 ? '#ffd76a' : '#f6ead2' });
 }
@@ -3282,19 +3289,100 @@ function draw() {
   if (scene === 'gameover') drawOver();
   if (help) drawHelp();
 }
+/* ------------------------------------------------ share a result / invite friends */
+// A "Share" button over the stage-clear and night-shift results, and "Invite friends" on the title screen. On phones it opens
+// the system share sheet with a picture of the result; elsewhere a small panel with LINE / Facebook / X / copy / save picture.
+// Every share is counted (track 'share') with utm tags on the link, so gstats shows which shares bring players back.
+const SHARE = (() => {
+  const L = (th, en) => LANG === 'th' ? th : en;
+  const btn = document.getElementById('shareBtn'), inv = document.getElementById('inviteBtn'), pop = document.getElementById('sharePop');
+  const HOME = /^https?:$/.test(location.protocol) && !/^(localhost|127\.)/.test(location.hostname) ? location.origin + '/' : 'https://tavern-knights.pages.dev/';
+  let cur = null, lang = '', blob = null, imgUrl = '';
+  const link = (m, medium, camp) => HOME + '?utm_source=' + m + '&utm_medium=' + medium + '&utm_campaign=' + camp + (LANG === 'en' ? '&lang=en' : '');
+  const mmss = t => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
+  const starStr = n => '★'.repeat(n);
+  function what() {
+    if (scene === 'results' && results) return { kind: 'stage', text: L('เคลียร์ด่านที่ ' + (results.n || 1) + ' ของ Tavern Knights ได้ ' + results.score + ' คะแนน ' + starStr(results.stars) + ' เวลา ' + mmss(results.time) + ' ใครทำได้ดีกว่านี้บ้าง? เล่นฟรีบนเว็บ',
+      'Cleared stage ' + (results.n || 1) + ' of Tavern Knights with ' + results.score + ' points ' + starStr(results.stars) + ' in ' + mmss(results.time) + '. Can you beat that? Free in your browser') };
+    if (scene === 'tavern' && T && T.over && night) return { kind: 'tavern', text: L('ปิดร้านกะดึกได้ ' + night.gold + 'g ' + starStr(night.stars) + ' เสิร์ฟไป ' + night.served + ' คน ใน Tavern Knights มาแข่งเปิดร้านกัน! เล่นฟรีบนเว็บ',
+      'Closed the night shift with ' + night.gold + 'g ' + starStr(night.stars) + ', ' + night.served + ' customers served in Tavern Knights. Think you can run it better? Free in your browser') };
+    return null;
+  }
+  const invite = () => ({ kind: 'invite', text: L('มาเล่น Tavern Knights กัน! เกมแอ็กชันพิกเซลผสมบริหารร้านเหล้า เล่นฟรีบนเว็บ ไม่ต้องโหลด', 'Come play Tavern Knights with me! Pixel action plus tavern management, free in your browser, no download') });
+  const urlFor = (c, m) => c.kind === 'invite' ? link(m, 'invite', 'friend') : link(m, 'share', 'result');
+  // A picture of the result screen with the game's address along the bottom.
+  function picture() {
+    return new Promise(res => {
+      try {
+        const w = cv.width, h = cv.height, bar = Math.round(h * 0.075), c = document.createElement('canvas'); c.width = w; c.height = h + bar;
+        const g = c.getContext('2d'); g.drawImage(cv, 0, 0); g.fillStyle = '#160f1c'; g.fillRect(0, h, w, bar);
+        g.fillStyle = '#ffd76a'; g.font = `600 ${Math.round(bar * 0.48)}px ${THAI}`; g.textBaseline = 'middle';
+        const l = 'Tavern Knights · ' + L('เล่นฟรีที่ ', 'Play free at ') + HOME.replace(/^https?:\/\//, '').replace(/\/$/, ''); g.fillText(l, Math.round(w * 0.03), h + bar / 2);
+        c.toBlob(b => res(b), 'image/png');
+      } catch (e) { res(null); }
+    });
+  }
+  const phone = () => !!(navigator.share && navigator.canShare && TOUCH_DEV);
+  function open(c, b) {
+    cur = c; blob = b; document.body.classList.add('sp-open'); pop.hidden = false;
+    document.getElementById('spTitle').textContent = c.kind === 'invite' ? L('ชวนเพื่อนมาเล่น', 'Invite friends') : L('แชร์ผลการเล่น', 'Share your result');
+    document.getElementById('spTxt').textContent = c.text;
+    const im = document.getElementById('spImg'); if (imgUrl) URL.revokeObjectURL(imgUrl); imgUrl = b ? URL.createObjectURL(b) : ''; im.hidden = !b; if (b) im.src = imgUrl;
+    const row = [navigator.share ? ['native', L('แชร์', 'Share')] : null, ['line', 'LINE'], ['facebook', 'Facebook'], ['x', 'X'], ['copy', L('คัดลอกลิงก์', 'Copy link')], b ? ['save', L('บันทึกรูป', 'Save picture')] : null].filter(Boolean);
+    document.getElementById('spRow').innerHTML = row.map(([k, t]) => k === 'line' || k === 'facebook' || k === 'x' ? `<a data-s="${k}" href="#" target="_blank" rel="noopener">${t}</a>` : `<button type="button" data-s="${k}">${t}</button>`).join('');
+    document.getElementById('spClose').textContent = L('ปิด', 'Close');
+    setTimeout(() => { const f = pop.querySelector('[data-s]'); if (f) f.focus(); }, 0);
+  }
+  function close() { pop.hidden = true; document.body.classList.remove('sp-open'); cur = null; try { cv.focus(); } catch (e) {} }
+  async function start(c) {
+    if (!c) return; initAudio(); SFX.select();
+    track('share_open', { kind: c.kind });
+    const b = c.kind === 'invite' ? null : await picture();
+    if (phone()) {
+      const files = b ? [new File([b], 'tavern-knights.png', { type: 'image/png' })] : [];
+      const data = files.length && navigator.canShare({ files }) ? { files, text: c.text + ' ' + urlFor(c, 'native') } : { title: 'Tavern Knights', text: c.text, url: urlFor(c, 'native') };
+      try { await navigator.share(data); track('share', { method: 'native', kind: c.kind }); } catch (e) {}
+      return;
+    }
+    open(c, b);
+  }
+  pop.addEventListener('click', e => {
+    if (e.target === pop || e.target.id === 'spClose') { close(); return; }
+    const a = e.target.closest('[data-s]'); if (!a || !cur) return; const m = a.dataset.s, c = cur;
+    track('share', { method: m, kind: c.kind });
+    if (m === 'native') { e.preventDefault(); const files = blob ? [new File([blob], 'tavern-knights.png', { type: 'image/png' })] : [];
+      navigator.share(files.length && navigator.canShare && navigator.canShare({ files }) ? { files, text: c.text + ' ' + urlFor(c, 'native') } : { title: 'Tavern Knights', text: c.text, url: urlFor(c, 'native') }).catch(() => {}); return; }
+    if (m === 'copy') { e.preventDefault(); const t = c.text + ' ' + urlFor(c, 'copy'), done = () => { a.textContent = L('คัดลอกแล้ว', 'Copied'); setTimeout(() => { a.textContent = L('คัดลอกลิงก์', 'Copy link'); }, 1800); };
+      try { navigator.clipboard.writeText(t).then(done, () => prompt('', t)); } catch (x) { prompt('', t); } return; }
+    if (m === 'save') { e.preventDefault(); const d = document.createElement('a'); d.href = imgUrl; d.download = 'tavern-knights.png'; document.body.appendChild(d); d.click(); d.remove(); return; }
+    const u = encodeURIComponent(urlFor(c, m)), tx = encodeURIComponent(c.text);
+    a.href = m === 'line' ? 'https://social-plugins.line.me/lineit/share?url=' + u + '&text=' + tx : m === 'facebook' ? 'https://www.facebook.com/sharer/sharer.php?u=' + u : 'https://twitter.com/intent/tweet?url=' + u + '&text=' + tx;
+  });
+  // While the panel is open, keys go to it, not to the game (Enter would otherwise skip the results screen).
+  document.addEventListener('keydown', e => { if (pop.hidden) return; if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key !== 'Tab' && e.key !== 'Enter' && e.key !== ' ') e.preventDefault(); e.stopPropagation(); }, true);
+  btn.addEventListener('click', () => start(what()));
+  inv.addEventListener('click', () => start(invite()));
+  document.getElementById('btnGuide').addEventListener('click', () => { track('guides_open', { from: 'header' }); window.open(LANG === 'en' ? '/guide/en/' : '/guide/', '_blank', 'noopener'); });
+  function sync() {
+    const res = scene === 'results' && results && results.t > 0.8, tav = scene === 'tavern' && T && T.over && night && T.overT > 0.8;
+    const showS = (res || tav) && !help && pop.hidden, showI = scene === 'title' && !titlePanel && !help && pop.hidden && !nameEdit;
+    if (btn.hidden === showS) btn.hidden = !showS;
+    if (showS) { const k = res ? 'at-res' : 'at-tav'; if (!btn.classList.contains(k)) { btn.classList.remove('at-res', 'at-tav'); btn.classList.add(k); } }
+    if (inv.hidden === showI) inv.hidden = !showI;
+    if (!pop.hidden && !(res || tav || scene === 'title')) close();
+    if (lang !== LANG) { lang = LANG; btn.textContent = L('📣 แชร์ผล', '📣 Share'); inv.textContent = L('ชวนเพื่อนมาเล่น', 'Invite friends'); }
+  }
+  return { sync, close };
+})();
 function frame(now) {
   acc += Math.min(0.1, (now - last) / 1000); last = now;
   while (acc >= STEP) { update(STEP); acc -= STEP; }
   draw();
   bgmSync();
   tpSync();
+  SHARE.sync();
   requestAnimationFrame(frame);
 }
 window.__tk = { sfxBuf: SFX_BUF, makeEnemy, get help() { return help; }, set help(v) { help = v; }, set scene(v) { scene = v; }, get scene() { return scene; }, get S() { return S; }, get T() { return T; }, startStage, startTavern, finishStage, endTavern, setLang, NET, titleAct, get results() { return results; }, set T(v) { T = v; }, set titlePanel(v) { titlePanel = v; }, set titleSel(v) { titleSel = v; }, set rank(v) { rkB = v[0]; rkP = v[1]; }, step: n => { for (let i = 0; i < n; i++) update(STEP); draw(); }, press, release, pressed, keys, save: () => save };
 (document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 1500))]) : Promise.resolve()).then(() => requestAnimationFrame(frame));
-})();
-</script>
-
-<noscript><p>Tavern Knights ต้องเปิด JavaScript ก่อนเล่น / Please enable JavaScript to play. <a href="/about.html">อ่านข้อมูลเกม</a></p></noscript>
-</body>
-</html>
+}

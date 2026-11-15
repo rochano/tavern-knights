@@ -12,12 +12,25 @@ Tavern Knights follows three down-on-their-luck knights who secretly run The Tip
 - Ultimate: Ultimate Tavern Combo, a giant boiling tom yum pot that clears the screen
 - Tavern night shift: rhythm cooking with arrow keys, pouring beer, serving, washing dishes, thieves, VIP guests, kitchen fires
 - Save: progress is stored in the player's browser
+- Online leaderboard: weekly and all-time rankings for stage score, stage time and tavern gold
+- Sharing: a Share button on stage and night-shift results (picture of the result plus link), and Invite friends on the title screen
 - Controls: arrows/WASD move, Up/Space jump, J/Z attack, K/X special, L/V ultimate, 1-3 swap knight, C call crew, H help, Esc pause
 
 ## Links
 - [Play now](https://tavern-knights.pages.dev/): the game, full screen
 - [About the game](https://tavern-knights.pages.dev/about.html): story, characters, screenshots, controls, FAQ
+- [Guides](https://tavern-knights.pages.dev/guide/en/) ([Thai](https://tavern-knights.pages.dev/guide/))
+- [How to play](https://tavern-knights.pages.dev/guide/en/how-to-play/): game loop, keyboard and touch controls, knights, crew, tavern stations
+- [Beginner tips](https://tavern-knights.pages.dev/guide/en/beginner-tips/): 3-star rules (clear, under 5 minutes, no knight knocked out), secret room with Chef Gorn, King Shroomba's hidden Ember Spore drop, ranking points
+- [Night shift guide](https://tavern-knights.pages.dev/guide/en/tavern-night-shift/): 80-second shift, star formula, VIPs pay double, thief and stove-fire timings
 - [Source on GitHub](https://github.com/rochano/tavern-knights)
 
 ## Languages
 - Thai and English. The game picks the language from the browser; switch in Options > Language, or open https://tavern-knights.pages.dev/?lang=en
+
+## FAQ
+- Is Tavern Knights free? Yes, completely free in the browser, no download or account.
+- Does it work on mobile? Yes, with touch controls; keyboard and mouse on a computer is the most comfortable.
+- Which languages? Thai and English.
+- Who made it? Rochano Developer Teams, an independent game team.
+- What games is it like? 90s arcade beat 'em ups combined with a tavern-management and rhythm-cooking mini-game.
