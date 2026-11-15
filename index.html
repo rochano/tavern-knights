@@ -14,7 +14,7 @@
 <meta property="og:title" content="Tavern Knights: สามอัศวินต้มยำกุ้ง">
 <meta property="og:description" content="เกมแอ็กชันพิกเซล 16-bit ผสมเกมบริหารร้านเหล้า เล่นฟรีบนเบราว์เซอร์">
 <meta property="og:url" content="https://tavern-knights.pages.dev/">
-<meta property="og:image" content="https://tavern-knights.pages.dev/img/og.jpg">
+<meta property="og:image" content="https://tavern-knights.pages.dev/img/og/home-th.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:locale" content="th_TH">
@@ -22,7 +22,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Tavern Knights: สามอัศวินต้มยำกุ้ง">
 <meta name="twitter:description" content="16-bit pixel action side-scroller + tavern management. Free in your browser.">
-<meta name="twitter:image" content="https://tavern-knights.pages.dev/img/og.jpg">
+<meta name="twitter:image" content="https://tavern-knights.pages.dev/img/og/home-th.jpg">
 <link rel="icon" href="img/e6_btn_s.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -179,6 +179,23 @@ body.tp-rot:not([data-tp=menu]) #tpad{display:block}
 #rotate span{font-size:17px}
 @keyframes tkrot{0%,25%{transform:rotate(0)}55%,100%{transform:rotate(-90deg)}}
 @media (max-width:420px){.pad{grid-template-columns:repeat(3,44px)}.btns{grid-template-columns:repeat(3,56px)}.sub{display:none}}
+/* Share a result / invite friends: DOM buttons over the canvas (taps here never reach the game) */
+.screen{container-type:inline-size}
+.tk-sh{position:absolute;z-index:4;transform:translateX(-50%);left:50%;margin:0;box-sizing:border-box;border-style:solid;border-width:.62cqw 1.07cqw;border-image:url(img/e6_btn_n.png) 6 10 fill / .62cqw 1.07cqw stretch;image-rendering:pixelated;background:none;color:#ffd76a;font-family:var(--thai);font-weight:600;font-size:max(10px,1.46cqw);line-height:1.15;padding:0 .9cqw;cursor:pointer;white-space:nowrap;text-shadow:0 1px 0 #2b1b14}
+.tk-sh:hover,.tk-sh:focus-visible{border-image-source:url(img/e6_btn_s.png);color:#fff6d6;outline:none}
+#shareBtn.at-res{top:83.5%}#shareBtn.at-tav{top:78%}
+#inviteBtn{left:2%;top:3%;transform:none;font-size:max(10px,1.24cqw)}
+#sharePop{position:absolute;inset:0;z-index:8;display:flex;align-items:center;justify-content:center;background:#05080ccc;font-family:var(--thai)}
+#sharePop[hidden]{display:none}
+.sp-box{width:min(92%,560px);max-height:94%;overflow:auto;box-sizing:border-box;border-style:solid;border-width:22px 20px;border-image:url(img/e6_window.png) 22 20 fill / 22px 20px stretch;image-rendering:pixelated;padding:2px 6px;text-align:center;color:#f6ead2}
+.sp-box h2{margin:0 0 6px;font-weight:600;font-size:18px;color:#ffd76a}
+.sp-box p{margin:0 0 8px;font-size:14px;line-height:1.45}
+.sp-box img{display:block;width:100%;max-height:34vh;object-fit:contain;image-rendering:pixelated;margin:0 0 8px;border:2px solid #4a3326}
+.sp-row{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.sp-row a,.sp-row button,.sp-x{font:600 14px var(--thai);color:#f6ead2;background:#2b1b14;border:2px solid #6b432a;border-radius:999px;padding:4px 12px;text-decoration:none;cursor:pointer}
+.sp-row [data-s=line]{background:#06C755;border-color:#06C755;color:#fff}.sp-row [data-s=facebook]{background:#1877F2;border-color:#1877F2;color:#fff}.sp-row [data-s=x]{background:#000;border-color:#555;color:#fff}
+.sp-x{margin-top:8px;background:none}
+body.sp-open #tpad{display:none!important}
 </style>
 
 <div class="wrap">
@@ -191,10 +208,11 @@ body.tp-rot:not([data-tp=menu]) #tpad{display:block}
       <button class="tool" id="btnHelp" type="button">วิธีเล่น (H)</button>
       <button class="tool" id="btnMute" type="button">เสียง: เปิด</button>
       <button class="tool" id="btnReset" type="button">ล้างเซฟ</button>
+      <button class="tool" id="btnGuide" type="button">คู่มือ</button>
     </div>
   </header>
 
-  <div class="stage"><div class="screen"><canvas id="game" width="1600" height="900" tabindex="0" aria-label="Tavern Knights game screen"></canvas><input id="nameIn" type="text" maxlength="16" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" aria-label="name"></div></div>
+  <div class="stage"><div class="screen"><canvas id="game" width="1600" height="900" tabindex="0" aria-label="Tavern Knights game screen"></canvas><input id="nameIn" type="text" maxlength="16" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" aria-label="name"><button type="button" class="tk-sh" id="shareBtn" hidden></button><button type="button" class="tk-sh" id="inviteBtn" hidden></button><div id="sharePop" hidden role="dialog" aria-modal="true" aria-labelledby="spTitle"><div class="sp-box"><h2 id="spTitle"></h2><img id="spImg" alt="" hidden><p id="spTxt"></p><div class="sp-row" id="spRow"></div><button type="button" class="sp-x" id="spClose"></button></div></div></div></div>
 
 
   <div id="tpad" aria-hidden="true">
@@ -251,7 +269,7 @@ const I18N_EN = {
 'ท่านหญิงแมรีโกลด์มาแล้ว จ่ายสองเท่า อย่าให้รอนาน!': 'Lady Marigold is here! She pays double, don\'t keep her waiting!',
 // DOM
 'โจมตี': 'Attack', 'ท่าพิเศษ': 'Special', 'ประสาน': 'Combo', 'สลับตัว': 'Swap', 'ผู้ช่วย': 'Crew', 'เริ่ม/ตกลง': 'Start/OK',
-'กระโดด': 'Jump', 'วิธีเล่น (H)': 'How to play (H)', 'เสียง: ': 'Sound: ', 'ปิด': 'Off', 'เปิด': 'On',
+'กระโดด': 'Jump', 'วิธีเล่น (H)': 'How to play (H)', 'คู่มือ': 'Guides', 'เสียง: ': 'Sound: ', 'ปิด': 'Off', 'เปิด': 'On',
 'ล้างแล้ว': 'Cleared', 'ล้างเซฟ': 'Reset save', 'กดอีกครั้งเพื่อยืนยัน': 'Click again to confirm',
 'สามอัศวินต้มยำกุ้ง · prototype': 'Three Tom Yum Knights · prototype',
 // stage
@@ -3506,12 +3524,98 @@ function draw() {
   if (scene === 'gameover') drawOver();
   if (help) drawHelp();
 }
+/* ------------------------------------------------ share a result / invite friends */
+// A "Share" button over the stage-clear and night-shift results, and "Invite friends" on the title screen. On phones it opens
+// the system share sheet with a picture of the result; elsewhere a small panel with LINE / Facebook / X / copy / save picture.
+// Every share is counted (track 'share') with utm tags on the link, so gstats shows which shares bring players back.
+const SHARE = (() => {
+  const L = (th, en) => LANG === 'th' ? th : en;
+  const btn = document.getElementById('shareBtn'), inv = document.getElementById('inviteBtn'), pop = document.getElementById('sharePop');
+  const HOME = /^https?:$/.test(location.protocol) && !/^(localhost|127\.)/.test(location.hostname) ? location.origin + '/' : 'https://tavern-knights.pages.dev/';
+  let cur = null, lang = '', blob = null, imgUrl = '';
+  const link = (m, medium, camp) => HOME + '?utm_source=' + m + '&utm_medium=' + medium + '&utm_campaign=' + camp + (LANG === 'en' ? '&lang=en' : '');
+  const mmss = t => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
+  const starStr = n => '★'.repeat(n);
+  function what() {
+    if (scene === 'results' && results) return { kind: 'stage', text: L('เคลียร์ด่านที่ ' + (results.n || 1) + ' ของ Tavern Knights ได้ ' + results.score + ' คะแนน ' + starStr(results.stars) + ' เวลา ' + mmss(results.time) + ' ใครทำได้ดีกว่านี้บ้าง? เล่นฟรีบนเว็บ',
+      'Cleared stage ' + (results.n || 1) + ' of Tavern Knights with ' + results.score + ' points ' + starStr(results.stars) + ' in ' + mmss(results.time) + '. Can you beat that? Free in your browser') };
+    if (scene === 'tavern' && T && T.over && night) return { kind: 'tavern', text: L('ปิดร้านกะดึกได้ ' + night.gold + 'g ' + starStr(night.stars) + ' เสิร์ฟไป ' + night.served + ' คน ใน Tavern Knights มาแข่งเปิดร้านกัน! เล่นฟรีบนเว็บ',
+      'Closed the night shift with ' + night.gold + 'g ' + starStr(night.stars) + ', ' + night.served + ' customers served in Tavern Knights. Think you can run it better? Free in your browser') };
+    return null;
+  }
+  const invite = () => ({ kind: 'invite', text: L('มาเล่น Tavern Knights กัน! เกมแอ็กชันพิกเซลผสมบริหารร้านเหล้า เล่นฟรีบนเว็บ ไม่ต้องโหลด', 'Come play Tavern Knights with me! Pixel action plus tavern management, free in your browser, no download') });
+  const urlFor = (c, m) => c.kind === 'invite' ? link(m, 'invite', 'friend') : link(m, 'share', 'result');
+  // A picture of the result screen with the game's address along the bottom.
+  function picture() {
+    return new Promise(res => {
+      try {
+        const w = cv.width, h = cv.height, bar = Math.round(h * 0.075), c = document.createElement('canvas'); c.width = w; c.height = h + bar;
+        const g = c.getContext('2d'); g.drawImage(cv, 0, 0); g.fillStyle = '#160f1c'; g.fillRect(0, h, w, bar);
+        g.fillStyle = '#ffd76a'; g.font = `600 ${Math.round(bar * 0.48)}px ${THAI}`; g.textBaseline = 'middle';
+        const l = 'Tavern Knights · ' + L('เล่นฟรีที่ ', 'Play free at ') + HOME.replace(/^https?:\/\//, '').replace(/\/$/, ''); g.fillText(l, Math.round(w * 0.03), h + bar / 2);
+        c.toBlob(b => res(b), 'image/png');
+      } catch (e) { res(null); }
+    });
+  }
+  const phone = () => !!(navigator.share && navigator.canShare && TOUCH_DEV);
+  function open(c, b) {
+    cur = c; blob = b; document.body.classList.add('sp-open'); pop.hidden = false;
+    document.getElementById('spTitle').textContent = c.kind === 'invite' ? L('ชวนเพื่อนมาเล่น', 'Invite friends') : L('แชร์ผลการเล่น', 'Share your result');
+    document.getElementById('spTxt').textContent = c.text;
+    const im = document.getElementById('spImg'); if (imgUrl) URL.revokeObjectURL(imgUrl); imgUrl = b ? URL.createObjectURL(b) : ''; im.hidden = !b; if (b) im.src = imgUrl;
+    const row = [navigator.share ? ['native', L('แชร์', 'Share')] : null, ['line', 'LINE'], ['facebook', 'Facebook'], ['x', 'X'], ['copy', L('คัดลอกลิงก์', 'Copy link')], b ? ['save', L('บันทึกรูป', 'Save picture')] : null].filter(Boolean);
+    document.getElementById('spRow').innerHTML = row.map(([k, t]) => k === 'line' || k === 'facebook' || k === 'x' ? `<a data-s="${k}" href="#" target="_blank" rel="noopener">${t}</a>` : `<button type="button" data-s="${k}">${t}</button>`).join('');
+    document.getElementById('spClose').textContent = L('ปิด', 'Close');
+    setTimeout(() => { const f = pop.querySelector('[data-s]'); if (f) f.focus(); }, 0);
+  }
+  function close() { pop.hidden = true; document.body.classList.remove('sp-open'); cur = null; try { cv.focus(); } catch (e) {} }
+  async function start(c) {
+    if (!c) return; initAudio(); SFX.select();
+    track('share_open', { kind: c.kind });
+    const b = c.kind === 'invite' ? null : await picture();
+    if (phone()) {
+      const files = b ? [new File([b], 'tavern-knights.png', { type: 'image/png' })] : [];
+      const data = files.length && navigator.canShare({ files }) ? { files, text: c.text + ' ' + urlFor(c, 'native') } : { title: 'Tavern Knights', text: c.text, url: urlFor(c, 'native') };
+      try { await navigator.share(data); track('share', { method: 'native', kind: c.kind }); } catch (e) {}
+      return;
+    }
+    open(c, b);
+  }
+  pop.addEventListener('click', e => {
+    if (e.target === pop || e.target.id === 'spClose') { close(); return; }
+    const a = e.target.closest('[data-s]'); if (!a || !cur) return; const m = a.dataset.s, c = cur;
+    track('share', { method: m, kind: c.kind });
+    if (m === 'native') { e.preventDefault(); const files = blob ? [new File([blob], 'tavern-knights.png', { type: 'image/png' })] : [];
+      navigator.share(files.length && navigator.canShare && navigator.canShare({ files }) ? { files, text: c.text + ' ' + urlFor(c, 'native') } : { title: 'Tavern Knights', text: c.text, url: urlFor(c, 'native') }).catch(() => {}); return; }
+    if (m === 'copy') { e.preventDefault(); const t = c.text + ' ' + urlFor(c, 'copy'), done = () => { a.textContent = L('คัดลอกแล้ว', 'Copied'); setTimeout(() => { a.textContent = L('คัดลอกลิงก์', 'Copy link'); }, 1800); };
+      try { navigator.clipboard.writeText(t).then(done, () => prompt('', t)); } catch (x) { prompt('', t); } return; }
+    if (m === 'save') { e.preventDefault(); const d = document.createElement('a'); d.href = imgUrl; d.download = 'tavern-knights.png'; document.body.appendChild(d); d.click(); d.remove(); return; }
+    const u = encodeURIComponent(urlFor(c, m)), tx = encodeURIComponent(c.text);
+    a.href = m === 'line' ? 'https://social-plugins.line.me/lineit/share?url=' + u + '&text=' + tx : m === 'facebook' ? 'https://www.facebook.com/sharer/sharer.php?u=' + u : 'https://twitter.com/intent/tweet?url=' + u + '&text=' + tx;
+  });
+  // While the panel is open, keys go to it, not to the game (Enter would otherwise skip the results screen).
+  document.addEventListener('keydown', e => { if (pop.hidden) return; if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key !== 'Tab' && e.key !== 'Enter' && e.key !== ' ') e.preventDefault(); e.stopPropagation(); }, true);
+  btn.addEventListener('click', () => start(what()));
+  inv.addEventListener('click', () => start(invite()));
+  document.getElementById('btnGuide').addEventListener('click', () => { track('guides_open', { from: 'header' }); window.open(LANG === 'en' ? '/guide/en/' : '/guide/', '_blank', 'noopener'); });
+  function sync() {
+    const res = scene === 'results' && results && results.t > 0.8, tav = scene === 'tavern' && T && T.over && night && T.overT > 0.8;
+    const showS = (res || tav) && !help && pop.hidden, showI = scene === 'title' && !titlePanel && !help && pop.hidden && !nameEdit;
+    if (btn.hidden === showS) btn.hidden = !showS;
+    if (showS) { const k = res ? 'at-res' : 'at-tav'; if (!btn.classList.contains(k)) { btn.classList.remove('at-res', 'at-tav'); btn.classList.add(k); } }
+    if (inv.hidden === showI) inv.hidden = !showI;
+    if (!pop.hidden && !(res || tav || scene === 'title')) close();
+    if (lang !== LANG) { lang = LANG; btn.textContent = L('📣 แชร์ผล', '📣 Share'); inv.textContent = L('ชวนเพื่อนมาเล่น', 'Invite friends'); }
+  }
+  return { sync, close };
+})();
 function frame(now) {
   acc += Math.min(0.1, (now - last) / 1000); last = now;
   while (acc >= STEP) { update(STEP); acc -= STEP; }
   draw();
   bgmSync();
   tpSync();
+  SHARE.sync();
   requestAnimationFrame(frame);
 }
 window.__tk = { sfxBuf: SFX_BUF, makeEnemy, get help() { return help; }, set help(v) { help = v; }, set scene(v) { scene = v; }, get scene() { return scene; }, get S() { return S; }, get T() { return T; }, startStage, startTavern, finishStage, endTavern, setLang, NET, titleAct, get results() { return results; }, set T(v) { T = v; }, set titlePanel(v) { titlePanel = v; }, set titleSel(v) { titleSel = v; }, set rank(v) { rkB = v[0]; rkP = v[1]; }, step: n => { for (let i = 0; i < n; i++) update(STEP); draw(); }, press, release, pressed, keys, save: () => save };
@@ -3519,6 +3623,6 @@ window.__tk = { sfxBuf: SFX_BUF, makeEnemy, get help() { return help; }, set hel
 })();
 </script>
 
-<noscript><p>Tavern Knights ต้องเปิด JavaScript ก่อนเล่น / Please enable JavaScript to play. <a href="/about.html">อ่านข้อมูลเกม</a></p></noscript>
+<noscript><p>Tavern Knights ต้องเปิด JavaScript ก่อนเล่น / Please enable JavaScript to play. <a href="/about.html">อ่านข้อมูลเกม</a> · <a href="/guide/">คู่มือวิธีเล่น</a></p></noscript>
 </body>
 </html>
