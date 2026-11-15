@@ -18,7 +18,7 @@ export interface TouchHost {
   readonly mapRank: boolean;
   help: string | null;
   tpOnTxt: boolean;
-  readonly ranking: { readonly nameEdit: boolean; readonly nameZ: boolean; readonly nameH0: number; nameOpen(): void };
+  readonly ranking: { readonly nameEdit: boolean; readonly nameZ: boolean; readonly nameH0: number; nameOpen(): void; askOpen(): void };
   readonly stage: {
     readonly S: { paused: boolean; camX: number; t: number; p: { x: number; face: number; special: unknown } | null; aim?: { x: number; y: number; t: number } } | null;
     stickVec: { dx: number; dy: number } | null;
@@ -41,7 +41,8 @@ export function createTouch(host: TouchHost) {
     const lf = localFrac(e, cv), x = lf[0] * W, y = lf[1] * H;
     const hit = uiRegions.slice().reverse().find(b => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h);
     if (!host.ranking.nameEdit && hit && hit.id === 'rkn' && !host.help) host.ranking.nameOpen();
-    else if (host.ranking.nameEdit && !(hit && (hit.id === 'nok' || hit.id === 'ncan'))) { try { const el = (document.getElementById('nameIn')! as HTMLInputElement), n = el.value.length; el.focus(); el.setSelectionRange(n, n); } catch (x) {} }
+    else if (!host.ranking.nameEdit && hit && hit.id === 'aski' && !host.help) host.ranking.askOpen(); /* focus inside the tap so phones open the keyboard */
+    else if (host.ranking.nameEdit && !(hit && (hit.id === 'nok' || hit.id === 'ncan' || hit.id === 'aok' || hit.id === 'acan'))) { try { const el = (document.getElementById('nameIn')! as HTMLInputElement), n = el.value.length; el.focus(); el.setSelectionRange(n, n); } catch (x) {} }
   });
   cv.addEventListener('pointerdown', e => {
     const lf = localFrac(e, cv); const x = lf[0] * W, y = lf[1] * H;

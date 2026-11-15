@@ -11,6 +11,7 @@ import { createControls } from './controls';
 import { createAlchemy } from './scenes/alchemy';
 import { createMap } from './scenes/map';
 import { createRanking } from './scenes/ranking';
+import { createShop } from './scenes/shop';
 import { createTitle } from './scenes/title';
 import { createHelp } from './scenes/help';
 import { createTavern } from './scenes/tavern';
@@ -70,7 +71,7 @@ function bgmSync() { bgmPlay(bgmWant(), scene === 'stage' && !!stage.S && !!stag
 /* ----------------------------------------------------------------- input */
 const controls = createControls({
   cv, tr, initAudio,
-  get ranking() { return ranking; },
+  get ranking() { return textBox; },
   resetSave() { save = structuredClone(DEFAULT_SAVE); persist(); scene = 'title'; },
 });
 const { toggleMute } = controls;
@@ -173,6 +174,7 @@ const map = createMap({
   goAlchemy() { scene = 'alchemy'; alchemy.enter(); },
   rankPrefetch() { ranking.prefetch(); },
   rankStale() { NET.stale(); },
+  get shop() { return shop; },
 });
 const { STAGES, CREW, crewLabel } = map;
 /* =========================================================== TITLE ETC */
@@ -183,6 +185,25 @@ const ranking = createRanking({
   get uiArtReady() { return kit.uiArtReady; },
   rect, glow, text, textC, wrapText, panel, nineBox, slice3, uiBtn, btn, dimg, icon, LH, fxImg, fxB, knightSprite, controlStripCustom,
 });
+/* shop + advisor (full version only; the map hides the button on the web demo) */
+const shop = createShop({
+  ctx, W, H, RES, ENV, UI_BIG, NET, THAI, cv, KNIGHTS, HERO_HI, tr, LW, uiIcon, uiBig,
+  get fxArtReady() { return spr.fxArtReady; },
+  get uiArtReady() { return kit.uiArtReady; },
+  get LANG() { return lang.LANG; },
+  rect, glow, text, textC, wrapText, panel, nineBox, slice3, uiBtn, btn, dimg, icon, LH, fxImg, fxB, knightSprite, controlStripCustom,
+  get save() { return save; },
+  persist, track, knightMax,
+});
+/** the HTML text box is shared by the ranking name and the advisor question */
+const textBox = {
+  get nameEdit() { return ranking.nameEdit || shop.askEdit; },
+  get nameZ() { return shop.askEdit ? shop.askZ : ranking.nameZ; },
+  get nameH0() { return shop.askEdit ? shop.askH0 : ranking.nameH0; },
+  nameOpen() { ranking.nameOpen(); },
+  askOpen() { shop.askOpen(); },
+  nameDone(ok: boolean) { if (shop.askEdit) shop.askDone(ok); else ranking.nameDone(ok); },
+};
 const titleScene = createTitle({
   ctx, W, H, RES, ENV, UI_BIG, THAI, GROUND, NET, KNIGHTS, ranking,
   get fxArtReady() { return spr.fxArtReady; },
@@ -206,10 +227,10 @@ function helpPageFor() { return scene === 'tavern' ? 'tavern' : scene === 'map' 
 /* pointer + touch input (touch.ts): tap regions, mouse combat / station clicks, the phone pad */
 function btn(id: string, x: number, y: number, w: number, h: number) { touch.btn(id, x, y, w, h); }
 const touch = createTouch({
-  cv, W, H, ranking, stage, tavern, STATIONS, tr, helpPageFor,
+  cv, W, H, ranking: textBox, stage, tavern, STATIONS, tr, helpPageFor,
   get LANG() { return lang.LANG; },
   get scene() { return scene; },
-  get mapRank() { return mapRank; },
+  get mapRank() { return mapRank || shop.open; },
   get titlePanel() { return titleScene.panel; },
   get help() { return help; }, set help(v) { help = v; },
   get tpOnTxt() { return tpOnTxt; }, set tpOnTxt(v) { tpOnTxt = v; },
@@ -250,7 +271,7 @@ function draw() {
 }
 /* share a result / invite friends (share.ts) */
 const SHARE = createShare({
-  cv, THAI, stage, tavern, ranking, initAudio, track,
+  cv, THAI, stage, tavern, ranking: textBox, initAudio, track,
   get LANG() { return lang.LANG; },
   get scene() { return scene; },
   get help() { return help; },
@@ -266,6 +287,6 @@ function frame(now: number) {
   SHARE.sync();
   requestAnimationFrame(frame);
 }
-window.__tk = { sfxBuf: SFX_BUF, makeEnemy, get help() { return help; }, set help(v) { help = v; }, set scene(v) { scene = v; }, get scene() { return scene; }, get S() { return stage.S; }, get T() { return tavern.T; }, startStage, startTavern, finishStage, endTavern, setLang, NET, titleAct: (i: number) => titleScene.act(i), get results() { return stage.results; }, set T(v: typeof tavern.T) { tavern.T = v; }, set titlePanel(v: typeof titleScene.panel) { titleScene.panel = v; }, set titleSel(v: number) { titleScene.sel = v; }, set rank(v: [number, Parameters<typeof ranking.setBoard>[1]]) { ranking.setBoard(v[0], v[1]); }, step: (n: number) => { for (let i = 0; i < n; i++) update(STEP); draw(); }, press, release, pressed, keys, save: () => save };
+window.__tk = { sfxBuf: SFX_BUF, makeEnemy, get help() { return help; }, set help(v) { help = v; }, set scene(v) { scene = v; }, get scene() { return scene; }, get S() { return stage.S; }, get T() { return tavern.T; }, startStage, startTavern, finishStage, endTavern, setLang, NET, titleAct: (i: number) => titleScene.act(i), shop, get results() { return stage.results; }, set T(v: typeof tavern.T) { tavern.T = v; }, set titlePanel(v: typeof titleScene.panel) { titleScene.panel = v; }, set titleSel(v: number) { titleScene.sel = v; }, set rank(v: [number, Parameters<typeof ranking.setBoard>[1]]) { ranking.setBoard(v[0], v[1]); }, step: (n: number) => { for (let i = 0; i < n; i++) update(STEP); draw(); }, press, release, pressed, keys, save: () => save };
 (document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 1500))]) : Promise.resolve()).then(() => requestAnimationFrame(frame));
 }
