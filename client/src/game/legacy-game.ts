@@ -10,6 +10,8 @@ import { DEFAULT_SAVE, loadSave, writeSave } from './save';
 import { KEYMAP, keys, press, pressed, release } from './input';
 import { createAlchemy } from './scenes/alchemy';
 import { createMap } from './scenes/map';
+import { createRanking } from './scenes/ranking';
+import { createTitle } from './scenes/title';
 import { CREW_ART_SRC, ENEMY_ART_SRC, FX_ART_SRC, HERO_ATLAS, HERO_ATLAS_SRC, HERO_HI_SRC, UI_ART_SRC } from './data/art';
 
 let started = false;
@@ -79,7 +81,7 @@ function persist() { writeSave(save); }
 /* Music and SFX live in audio.ts; the game only says which track fits the current scene. */
 function initAudio() { startAudio(); }
 function bgmWant() {
-  if (scene === 'title' && titlePanel === 'credits') return 'ending';
+  if (scene === 'title' && titleScene.panel === 'credits') return 'ending';
   if (scene === 'results') return 'ending';
   if (scene === 'title' || scene === 'map') return 'title';
   if (scene === 'stage') { if (S && S.boss) return S.boss.dead ? null : 'boss'; return S && S.n === 2 ? 'stage2' : 'stage1'; }
@@ -93,10 +95,10 @@ let hitKind = 'melee';
 /* ----------------------------------------------------------------- input */
 { const hd = document.querySelector('header'); let ht = 0; const show = () => { hd.classList.add('show'); clearTimeout(ht); ht = setTimeout(() => hd.classList.remove('show'), 2200); }; window.addEventListener('mousemove', e => { if (e.clientY < 70) show(); }); window.addEventListener('touchstart', e => { if (e.touches[0] && e.touches[0].clientY < 70) show(); }, { passive: true }); }
 setTimeout(function styleTools() { const u = UI_ART_SRC.big.frame_dark; document.querySelectorAll('button.tool').forEach(b => { b.style.background = 'none'; b.style.border = '9px solid transparent'; b.style.borderImage = `url(${u}) 40 44 fill / 9px 11px stretch`; b.style.padding = '0 4px'; b.style.borderRadius = '0'; b.style.color = '#f6ead2'; b.style.textShadow = '0 1px 0 #000'; }); }, 0);
-window.addEventListener('keydown', e => { if (e.target && e.target.id === 'nameIn') { if (e.key === 'Enter') { e.preventDefault(); nameDone(true); } else if (e.key === 'Escape') { e.preventDefault(); nameDone(false); } return; } const a = KEYMAP[e.code]; if (!a) return; e.preventDefault(); if (a === 'mute' && !e.repeat) toggleMute(); press(a); });
+window.addEventListener('keydown', e => { if (e.target && e.target.id === 'nameIn') { if (e.key === 'Enter') { e.preventDefault(); ranking.nameDone(true); } else if (e.key === 'Escape') { e.preventDefault(); ranking.nameDone(false); } return; } const a = KEYMAP[e.code]; if (!a) return; e.preventDefault(); if (a === 'mute' && !e.repeat) toggleMute(); press(a); });
 window.addEventListener('keyup', e => { const a = KEYMAP[e.code]; if (a) release(a); });
 window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
-cv.addEventListener('pointerdown', () => { if (!nameEdit) cv.focus(); initAudio(); pressed.click = true; });
+cv.addEventListener('pointerdown', () => { if (!ranking.nameEdit) cv.focus(); initAudio(); pressed.click = true; });
 document.querySelectorAll('#touch button').forEach(b => {
   const a = b.dataset.k;
   b.addEventListener('pointerdown', e => { e.preventDefault(); b.setPointerCapture(e.pointerId); press(a); });
@@ -1799,7 +1801,7 @@ function updateTavern(dt) {
   if (pressed.pause) { T.paused = !T.paused; T.pauseSel = 0; }
   if (T.paused) {
     if (pressed.up || pressed.down) { T.pauseSel = 1 - (T.pauseSel || 0); SFX.select(); }
-    const quit = () => { const back = T.fromTitle ? 'title' : 'map'; T = null; scene = back; if (back === 'title') titlePanel = null; SFX.select(); };
+    const quit = () => { const back = T.fromTitle ? 'title' : 'map'; T = null; scene = back; if (back === 'title') titleScene.panel = null; SFX.select(); };
     if (pressed['ui:tquit']) { quit(); return; }
     if (pressed['ui:tresume']) { T.paused = false; return; }
     if (pressed['ui:thelp']) { help = 'tavern'; return; }
@@ -2179,212 +2181,33 @@ const map = createMap({
   get mapRank() { return mapRank; }, set mapRank(v) { mapRank = v; },
   rect, glow, text, textC, wrapText, panel, nineBox, slice3, uiBtn, btn, dimg, icon, LH, LW, fxImg, fxB, knightSprite, controlStripCustom, hash, uiIcon,
   get save() { return save; },
-  persist, track, knightMax, stage2Open, startStage, rankInput, drawRankPanel,
+  persist, track, knightMax, stage2Open, startStage,
+  rankInput: close => ranking.input(close), drawRankPanel: () => ranking.draw(),
   showHelp(page) { help = page; },
   goAlchemy() { scene = 'alchemy'; alchemy.enter(); },
-  rankPrefetch() { NET.board(NET_BOARDS[rkB][0], rkP); },
+  rankPrefetch() { ranking.prefetch(); },
   rankStale() { NET.stale(); },
 });
 const { STAGES, CREW, crewLabel } = map;
 /* =========================================================== TITLE ETC */
-let scene = 'title', titleT = 0;
-const TITLE_MENU = [0, 1, 2, 3, 4, 5].map(i => { const cy = 152.6 + i * 9.7; return [140, cy - 4.6, 260, cy + 4.6]; });
-let titleSel = 0, titlePanel = null, optSel = 0, rkB = 0, rkP = 'week', mapRank = false;
-// input for the ranking panel (title menu and world map)
-let nameEdit = false, nameZ = false, nameH0 = 0;
-function nameOpen() {
-  const el = document.getElementById('nameIn'); nameEdit = true; nameZ = innerWidth < innerHeight; nameH0 = innerHeight; /* remember: the keyboard shrinks the page and would make it look landscape */ el.value = NET.name || '';
-  el.style.display = 'block';
-  try { el.focus(); const n = el.value.length; el.setSelectionRange(n, n); } catch (e) {} /* caret at the end, so backspace deletes one letter */
-}
-function nameDone(ok) {
-  const el = document.getElementById('nameIn'); if (!nameEdit) return; nameEdit = false; el.style.display = 'none';
-  try { el.blur(); window.scrollTo(0, 0); } catch (e) {} cv.focus(); SFX.select();
-  if (ok) NET.rename(el.value);
-}
-function rankInput(close) {
-  if (nameEdit) { if (pressed['ui:nok'] || pressed.ok || pressed.atk) nameDone(true); else if (pressed['ui:ncan'] || pressed.pause || pressed.rank) nameDone(false); return; }
-  if (pressed.left) { rkB = (rkB + 2) % 3; SFX.select(); }
-  if (pressed.right) { rkB = (rkB + 1) % 3; SFX.select(); }
-  for (let k = 0; k < 3; k++) if (pressed['ui:rk' + k]) { rkB = k; SFX.select(); }
-  if (pressed.up || pressed.down) { rkP = rkP === 'week' ? 'all' : 'week'; SFX.select(); }
-  if (pressed['ui:rkw'] || pressed['ui:rka']) { rkP = pressed['ui:rkw'] ? 'week' : 'all'; SFX.select(); }
-  if (pressed.rename || pressed['ui:rkn']) { SFX.select(); if (!nameEdit) nameOpen(); }
-  else if (pressed.ok || pressed.atk || pressed.pause || pressed.rank || pressed['ui:close']) { close(); SFX.select(); }
-}
-function titleAct(i) {
-  track('title_menu', { item: ['start', 'ranking', 'options', 'about', 'credits', 'tavern_mode'][i] || i });
-  SFX.select();
-  if (i === 0) { scene = 'map'; map.enter(); }
-  else if (i === 1) { titlePanel = 'rank'; NET.stale(); }
-  else if (i === 2) { titlePanel = 'options'; optSel = 0; }
-  else if (i === 3) titlePanel = 'about';
-  else if (i === 4) titlePanel = 'credits';
-  else { startTavern(); T.fromTitle = true; }
-}
-function updateTitle(dt) {
-  titleT += dt;
-  if (!ENV.title) { if (anyConfirm() && titleT > 0.3) { scene = 'map'; map.enter(); } return; }
-  if (titlePanel) {
-    if (titlePanel === 'options') {
-      if (pressed.up) { optSel = (optSel + 3) % 4; SFX.select(); }
-      if (pressed.down) { optSel = (optSel + 1) % 4; SFX.select(); }
-      const VK = [null, 'bgm', 'sfx'], adj = (k, d) => { setVol(VK[k], VOL[VK[k]] + d); bgmSync(); SFX.select(); };
-      if (optSel > 0 && optSel < 3 && pressed.left) adj(optSel, -1);
-      if (optSel > 0 && optSel < 3 && pressed.right) adj(optSel, 1);
-      if ((optSel === 3 && (pressed.left || pressed.right || pressed.ok || pressed.atk)) || pressed['ui:opt3']) { optSel = 3; setLang(LANG === 'th' ? 'en' : 'th'); SFX.select(); }
-      if (pressed['ui:opt0']) { optSel = 0; toggleMute(); SFX.select(); }
-      for (const k of [1, 2]) { if (pressed['ui:opt' + k + 'm']) { optSel = k; adj(k, -1); } if (pressed['ui:opt' + k + 'p']) { optSel = k; adj(k, 1); } }
-      if ((pressed.ok || pressed.atk) && optSel === 0) { toggleMute(); SFX.select(); }
-      if (pressed.pause || pressed['ui:close']) titlePanel = null;
-    } else if (titlePanel === 'rank') rankInput(() => { titlePanel = null; }); else if (pressed.ok || pressed.atk || pressed.pause || pressed['ui:close']) titlePanel = null;
-    return;
-  }
-  if (pressed.up) { titleSel = (titleSel + 5) % 6; SFX.select(); }
-  if (pressed.down) { titleSel = (titleSel + 1) % 6; SFX.select(); }
-  for (let i = 0; i < 6; i++) if (pressed['ui:tm' + i]) { titleSel = i; titleAct(i); return; }
-  if ((pressed.ok || pressed.atk) && titleT > 0.3) titleAct(titleSel);
-}
-// title words drawn per language over the text-free title art (the painted Thai plate/menu were inpainted out)
-// drawn once into an offscreen canvas per language/selection (cheap per frame on phones); solid colour bands, no gradients or strokeText (broken in some iOS webviews)
-function outlineText(c, str, x, y, size, fills, stroke, lw, weight) {
-  c.font = `${weight || 600} ${size}px ${THAI}`; c.textAlign = 'left'; c.textBaseline = 'middle';
-  const w = c.measureText(str).width, x0 = x - w / 2, r = lw / 2;
-  c.fillStyle = stroke; for (let k = 0; k < 8; k++) { const an = k * Math.PI / 4; c.fillText(str, x0 + Math.cos(an) * r, y + Math.sin(an) * r); }
-  if (typeof fills === 'string') fills = [fills];
-  const n = fills.length, top = y - size * 0.6, band = size * 1.2 / n;
-  fills.forEach((f, i) => { c.save(); if (n > 1) { const y0 = i ? top + band * i : y - size * 2, y1 = i === n - 1 ? y + size * 2 : top + band * (i + 1); c.beginPath(); c.rect(x0 - 4, y0, w + 8, y1 - y0); c.clip(); } c.fillStyle = f; c.fillText(str, x0, y); c.restore(); });
-}
-let _twCache = null, _twKey = '';
-try { document.fonts && document.fonts.addEventListener('loadingdone', () => { _twKey = ''; }); } catch (e) {}
-function drawTitleWords() {
-  const en = LANG === 'en', key = LANG + '|' + (titlePanel ? -1 : titleSel);
-  if (key !== _twKey || !_twCache) {
-    if (!_twCache) { _twCache = document.createElement('canvas'); _twCache.width = W * RES; _twCache.height = H * RES; }
-    const c = _twCache.getContext('2d'); c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, _twCache.width, _twCache.height); c.setTransform(RES, 0, 0, RES, 0, 0);
-    const sub = en ? 'Three Tom Yum Knights' : 'สามอัศวินต้มยำกุ้ง';
-    let sz = en ? 17 : 21; c.font = `600 ${sz}px ${THAI}`; while (c.measureText(sub).width > 146 && sz > 9) { sz -= 0.5; c.font = `600 ${sz}px ${THAI}`; }
-    outlineText(c, sub, 199, en ? 52 : 51, sz, ['#fff0a8', '#ffcf45', '#f0962a'], '#3a1d0c', 3, 600);
-    const labels = en ? ['Start Game', 'Ranking', 'Options', 'About', 'Ending / Credits', 'Tavern Mode'] : ['เริ่มเกม', 'อันดับ', 'ตัวเลือก', 'เกี่ยวกับ', 'ฉากจบ / เครดิต', 'โหมดบริหารร้าน'];
-    TITLE_MENU.forEach((b, i) => outlineText(c, labels[i], (b[0] + b[2]) / 2, (b[1] + b[3]) / 2 + 0.3, 8.6, i === titleSel && !titlePanel ? '#ffe9a0' : '#f3e6c8', '#1b1020', 2.2, 600));
-    outlineText(c, 'v1.0.1 · ' + (en ? 'Developer: ' : 'ผู้พัฒนา: ') + 'Rochano Developer Teams', 330, 204, 6, '#e9dcc0', '#1b1020', 1.8, 400);
-    _twKey = key;
-  }
-  ctx.drawImage(_twCache, 0, 0, W, H);
-}
-// online ranking panel (title menu > Ranking): three boards, this week / all time, top 8 + your own rank
-function drawRankPanel() {
-  text('อันดับ (Ranking)', W / 2, 40, { size: 11, align: 'center', thai: true, color: '#f2a93b', weight: 600 });
-  NET_BOARDS.forEach(([b, lb], k) => { const x = 80 + k * 82, on = k === rkB; btn('rk' + k, x, 56, 78, 16); uiBtn(x, 56, 78, 16, on); textC(lb, x + 39, 64, { size: 6.5, align: 'center', thai: true, color: on ? '#ffe9b0' : '#cfc0b0' }); });
-  [['week', 'สัปดาห์นี้', 'rkw', 140], ['all', 'ตลอดกาล', 'rka', 202]].forEach(([p, lb, id, x]) => { const on = rkP === p; btn(id, x, 75, 58, 12); uiBtn(x, 75, 58, 12, on); textC(lb, x + 29, 81, { size: 6.5, align: 'center', thai: true, color: on ? '#ffe9b0' : '#a89a8a' }); });
-  const b = NET_BOARDS[rkB][0], e = NET.board(b, rkP), rows = e.rows || [];
-  if (!rows.length) {
-    const msg = e.state === 'load' ? 'กำลังโหลด...' : e.state === 'off' ? 'ระบบอันดับออนไลน์ยังไม่เปิด หรือไม่ได้ต่อเน็ต' : 'ยังไม่มีใครติดอันดับ เป็นคนแรกเลย!';
-    text(msg, W / 2, 118, { size: 7.5, align: 'center', thai: true, color: e.state === 'off' ? '#ff8a7a' : '#cfc0b0', weight: 400 });
-  }
-  rows.slice(0, 8).forEach((r, k) => {
-    const y = 91 + k * 8.4, col = r.me ? '#9be15d' : k === 0 ? '#ffd76a' : '#f6ead2';
-    const cy = y + 3.6; /* number font and Thai font sit differently from the top, so centre each on one line */
-    textC(String(r.rank), 96, cy, { size: 7, align: 'right', color: col, weight: 700 });
-    textC('⁠' + r.name, 104, cy, { size: 7, thai: true, color: col, weight: r.me ? 700 : 400 });
-    textC(netVal(b, r.value), 318, cy, { size: 7, align: 'right', color: col, weight: 700 });
-  });
-  textC('คุณ:', 80, 163.6, { size: 7, thai: true, color: '#bba8ba', weight: 400 });
-  ctx.font = `400 7px ${THAI}`; const lw = ctx.measureText('คุณ:').width + 3;
-  if (NET.name) textC('⁠' + NET.name, 80 + lw, 163.6, { size: 7, thai: true, color: '#f6ead2', weight: 700 }); else textC('(ยังไม่ได้ตั้งชื่อ)', 80 + lw, 163.6, { size: 7, thai: true, color: '#8a7a6a', weight: 400 });
-  if (e.me) { const rs = 'อันดับที่ ' + e.me.rank; textC(rs, 80, 173.1, { size: 7, thai: true, color: '#9be15d', weight: 400 }); ctx.font = `400 7px ${THAI}`; textC('· ' + netVal(b, e.me.value), 83 + ctx.measureText(rs).width, 173.1, { size: 7, color: '#9be15d', weight: 700 }); }
-  btn('rkn', 248, 159, 72, 15); uiBtn(248, 159, 72, 15, false); textC('เปลี่ยนชื่อ (N)', 284, 166.5, { size: 6.5, align: 'center', thai: true, color: '#ffd7a0' });
-  if (NET.msg && Date.now() - NET.msgT < 3500) { const m = { ok: ['เปลี่ยนชื่อแล้ว', '#9be15d'], bad: ['ชื่อนี้ใช้ไม่ได้', '#ff8a7a'], off: ['ต่อไม่ได้ ลองใหม่', '#ff8a7a'] }[NET.msg]; ctx.font = `700 7px ${THAI}`; const nx = 80 + lw + (NET.name ? ctx.measureText(NET.name).width : ctx.measureText(tr('(ยังไม่ได้ตั้งชื่อ)')).width) + 6; ctx.font = `400 6px ${THAI}`; const mw = ctx.measureText(tr(m[0])).width;
-    if (nx + mw <= 244) textC(m[0], nx, 163.6, { size: 6, thai: true, color: m[1], weight: 400 }); else textC(m[0], 244, 163.6, { size: 6, align: 'right', thai: true, color: m[1], weight: 400 }); }
-  if (nameEdit) {
-    rect(0, 0, W, H, '#05050ac0'); if (!nineBox('dialog', 92, 70, 216, 88, 16, 9)) panel(96, 74, 208, 80, '#1b120cf4', '#f2a93b');
-    uiBtn(110, 92, 180, 22, false);
-    text('ตั้งชื่อที่จะแสดงบนตารางอันดับ', W / 2, 80, { size: 8, align: 'center', thai: true, color: '#f2a93b', weight: 600 });
-    { const el = document.getElementById('nameIn'), v = el.value, on = document.activeElement === el; /* the game draws the typed name itself so it is always crisp */
-      ctx.font = `700 12px ${THAI}`; const tw = v ? ctx.measureText(v).width : 0, sz = tw > 156 ? 12 * 156 / tw : 12;
-      if (v) textC('\u2060' + v, W / 2, 103, { size: sz, align: 'center', thai: true, color: '#fff4dc', weight: 700 });
-      else textC(on ? '' : 'แตะเพื่อพิมพ์ชื่อ', W / 2, 103, { size: 7, align: 'center', thai: true, color: '#8aa0c0', weight: 400 });
-      if (on && (performance.now() / 500 | 0) % 2 === 0) rect(W / 2 + tw * sz / 24 + 1.5, 97, 1.2, 12, '#fff4dc'); }
-    text('ใช้ได้ 2-16 ตัวอักษร', W / 2, 119, { size: 6, align: 'center', thai: true, color: '#bba8ba', weight: 400 });
-    [['nok', 'ตกลง', 122, true], ['ncan', 'ยกเลิก', 204, false]].forEach(([id, lb, x, on]) => { btn(id, x, 132, 74, 15); uiBtn(x, 132, 74, 15, on); textC(lb, x + 37, 139.5, { size: 7, align: 'center', thai: true, color: on ? '#ffe9b0' : '#cfc0b0' }); });
-  }
-}
-function drawTitleMenuScreen() {
-  const t = titleT;
-  rect(0, 0, W, H, '#0c0a10'); ctx.drawImage(ENV.title_clean || ENV.title, 0, 0, W, 223.5);
-  if (ENV.title_clean) drawTitleWords();
-  TITLE_MENU.forEach((b, i) => {
-    btn('tm' + i, b[0] - 4, b[1] - 1, b[2] - b[0] + 8, b[3] - b[1] + 2);
-    if (i !== titleSel || titlePanel) return;
-    const bob = Math.sin(t * 8) * 1.5, y = (b[1] + b[3]) / 2;
-    ctx.fillStyle = 'rgba(255,210,110,0.16)'; ctx.fillRect(b[0] - 3, b[1], b[2] - b[0] + 6, b[3] - b[1]);
-    ctx.strokeStyle = '#ffd76a'; ctx.lineWidth = 0.8; ctx.strokeRect(b[0] - 3, b[1], b[2] - b[0] + 6, b[3] - b[1]);
-    const px = b[0] - 12 + bob; if (uiBig('pointer', px - 4, y, 0.85)) return; ctx.fillStyle = '#1b1020'; ctx.beginPath(); ctx.moveTo(px - 1, y - 5); ctx.lineTo(px + 8, y); ctx.lineTo(px - 1, y + 5); ctx.fill();
-    ctx.fillStyle = '#ffd76a'; ctx.beginPath(); ctx.moveTo(px, y - 3.5); ctx.lineTo(px + 6, y); ctx.lineTo(px, y + 3.5); ctx.fill();
-  });
-  if (titlePanel) {
-    rect(0, 0, W, H, '#05050af4'); if (!nineBox('dialog', 64, 28, 272, 162, 16, 9)) panel(70, 34, 260, 150, '#1b120cf4', '#f2a93b');
-    btn('close', 70, 34, 260, titlePanel === 'options' || titlePanel === 'rank' ? 20 : 150);
-    if (titlePanel === 'options') {
-      text('ตัวเลือก (Options)', W / 2, 40, { size: 11, align: 'center', thai: true, color: '#f2a93b', weight: 600 });
-      const rows = [['เสียงทั้งหมด (M)', audio.muted ? 'ปิด' : 'เปิด'], ['เพลง (BGM)', VOL.bgm], ['เอฟเฟกต์เสียง (SFX)', VOL.sfx], ['ภาษา (Language)', LANG === 'th' ? 'ไทย' : 'English']];
-      rows.forEach((r, k) => { const y = 60 + k * 24; uiBtn(90, y - 4, 220, 22, k === optSel, '#5a3a22', '#2a1a10', '#5a3a22', '#2a1a10'); textC(r[0], 100, y + 7, { size: 9, thai: true, color: '#f6ead2' });
-        if (k === 3) { btn('opt3', 90, y - 4, 220, 22); ctx.font = `700 9px ${THAI}`; const ah = Math.max(24, ctx.measureText(tr(r[1])).width / 2 + 10); keyLabel('←', 268 - ah, y + 7, 9, { color: '#ffd76a' }); textC(r[1], 268, y + 7, { size: 9, thai: true, align: 'center', color: '#ffd76a', weight: 700 }); keyLabel('→', 268 + ah, y + 7, 9, { color: '#ffd76a' }); }
-        else if (k === 0) { btn('opt0', 90, y - 4, 220, 22); textC(r[1], 296.5, y + 7, { size: 9, thai: true, align: 'right', color: r[1] === 'เปิด' ? '#9be15d' : '#ff8a7a', weight: 700 }); }
-        else { btn('opt' + k + 'm', 230, y - 4, 34, 22); btn('opt' + k + 'p', 266, y - 4, 44, 22); keyLabel('←', 244, y + 7, 9, { color: r[1] > 0 ? '#ffd76a' : '#6a5a4a' }); textC(String(r[1]), 268, y + 7, { size: 9, align: 'center', weight: 700, color: r[1] ? '#f6ead2' : '#ff8a7a' }); keyLabel('→', 292, y + 7, 9, { color: r[1] < 10 ? '#ffd76a' : '#6a5a4a' }); } });
-      text('ล้างเซฟได้จากปุ่ม "ล้างเซฟ" ด้านบนเกม', W / 2, 158, { size: 7, align: 'center', thai: true, color: '#bba8ba', weight: 400 });
-      text('ขึ้น/ลง เลือก · ซ้าย/ขวา ปรับ · Enter เปิด/ปิด · Esc ปิด', W / 2, 170, { size: 7, align: 'center', thai: true, color: '#ffd76a', weight: 400 });
-    } else if (titlePanel === 'rank') drawRankPanel();
-    else if (titlePanel === 'about') {
-      text('เกี่ยวกับ (About)', W / 2, 40, { size: 11, align: 'center', thai: true, color: '#f2a93b', weight: 600 });
-      wrapText('อัศวินตกอับสามคนเปิดร้าน The Tipsy Dragon บังหน้า กลางวันลุยดันเจี้ยนล่าวัตถุดิบหายากจากบอส กลางคืนเปิดร้านทำต้มยำกุ้งเลี้ยงลูกค้า แล้วนำของที่ได้ไปปรุงยาและตีอาวุธ เพื่อสู้กับกลุ่ม Obsidian Syndicate', 84, 62, 232, 11, { size: 8, thai: true, weight: 400, color: '#f6ead2' });
-      wrapText('เวอร์ชันต้นแบบนี้มี: ด่าน 1 ป่าเห็ดพิษ + บอสราชาเห็ด, กะกลางคืนในร้าน, ห้องปรุงยา/ตีเหล็ก และแผนที่โลก', 84, 128, 232, 10, { size: 7, thai: true, weight: 400, color: '#bfe8ff' });
-      text('กด Enter / แตะ เพื่อปิด', W / 2, 168, { size: 7, align: 'center', thai: true, color: '#ffd76a', weight: 400 });
-    } else {
-      text('ฉากจบ / เครดิต', W / 2, 40, { size: 11, align: 'center', thai: true, color: '#f2a93b', weight: 600 });
-      text('ฉากจบ', W / 2, 60, { size: 9, align: 'center', thai: true, color: '#ffd76a' });
-      wrapText(save.runs ? 'คุณชนะราชาเห็ดมาแล้ว ' + save.runs + ' รอบ ฉากจบจะปลดล็อกเมื่อปราบ Archmage Malacor ที่ด่าน 6 (ยังไม่มีในต้นแบบนี้)' : 'ฉากจบจะปลดล็อกเมื่อปราบ Archmage Malacor ที่ด่าน 6 (ยังไม่มีในต้นแบบนี้)', 84, 74, 232, 10, { size: 7.5, thai: true, weight: 400, color: '#f6ead2' });
-      text('เครดิต', W / 2, 104, { size: 9, align: 'center', thai: true, color: '#ffd76a' });
-      text('ทีมพัฒนา: Rochano Developer Teams', W / 2, 118, { size: 8, align: 'center', thai: true, color: '#f6ead2', weight: 400 });
-      text('ออกแบบเกม ตัวละคร และฉาก: Rochano Developer Teams', W / 2, 131, { size: 7.5, align: 'center', thai: true, color: '#cfc0b0', weight: 400 });
-      text('ต้นแบบที่เล่นได้: สร้างร่วมกับ Claude', W / 2, 144, { size: 7.5, align: 'center', thai: true, color: '#cfc0b0', weight: 400 });
-      text('กด Enter / แตะ เพื่อปิด', W / 2, 168, { size: 7, align: 'center', thai: true, color: '#ffd76a', weight: 400 });
-    }
-  }
-  controlStripCustom(titlePanel === 'rank' ? [['← →', 'ตาราง'], ['↑ ↓', 'ช่วงเวลา'], ['N', 'เปลี่ยนชื่อ'], ['Esc', '\u200bปิด']] : titlePanel ? [['Enter', 'ตกลง'], ['Esc', '\u200bปิด'], ['M', 'เสียง']] : [['↑ ↓', 'เลือกเมนู'], ['Enter / J', 'ตกลง'], ['H', 'วิธีเล่น'], ['M', 'เสียง']]);
-}
-function drawTitle() {
-  if (ENV.title) { drawTitleMenuScreen(); return; }
-  const t = titleT;
-  drawForestBg(t * 20, t);
-  rect(0, GROUND, W, H - GROUND, '#1a2a20'); rect(0, GROUND, W, 3, '#3cbf5a');
-  // tavern on the right
-  const tx = 262;
-  rect(tx, 96, 128, 94, '#4a2e1e'); for (let y = 100; y < 190; y += 8) rect(tx, y, 128, 0.5, '#3a2416');
-  ctx.fillStyle = '#7a2a1a'; ctx.beginPath(); ctx.moveTo(tx - 10, 98); ctx.lineTo(tx + 64, 54); ctx.lineTo(tx + 138, 98); ctx.fill();
-  rect(tx + 90, 64, 10, 22, '#3a2416');
-  for (let k = 0; k < 4; k++) { ctx.globalAlpha = 0.35; ctx.fillStyle = '#cfd8d0'; ctx.beginPath(); ctx.arc(tx + 95 + Math.sin(t * 2 + k) * 3, 58 - ((t * 10 + k * 7) % 28), 3 + k * 0.6, 0, 7); ctx.fill(); } ctx.globalAlpha = 1;
-  [[tx + 14, 120], [tx + 44, 120], [tx + 96, 120]].forEach(([x, y]) => { glow(x + 8, y + 7, 22, 'rgba(255,190,90,A)', 0.4); rect(x, y, 16, 14, '#1b1020'); rect(x + 1, y + 1, 14, 12, '#f2b14a'); rect(x + 7.5, y + 1, 1, 12, '#1b1020'); });
-  rect(tx + 70, 148, 20, 42, '#1b1020'); rect(tx + 71, 149, 18, 41, '#5a3a22'); rect(tx + 85, 168, 2, 2, '#f2c94c');
-  panel(tx + 22, 100, 84, 14, '#5a3a22', '#f2a93b'); text('THE TIPSY DRAGON', tx + 64, 102.5, { size: 7, align: 'center', color: '#ffd76a', weight: 700 });
-  // logo
-  rect(0, 14, 250, 92, '#05141a99');
-  text('TAVERN KNIGHTS', 16, 18, { size: 30, color: '#f2a93b', weight: 700, shadowColor: '#5a1a10' });
-  text('สามอัศวินต้มยำกุ้ง', 18, 52, { size: 18, color: '#f6ead2', thai: true, weight: 600 });
-  text('พระสหาย · สาวใช้ · จอมขมังเวทย์ ผู้กอบกู้ร้านเหล้า', 18, 80, { size: 8, color: '#bfe8ff', thai: true, weight: 400 });
-  // knights
-  for (let i = 0; i < 3; i++) {
-    const hop = Math.floor(t * 3 + i * 1.3) % 5 === 0;
-    const spr = knightSprite(i, hop ? 'jump' : 'stand').r; const x = 40 + i * 64;
-    ctx.fillStyle = '#00000044'; ctx.beginPath(); ctx.ellipse(x + 18, GROUND, 14, 3, 0, 0, 7); ctx.fill();
-    dimg(spr, x, GROUND - 44 - (hop ? 6 : 0));
-    text(KNIGHTS[i].th, x + 18, GROUND + 6, { size: 8, align: 'center', thai: true, color: KNIGHTS[i].color });
-  }
-  if (Math.floor(t * 2) % 2 === 0) text('คลิก / แตะ / กด Enter เพื่อเริ่ม', 18, 116, { size: 11, color: '#ffd76a', thai: true, weight: 600 });
-  text('กด H หรือปุ่ม "วิธีเล่น" เพื่อดูปุ่มบังคับ', 18, 132, { size: 8, color: '#cfe0e4', thai: true, weight: 400 });
-  if (save.runs) text('เซฟ: ' + save.gold + 'g · เล่นแล้ว ' + save.runs + ' รอบ', 18, 144, { size: 7, color: '#8a9aa0', thai: true, weight: 400 });
-  controlStripCustom([['Enter / J', 'เริ่ม'], ['H', 'วิธีเล่น'], ['M', 'เปิด/ปิดเสียง']]);
-}
+let scene = 'title', mapRank = false;
+const ranking = createRanking({
+  ctx, W, H, RES, ENV, UI_BIG, NET, NET_BOARDS, THAI, cv, netVal,
+  get fxArtReady() { return fxArtReady; },
+  get uiArtReady() { return uiArtReady; },
+  rect, glow, text, textC, wrapText, panel, nineBox, slice3, uiBtn, btn, dimg, icon, LH, fxImg, fxB, knightSprite, controlStripCustom,
+});
+const titleScene = createTitle({
+  ctx, W, H, RES, ENV, UI_BIG, THAI, GROUND, NET, KNIGHTS, ranking,
+  get fxArtReady() { return fxArtReady; },
+  get uiArtReady() { return uiArtReady; },
+  get LANG() { return LANG; },
+  rect, glow, text, textC, wrapText, panel, nineBox, slice3, uiBtn, btn, dimg, icon, LH, fxImg, fxB, knightSprite, controlStripCustom,
+  get save() { return save; },
+  persist, track, knightMax, tr, setLang, toggleMute, bgmSync, keyLabel, uiBig, drawForestBg, anyConfirm,
+  goMap() { scene = 'map'; map.enter(); },
+  startTavernFromTitle() { startTavern(); T.fromTitle = true; },
+});
 function updateResults(dt) { results.t += dt; if (results.t > 0.8 && (!results.net || results.net.state !== 'send' || results.t > 3) && anyConfirm()) { startTavern(); if (!save.seen.tavern) { help = 'tavern'; save.seen.tavern = true; persist(); } } }
 function drawResults() {
   drawStageBg(results.n || 1, results.t * 10, results.t);
@@ -2456,12 +2279,12 @@ let uiRegions = [];
 function localFrac(e, el) { const r = el.getBoundingClientRect(); if (document.body.classList.contains('tp-rot')) return [(e.clientY - r.top) / r.height, (r.right - e.clientX) / r.width]; return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; }
 function btn(id, x, y, w, h) { uiRegions.push({ id, x, y, w, h }); }
 /* phones only open the keyboard when focus() runs inside the tap itself, so the rename button focuses the name field right here */
-document.addEventListener('mousedown', e => { if (nameEdit && e.target.id !== 'nameIn') e.preventDefault(); }, true); /* the mouse event a tap sends afterwards would move focus back to the canvas */
+document.addEventListener('mousedown', e => { if (ranking.nameEdit && e.target.id !== 'nameIn') e.preventDefault(); }, true); /* the mouse event a tap sends afterwards would move focus back to the canvas */
 cv.addEventListener('pointerup', e => {
   const lf = localFrac(e, cv), x = lf[0] * W, y = lf[1] * H;
   const hit = uiRegions.slice().reverse().find(b => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h);
-  if (!nameEdit && hit && hit.id === 'rkn' && !help) nameOpen();
-  else if (nameEdit && !(hit && (hit.id === 'nok' || hit.id === 'ncan'))) { try { const el = document.getElementById('nameIn'), n = el.value.length; el.focus(); el.setSelectionRange(n, n); } catch (x) {} }
+  if (!ranking.nameEdit && hit && hit.id === 'rkn' && !help) ranking.nameOpen();
+  else if (ranking.nameEdit && !(hit && (hit.id === 'nok' || hit.id === 'ncan'))) { try { const el = document.getElementById('nameIn'), n = el.value.length; el.focus(); el.setSelectionRange(n, n); } catch (x) {} }
 });
 cv.addEventListener('pointerdown', e => {
   const lf = localFrac(e, cv); const x = lf[0] * W, y = lf[1] * H;
@@ -2542,17 +2365,17 @@ function tpRotFit(rot) { /* Safari/LINE: 100vh includes the area under the brows
 }
 function tpSync() {
   if (!TOUCH_DEV) return;
-  const land = innerWidth >= innerHeight || nameEdit; /* while typing a name, lay the game flat at the top so the phone keyboard never covers it (X/FB in-app browsers don't resize for the keyboard) */
-  document.body.classList.toggle('tp-name', nameEdit); const nz = nameEdit && nameZ; document.body.classList.toggle('tp-namez', nz);
+  const land = innerWidth >= innerHeight || ranking.nameEdit; /* while typing a name, lay the game flat at the top so the phone keyboard never covers it (X/FB in-app browsers don't resize for the keyboard) */
+  document.body.classList.toggle('tp-name', ranking.nameEdit); const nz = ranking.nameEdit && ranking.nameZ; document.body.classList.toggle('tp-namez', nz);
   { /* upright phone: zoom in on the name box and centre it in the space above the keyboard */
     const sc = document.querySelector('.screen'), vv = window.visualViewport;
-    if (nz) { const k = 1.75, wd = innerWidth, hd = wd * 9 / 16, avail = innerHeight < nameH0 * 0.8 ? innerHeight : vv && vv.height < innerHeight * 0.9 ? vv.height : innerHeight * 0.56;
+    if (nz) { const k = 1.75, wd = innerWidth, hd = wd * 9 / 16, avail = innerHeight < ranking.nameH0 * 0.8 ? innerHeight : vv && vv.height < innerHeight * 0.9 ? vv.height : innerHeight * 0.56;
       sc.style.transformOrigin = '0 0'; sc.style.transform = `translate(${wd / 2 * (1 - k)}px, ${avail / 2 - 114 / 225 * hd * k}px) scale(${k})`; }
     else if (sc.style.transform) sc.style.transform = sc.style.transformOrigin = ''; }
   document.body.classList.toggle('tp-on', true); tpOnTxt = true; document.body.classList.toggle('tp-rot', !land); tpRotFit(!land);
   const mode = help ? 'menu' : (scene === 'stage' || scene === 'gameover') ? 'act' : scene === 'tavern' ? 'tav' : scene === 'title' ? 'title' : scene === 'map' ? 'map' : 'menu';
-  if ((titlePanel && scene === 'title') || (mapRank && scene === 'map')) document.body.dataset.tpp = '1'; else delete document.body.dataset.tpp;
-  if (nameEdit) document.body.dataset.tpn = '1'; else delete document.body.dataset.tpn;
+  if ((titleScene.panel && scene === 'title') || (mapRank && scene === 'map')) document.body.dataset.tpp = '1'; else delete document.body.dataset.tpp;
+  if (ranking.nameEdit) document.body.dataset.tpn = '1'; else delete document.body.dataset.tpn;
   const key = mode + LANG + (mode === 'tav' && T ? T.active : ''); if (key === tpKey) return; tpKey = key; document.body.dataset.tp = mode;
   const TB = window.__TB, Q = s => tpEl.querySelector(s);
   const lab = (sel, img, txt) => { const b = Q(sel); if (img) b.style.backgroundImage = `url(${img})`; b.querySelector('span').textContent = tr(txt); };
@@ -2570,7 +2393,7 @@ let last = performance.now(), acc = 0;
 function update(dt) {
   if (pressed.help) { help = help ? null : helpPageFor(); }
   else if (help) { if (pressed.ok || pressed.click || pressed.atk || pressed.pause) help = null; }
-  else if (scene === 'title') updateTitle(dt);
+  else if (scene === 'title') titleScene.update(dt);
   else if (scene === 'map') map.update(dt);
   else if (scene === 'stage') updateStage(dt);
   else if (scene === 'results') updateResults(dt);
@@ -2585,7 +2408,7 @@ function draw() {
   uiRegions = [];
   ctx.save();
   if (shake > 0) ctx.translate(Math.round(rnd(-shake, shake)), Math.round(rnd(-shake, shake)));
-  if (scene === 'title') drawTitle();
+  if (scene === 'title') titleScene.draw();
   else if (scene === 'map') map.draw();
   else if (scene === 'stage' || scene === 'gameover') { drawStageWorld(); drawUltimate(); drawStageHud(); }
   else if (scene === 'results') drawResults();
@@ -2671,7 +2494,7 @@ const SHARE = (() => {
   document.getElementById('btnGuide').addEventListener('click', () => { track('guides_open', { from: 'header' }); window.open(LANG === 'en' ? '/guide/en/' : '/guide/', '_blank', 'noopener'); });
   function sync() {
     const res = scene === 'results' && results && results.t > 0.8, tav = scene === 'tavern' && T && T.over && night && T.overT > 0.8;
-    const showS = (res || tav) && !help && pop.hidden, showI = scene === 'title' && !titlePanel && !help && pop.hidden && !nameEdit;
+    const showS = (res || tav) && !help && pop.hidden, showI = scene === 'title' && !titleScene.panel && !help && pop.hidden && !ranking.nameEdit;
     if (btn.hidden === showS) btn.hidden = !showS;
     if (showS) { const k = res ? 'at-res' : 'at-tav'; if (!btn.classList.contains(k)) { btn.classList.remove('at-res', 'at-tav'); btn.classList.add(k); } }
     if (inv.hidden === showI) inv.hidden = !showI;
@@ -2689,6 +2512,6 @@ function frame(now) {
   SHARE.sync();
   requestAnimationFrame(frame);
 }
-window.__tk = { sfxBuf: SFX_BUF, makeEnemy, get help() { return help; }, set help(v) { help = v; }, set scene(v) { scene = v; }, get scene() { return scene; }, get S() { return S; }, get T() { return T; }, startStage, startTavern, finishStage, endTavern, setLang, NET, titleAct, get results() { return results; }, set T(v) { T = v; }, set titlePanel(v) { titlePanel = v; }, set titleSel(v) { titleSel = v; }, set rank(v) { rkB = v[0]; rkP = v[1]; }, step: n => { for (let i = 0; i < n; i++) update(STEP); draw(); }, press, release, pressed, keys, save: () => save };
+window.__tk = { sfxBuf: SFX_BUF, makeEnemy, get help() { return help; }, set help(v) { help = v; }, set scene(v) { scene = v; }, get scene() { return scene; }, get S() { return S; }, get T() { return T; }, startStage, startTavern, finishStage, endTavern, setLang, NET, titleAct: i => titleScene.act(i), get results() { return results; }, set T(v) { T = v; }, set titlePanel(v) { titleScene.panel = v; }, set titleSel(v) { titleScene.sel = v; }, set rank(v) { ranking.setBoard(v[0], v[1]); }, step: n => { for (let i = 0; i < n; i++) update(STEP); draw(); }, press, release, pressed, keys, save: () => save };
 (document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 1500))]) : Promise.resolve()).then(() => requestAnimationFrame(frame));
 }
