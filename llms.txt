@@ -13,11 +13,16 @@ Tavern Knights follows three down-on-their-luck knights who secretly run The Tip
 - Tavern night shift: rhythm cooking with arrow keys, pouring beer, serving, washing dishes, thieves, VIP guests, kitchen fires
 - Save: progress is stored in the player's browser
 - Online leaderboard: weekly and all-time rankings for stage score, stage time and tavern gold
+- Sharing: a Share button on stage and night-shift results (picture of the result plus link), and Invite friends on the title screen
 - Controls: arrows/WASD move, Up/Space jump, J/Z attack, K/X special, L/V ultimate, 1-3 swap knight, C call crew, H help, Esc pause
 
 ## Links
 - [Play now](https://tavern-knights.pages.dev/): the game, full screen
 - [About the game](https://tavern-knights.pages.dev/about.html): story, characters, screenshots, controls, FAQ
+- [Guides](https://tavern-knights.pages.dev/guide/en/) ([Thai](https://tavern-knights.pages.dev/guide/))
+- [How to play](https://tavern-knights.pages.dev/guide/en/how-to-play/): game loop, keyboard and touch controls, knights, crew, tavern stations
+- [Beginner tips](https://tavern-knights.pages.dev/guide/en/beginner-tips/): 3-star rules (clear, under 5 minutes, no knight knocked out), secret room with Chef Gorn, King Shroomba's hidden Ember Spore drop, ranking points
+- [Night shift guide](https://tavern-knights.pages.dev/guide/en/tavern-night-shift/): 80-second shift, star formula, VIPs pay double, thief and stove-fire timings
 - [Source on GitHub](https://github.com/rochano/tavern-knights)
 
 ## Languages
