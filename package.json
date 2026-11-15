@@ -1,0 +1,14 @@
+{
+  "name": "tavern-knights",
+  "private": true,
+  "workspaces": ["client", "server", "shared"],
+  "scripts": {
+    "build": "npm run build -w @tk/client",
+    "start": "npm start -w @tk/client",
+    "typecheck": "npm run typecheck -w @tk/server",
+    "dev:api": "npm run build && wrangler pages dev client/dist/browser --d1 DB=tk-local"
+  },
+  "devDependencies": {
+    "wrangler": "^4.40.0"
+  }
+}

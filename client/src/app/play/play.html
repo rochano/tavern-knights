@@ -1,0 +1,43 @@
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>Tavern Knights</h1>
+      <span class="sub">สามอัศวินต้มยำกุ้ง · prototype</span>
+    </div>
+    <div class="tools">
+      <button class="tool" id="btnHelp" type="button">วิธีเล่น (H)</button>
+      <button class="tool" id="btnMute" type="button">เสียง: เปิด</button>
+      <button class="tool" id="btnReset" type="button">ล้างเซฟ</button>
+      <button class="tool" id="btnGuide" type="button">คู่มือ</button>
+    </div>
+  </header>
+
+  <div class="stage"><div class="screen"><canvas id="game" width="1600" height="900" tabindex="0" aria-label="Tavern Knights game screen"></canvas><input id="nameIn" type="text" maxlength="16" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" aria-label="name"><button type="button" class="tk-sh" id="shareBtn" hidden></button><button type="button" class="tk-sh" id="inviteBtn" hidden></button><div id="sharePop" hidden role="dialog" aria-modal="true" aria-labelledby="spTitle"><div class="sp-box"><h2 id="spTitle"></h2><img id="spImg" alt="" hidden><p id="spTxt"></p><div class="sp-row" id="spRow"></div><button type="button" class="sp-x" id="spClose"></button></div></div></div></div>
+
+
+  <div id="tpad" aria-hidden="true">
+    <div class="tp-dpad" id="tpDpad"><i class="u" data-d="up"></i><i class="l" data-d="left"></i><i class="r" data-d="right"></i><i class="d" data-d="down"></i><b class="tp-knob" id="tpKnob"></b></div>
+    <div class="tp-acts">
+      <button type="button" class="tp-b tp-atk" data-k="atk"><span></span></button>
+      <button type="button" class="tp-b tp-sp" data-k="sp"><span></span></button>
+      <button type="button" class="tp-b tp-ult" data-k="ult"><span></span></button>
+      <button type="button" class="tp-b tp-next" data-k="next"><span></span></button>
+      <button type="button" class="tp-b tp-sup" data-k="sup"><span></span></button>
+      <button type="button" class="tp-b tp-back" data-k="pause"><span></span></button>
+    </div>
+    <button type="button" class="tp-b tp-pause" data-k="pause" aria-label="pause"></button>
+    <button type="button" class="tp-b tp-full hide" id="tpFull" aria-label="fullscreen"></button>
+  </div>
+  <div id="rotate"><div class="rot-box"><i id="rotIc"></i><span id="rotTxt">หมุนมือถือเป็นแนวนอนเพื่อเล่น</span></div></div>
+  <div class="touch" id="touch">
+    <div class="pad">
+      <span></span><button data-k="up"><b>▲</b>กระโดด</button><span></span>
+      <button data-k="left"><b>◀</b></button><button data-k="down"><b>▼</b></button><button data-k="right"><b>▶</b></button>
+    </div>
+    <div class="btns">
+      <button data-k="atk" class="hot"><b>J</b>โจมตี</button><button data-k="sp"><b>K</b>ท่าพิเศษ</button><button data-k="ult"><b>L</b>ประสาน</button>
+      <button data-k="next"><b>⇄</b>สลับตัว</button><button data-k="sup"><b>C</b>ผู้ช่วย</button><button data-k="ok"><b>▶</b>เริ่ม/ตกลง</button>
+    </div>
+  </div>
+</div>
+
