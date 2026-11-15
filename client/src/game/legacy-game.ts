@@ -5,6 +5,9 @@
 
 import { I18N_EN, TOUCH_TXT } from './i18n/en';
 import { createNet } from './net';
+import { SFX, SFX_BUF, VOL, audio, bgmSync as bgmPlay, noise, setVol, startAudio } from './audio';
+import { DEFAULT_SAVE, loadSave, writeSave } from './save';
+import { KEYMAP, keys, press, pressed, release } from './input';
 import { CREW_ART_SRC, ENEMY_ART_SRC, FX_ART_SRC, HERO_ATLAS, HERO_ATLAS_SRC, HERO_HI_SRC, UI_ART_SRC } from './data/art';
 
 let started = false;
@@ -60,38 +63,19 @@ function netLine(net, boards) {
   const str = boards.length > 1 ? 'อันดับสัปดาห์นี้: คะแนนที่ ' + r[0].rank + ' · เวลาที่ ' + (r[1] ? r[1].rank : '-') : 'อันดับรายได้สัปดาห์นี้: ที่ ' + r[0].rank;
   return { str: best ? str + ' · สถิติใหม่!' : str, col: '#9be15d' };
 }
-function setLang(l) { if (l !== LANG) track('language_change', { to: l }); LANG = l; _trC.clear(); try { localStorage.setItem('tk-lang', l); } catch (e) {} applyLangDom(); if (typeof btnMute !== 'undefined') btnMute.textContent = tr('เสียง: ') + tr(muted ? 'ปิด' : 'เปิด'); if (typeof btnReset !== 'undefined') btnReset.textContent = tr('ล้างเซฟ'); }
+function setLang(l) { if (l !== LANG) track('language_change', { to: l }); LANG = l; _trC.clear(); try { localStorage.setItem('tk-lang', l); } catch (e) {} applyLangDom(); if (typeof btnMute !== 'undefined') btnMute.textContent = tr('เสียง: ') + tr(audio.muted ? 'ปิด' : 'เปิด'); if (typeof btnReset !== 'undefined') btnReset.textContent = tr('ล้างเซฟ'); }
 ctx.imageSmoothingEnabled = false;
 
 const FONT = '"Pixelify Sans","Courier New",monospace';
 const THAI = '"Mitr","Noto Sans Thai",sans-serif';
 
 /* ------------------------------------------------------------------ save */
-const DEFAULT_SAVE = { gold: 0, up: { blade: 0, stew: 0, brew: 0, legend: false }, ing: { glowcap: 0, truffle: 0, crown: 0, ember: 0, chili: 0, essence: 0 }, runs: 0, best: 0, buff: false, drink: false, tools: { lucky: false, spoon: false, bell: false }, crew: ['gorn', 'bart'], stages: {}, seen: {} };
-function loadSave() {
-  try { const s = JSON.parse(localStorage.getItem('tavern-knights-save') || 'null'); if (s && s.up && s.ing) { const d = structuredClone(DEFAULT_SAVE); const m = Object.assign(d, s); m.ing = Object.assign(structuredClone(DEFAULT_SAVE.ing), s.ing); m.tools = Object.assign({ lucky: false, spoon: false, bell: false }, s.tools || {}); return m; } } catch (e) {}
-  return structuredClone(DEFAULT_SAVE);
-}
 let save = loadSave();
-function persist() { try { localStorage.setItem('tavern-knights-save', JSON.stringify(save)); } catch (e) {} }
+function persist() { writeSave(save); }
 
 /* ----------------------------------------------------------------- audio */
-let ac = null, muted = false;
-/* volume levels 0-10 for music and sound effects (8 = the original mix), saved per browser */
-const VOL = { bgm: 8, sfx: 8 }; try { Object.assign(VOL, JSON.parse(localStorage.getItem('tk-vol') || '{}')); } catch (e) {}
-function setVol(k, v) { VOL[k] = Math.max(0, Math.min(10, v)); try { localStorage.setItem('tk-vol', JSON.stringify(VOL)); } catch (e) {} }
-function initAudio() { bgmUnlock(); if (ac) { if (ac.state === 'suspended') ac.resume(); return; } try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; } sfxLoad(); }
-/* title BGM: user's track "Beyond the Kingdom Gate" (plays on title + map, loops) */
-const BGM_TITLE_SRC = 'audio/title_beyond_the_kingdom_gate.mp3';
-const BGM_STAGE1_SRC = 'audio/stage1_moonlight_over_the_glade.mp3';
-const BGM_STAGE2_SRC = 'audio/stage2_tiptoeing_past_the_gargoyles.mp3';
-const BGM_TAVERN_SRC = 'audio/nightshift_sizzling_skillet_meltdown.mp3'; /* "Sizzling Skillet Meltdown" (Night Shift) */
-const BGM_BOSS_SRC = 'audio/boss_iron_crown_heavy_weight.mp3'; /* "Iron Crown Heavy Weight" (King Shroomba) */
-const BGM_ENDING_SRC = 'audio/ending_sunlight_on_the_overworld.mp3'; /* "Sunlight on the Overworld": credits panel + stage results */
-/* BGM: user's tracks. title+map = "Beyond the Kingdom Gate", stage 1 = "Moonlight Over the Glade" */
-const BGM_TRACKS = { title: BGM_TITLE_SRC, stage1: BGM_STAGE1_SRC, stage2: BGM_STAGE2_SRC, tavern: BGM_TAVERN_SRC, boss: BGM_BOSS_SRC, ending: BGM_ENDING_SRC }; /* stage2 = "Tiptoeing Past the Gargoyles" (Wine Dungeon); used in the alchemy cellar until stage 2 exists */
-const bgm = { els: {}, unlocked: false, cur: null }; window.__bgm = bgm;
-function bgmUnlock() { bgm.unlocked = true; }
+/* Music and SFX live in audio.ts; the game only says which track fits the current scene. */
+function initAudio() { startAudio(); }
 function bgmWant() {
   if (scene === 'title' && titlePanel === 'credits') return 'ending';
   if (scene === 'results') return 'ending';
@@ -101,80 +85,10 @@ function bgmWant() {
   if (scene === 'tavern') return 'tavern';
   return null;
 }
-function bgmEl(id) { if (!bgm.els[id]) { const a = new Audio(BGM_TRACKS[id]); a.preload = 'auto'; a.loop = true; a.volume = 0.45; bgm.els[id] = a; } return bgm.els[id]; }
-function bgmSync() {
-  if (!bgm.unlocked) return;
-  const want = muted ? null : bgmWant();
-  if (want !== bgm.cur && bgm.cur) { const old = bgm.els[bgm.cur]; old.pause(); if (!muted) old.currentTime = 0; }
-  if (want) { const el = bgmEl(want); const vv = Math.min(1, (want === 'title' ? 0.55 : 0.45) * (scene === 'stage' && S && S.paused ? 0.4 : 1) * VOL.bgm / 8); if (Math.abs(el._vv - vv) > 0.001 || el._vv === undefined) { el.volume = vv; el._vv = vv; } if (el.paused) { const pr = el.play(); if (pr && pr.catch) pr.catch(() => {}); } }
-  bgm.cur = want; bgm.lastScene = scene;
-}
-function tone(freq, dur, type = 'square', vol = 0.06, slide = 0, delay = 0) {
-  if (!ac || muted || !VOL.sfx) return; vol *= VOL.sfx / 8;
-  const t = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain();
-  o.type = type; o.frequency.setValueAtTime(freq, t);
-  if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), t + dur);
-  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g).connect(ac.destination); o.start(t); o.stop(t + dur + 0.02);
-}
-function noise(dur, vol = 0.08, delay = 0) {
-  if (!ac || muted || !VOL.sfx) return; vol *= VOL.sfx / 8;
-  const len = Math.floor(ac.sampleRate * dur), buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
-  const s = ac.createBufferSource(), g = ac.createGain(); s.buffer = buf; g.gain.value = vol;
-  s.connect(g).connect(ac.destination); s.start(ac.currentTime + delay);
-}
-const SFX = {
-  slash: () => { noise(0.06, 0.05); tone(520, 0.06, 'square', 0.03, -200); },
-  hit: () => { tone(180, 0.08, 'square', 0.06, -80); noise(0.05, 0.05); },
-  jump: () => tone(300, 0.12, 'square', 0.04, 300),
-  swap: () => { tone(660, 0.05, 'triangle', 0.05); tone(990, 0.07, 'triangle', 0.05, 0, 0.05); },
-  coin: () => { tone(988, 0.06, 'square', 0.04); tone(1319, 0.12, 'square', 0.04, 0, 0.06); },
-  hurt: () => tone(220, 0.25, 'sawtooth', 0.06, -150),
-  special: () => { tone(330, 0.35, 'sawtooth', 0.05, 500); noise(0.3, 0.05); },
-  boom: () => { noise(0.5, 0.12); tone(90, 0.5, 'sine', 0.12, -50); },
-  arrow: () => tone(880, 0.08, 'triangle', 0.04, -400),
-  serve: () => { tone(784, 0.07, 'triangle', 0.05); tone(1046, 0.1, 'triangle', 0.05, 0, 0.07); },
-  fail: () => tone(200, 0.3, 'square', 0.05, -100),
-  punch: () => { noise(0.08, 0.1); tone(120, 0.12, 'square', 0.06, -60); },
-  harp: () => { [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.4, 'triangle', 0.035, 0, i * 0.06)); },
-  pour: () => noise(0.15, 0.03),
-  ult: () => { [262, 330, 392, 523, 659].forEach((f, i) => tone(f, 0.25, 'square', 0.05, 0, i * 0.08)); },
-  select: () => tone(660, 0.05, 'square', 0.035),
-};
-
-/* Gemini-made SFX (cut from the user's clips); synth above stays as fallback until a file loads */
-const SFX_FILE = { coin: 'sfx/coin.mp3', select: 'sfx/select.mp3', chest: 'sfx/chest.mp3', fail: 'sfx/fail.mp3', serve: 'sfx/serve.mp3', arrow: 'sfx/arrow.mp3', boom: 'sfx/boom.mp3', special: 'sfx/special.mp3', hit: 'sfx/hit.mp3', hurt: 'sfx/hurt.mp3', hitShot: 'sfx/hit1.mp3', jump: 'sfx/jump.mp3', step: 'sfx/step.mp3' };
-const SFX_GAIN = { coin: 0.22, select: 0.2, chest: 0.28, fail: 0.35, serve: 0.35, arrow: 0.2, boom: 0.4, special: 0.35, hit: 0.25, hurt: 0.28, hitShot: 0.22, jump: 0.2, step: 0.14 };
-const SFX_RATE = { hitShot: 1.45 };
+function bgmSync() { bgmPlay(bgmWant(), scene === 'stage' && !!S && !!S.paused); }
 let hitKind = 'melee';
-const SFX_BUF = {}; let sfxLoading = false;
-function sfxLoad() {
-  if (sfxLoading || !ac) return; sfxLoading = true;
-  const got = {}; for (const k in SFX_FILE) (got[SFX_FILE[k]] = got[SFX_FILE[k]] || fetch(SFX_FILE[k]).then(r => r.ok ? r.arrayBuffer() : Promise.reject()).then(b => new Promise((ok, no) => ac.decodeAudioData(b, ok, no)))).then(buf => { SFX_BUF[k] = buf; }).catch(() => {});
-  if (0) for (const k in SFX_FILE) fetch(SFX_FILE[k]).then(r => r.ok ? r.arrayBuffer() : Promise.reject()).then(b => new Promise((ok, no) => ac.decodeAudioData(b, ok, no))).then(buf => { SFX_BUF[k] = buf; }).catch(() => {});
-}
-function sfxPlay(k, rate) {
-  if (window.__sfxLog) window.__sfxLog(k, !!SFX_BUF[k], rate || 0);
-  if (!ac || muted || !VOL.sfx || !SFX_BUF[k]) return false;
-  const s = ac.createBufferSource(), g = ac.createGain(); s.buffer = SFX_BUF[k]; if (SFX_RATE[k]) s.playbackRate.value = SFX_RATE[k]; if (k === 'step') s.playbackRate.value = 0.9 + Math.random() * 0.2; if (rate) s.playbackRate.value = rate; g.gain.value = SFX_GAIN[k] * VOL.sfx / 8;
-  s.connect(g).connect(ac.destination); s.start(); return true;
-}
-SFX.hitShot = () => SFX.hit();
-/* QTE notes: the coin chime pitched per arrow (do-re-mi-sol), Perfect a step higher */
-const NOTE_RATE = { up: 1.5, right: 1.335, down: 1.122, left: 1.0 };
-SFX.note = (dir, perfect) => { const r = (NOTE_RATE[dir] || 1) * (perfect ? 1.122 : 1) * 0.8; if (!sfxPlay('coin', r)) tone(523 * r, 0.08, 'square', 0.04); };
-SFX.step = () => tone(140, 0.04, 'triangle', 0.025);
-SFX.chest = () => { [523, 659, 784, 1046, 1319].forEach((f, i) => tone(f, 0.2, 'triangle', 0.04, 0, i * 0.07)); };
-for (const k in SFX_FILE) { const syn = SFX[k]; SFX[k] = () => { if (!sfxPlay(k)) syn(); }; }
 
 /* ----------------------------------------------------------------- input */
-const keys = {}, pressed = {};
-const KEYMAP = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'up', KeyW: 'up', Space: 'sp', ArrowDown: 'down', KeyS: 'down',
-  KeyJ: 'atk', KeyZ: 'atk', KeyK: 'sp', KeyX: 'sp', KeyL: 'ult', KeyV: 'ult', Digit1: 'k1', Digit2: 'k2', Digit3: 'k3', KeyQ: 'prev', KeyE: 'next',
-  KeyC: 'sup', KeyH: 'help', Enter: 'ok', KeyP: 'pause', Escape: 'pause', KeyM: 'mute', KeyN: 'rename', KeyR: 'rank', Numpad1: 'k1', Numpad2: 'k2', Numpad3: 'k3' };
-function press(a) { if (!keys[a]) pressed[a] = true; keys[a] = true; initAudio(); }
-function release(a) { keys[a] = false; }
 { const hd = document.querySelector('header'); let ht = 0; const show = () => { hd.classList.add('show'); clearTimeout(ht); ht = setTimeout(() => hd.classList.remove('show'), 2200); }; window.addEventListener('mousemove', e => { if (e.clientY < 70) show(); }); window.addEventListener('touchstart', e => { if (e.touches[0] && e.touches[0].clientY < 70) show(); }, { passive: true }); }
 setTimeout(function styleTools() { const u = UI_ART_SRC.big.frame_dark; document.querySelectorAll('button.tool').forEach(b => { b.style.background = 'none'; b.style.border = '9px solid transparent'; b.style.borderImage = `url(${u}) 40 44 fill / 9px 11px stretch`; b.style.padding = '0 4px'; b.style.borderRadius = '0'; b.style.color = '#f6ead2'; b.style.textShadow = '0 1px 0 #000'; }); }, 0);
 window.addEventListener('keydown', e => { if (e.target && e.target.id === 'nameIn') { if (e.key === 'Enter') { e.preventDefault(); nameDone(true); } else if (e.key === 'Escape') { e.preventDefault(); nameDone(false); } return; } const a = KEYMAP[e.code]; if (!a) return; e.preventDefault(); if (a === 'mute' && !e.repeat) toggleMute(); press(a); });
@@ -188,7 +102,7 @@ document.querySelectorAll('#touch button').forEach(b => {
   b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up);
 });
 const btnMute = document.getElementById('btnMute');
-function toggleMute() { muted = !muted; btnMute.textContent = tr('เสียง: ') + tr(muted ? 'ปิด' : 'เปิด'); }
+function toggleMute() { audio.muted = !audio.muted; btnMute.textContent = tr('เสียง: ') + tr(audio.muted ? 'ปิด' : 'เปิด'); }
 btnMute.addEventListener('click', () => { initAudio(); toggleMute(); });
 const btnReset = document.getElementById('btnReset');
 let resetArm = 0;
@@ -2712,7 +2626,7 @@ function drawTitleMenuScreen() {
     btn('close', 70, 34, 260, titlePanel === 'options' || titlePanel === 'rank' ? 20 : 150);
     if (titlePanel === 'options') {
       text('ตัวเลือก (Options)', W / 2, 40, { size: 11, align: 'center', thai: true, color: '#f2a93b', weight: 600 });
-      const rows = [['เสียงทั้งหมด (M)', muted ? 'ปิด' : 'เปิด'], ['เพลง (BGM)', VOL.bgm], ['เอฟเฟกต์เสียง (SFX)', VOL.sfx], ['ภาษา (Language)', LANG === 'th' ? 'ไทย' : 'English']];
+      const rows = [['เสียงทั้งหมด (M)', audio.muted ? 'ปิด' : 'เปิด'], ['เพลง (BGM)', VOL.bgm], ['เอฟเฟกต์เสียง (SFX)', VOL.sfx], ['ภาษา (Language)', LANG === 'th' ? 'ไทย' : 'English']];
       rows.forEach((r, k) => { const y = 60 + k * 24; uiBtn(90, y - 4, 220, 22, k === optSel, '#5a3a22', '#2a1a10', '#5a3a22', '#2a1a10'); textC(r[0], 100, y + 7, { size: 9, thai: true, color: '#f6ead2' });
         if (k === 3) { btn('opt3', 90, y - 4, 220, 22); ctx.font = `700 9px ${THAI}`; const ah = Math.max(24, ctx.measureText(tr(r[1])).width / 2 + 10); keyLabel('←', 268 - ah, y + 7, 9, { color: '#ffd76a' }); textC(r[1], 268, y + 7, { size: 9, thai: true, align: 'center', color: '#ffd76a', weight: 700 }); keyLabel('→', 268 + ah, y + 7, 9, { color: '#ffd76a' }); }
         else if (k === 0) { btn('opt0', 90, y - 4, 220, 22); textC(r[1], 296.5, y + 7, { size: 9, thai: true, align: 'right', color: r[1] === 'เปิด' ? '#9be15d' : '#ff8a7a', weight: 700 }); }
