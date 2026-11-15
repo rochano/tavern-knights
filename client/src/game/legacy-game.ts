@@ -5,6 +5,10 @@
 
 import { I18N_EN, TOUCH_TXT } from './i18n/en';
 import { createNet } from './net';
+import { SFX, SFX_BUF, VOL, audio, bgmSync as bgmPlay, noise, setVol, startAudio } from './audio';
+import { DEFAULT_SAVE, loadSave, writeSave } from './save';
+import { KEYMAP, keys, press, pressed, release } from './input';
+import { createAlchemy } from './scenes/alchemy';
 import { CREW_ART_SRC, ENEMY_ART_SRC, FX_ART_SRC, HERO_ATLAS, HERO_ATLAS_SRC, HERO_HI_SRC, UI_ART_SRC } from './data/art';
 
 let started = false;
@@ -60,38 +64,19 @@ function netLine(net, boards) {
   const str = boards.length > 1 ? 'อันดับสัปดาห์นี้: คะแนนที่ ' + r[0].rank + ' · เวลาที่ ' + (r[1] ? r[1].rank : '-') : 'อันดับรายได้สัปดาห์นี้: ที่ ' + r[0].rank;
   return { str: best ? str + ' · สถิติใหม่!' : str, col: '#9be15d' };
 }
-function setLang(l) { if (l !== LANG) track('language_change', { to: l }); LANG = l; _trC.clear(); try { localStorage.setItem('tk-lang', l); } catch (e) {} applyLangDom(); if (typeof btnMute !== 'undefined') btnMute.textContent = tr('เสียง: ') + tr(muted ? 'ปิด' : 'เปิด'); if (typeof btnReset !== 'undefined') btnReset.textContent = tr('ล้างเซฟ'); }
+function setLang(l) { if (l !== LANG) track('language_change', { to: l }); LANG = l; _trC.clear(); try { localStorage.setItem('tk-lang', l); } catch (e) {} applyLangDom(); if (typeof btnMute !== 'undefined') btnMute.textContent = tr('เสียง: ') + tr(audio.muted ? 'ปิด' : 'เปิด'); if (typeof btnReset !== 'undefined') btnReset.textContent = tr('ล้างเซฟ'); }
 ctx.imageSmoothingEnabled = false;
 
 const FONT = '"Pixelify Sans","Courier New",monospace';
 const THAI = '"Mitr","Noto Sans Thai",sans-serif';
 
 /* ------------------------------------------------------------------ save */
-const DEFAULT_SAVE = { gold: 0, up: { blade: 0, stew: 0, brew: 0, legend: false }, ing: { glowcap: 0, truffle: 0, crown: 0, ember: 0, chili: 0, essence: 0 }, runs: 0, best: 0, buff: false, drink: false, tools: { lucky: false, spoon: false, bell: false }, crew: ['gorn', 'bart'], stages: {}, seen: {} };
-function loadSave() {
-  try { const s = JSON.parse(localStorage.getItem('tavern-knights-save') || 'null'); if (s && s.up && s.ing) { const d = structuredClone(DEFAULT_SAVE); const m = Object.assign(d, s); m.ing = Object.assign(structuredClone(DEFAULT_SAVE.ing), s.ing); m.tools = Object.assign({ lucky: false, spoon: false, bell: false }, s.tools || {}); return m; } } catch (e) {}
-  return structuredClone(DEFAULT_SAVE);
-}
 let save = loadSave();
-function persist() { try { localStorage.setItem('tavern-knights-save', JSON.stringify(save)); } catch (e) {} }
+function persist() { writeSave(save); }
 
 /* ----------------------------------------------------------------- audio */
-let ac = null, muted = false;
-/* volume levels 0-10 for music and sound effects (8 = the original mix), saved per browser */
-const VOL = { bgm: 8, sfx: 8 }; try { Object.assign(VOL, JSON.parse(localStorage.getItem('tk-vol') || '{}')); } catch (e) {}
-function setVol(k, v) { VOL[k] = Math.max(0, Math.min(10, v)); try { localStorage.setItem('tk-vol', JSON.stringify(VOL)); } catch (e) {} }
-function initAudio() { bgmUnlock(); if (ac) { if (ac.state === 'suspended') ac.resume(); return; } try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; } sfxLoad(); }
-/* title BGM: user's track "Beyond the Kingdom Gate" (plays on title + map, loops) */
-const BGM_TITLE_SRC = 'audio/title_beyond_the_kingdom_gate.mp3';
-const BGM_STAGE1_SRC = 'audio/stage1_moonlight_over_the_glade.mp3';
-const BGM_STAGE2_SRC = 'audio/stage2_tiptoeing_past_the_gargoyles.mp3';
-const BGM_TAVERN_SRC = 'audio/nightshift_sizzling_skillet_meltdown.mp3'; /* "Sizzling Skillet Meltdown" (Night Shift) */
-const BGM_BOSS_SRC = 'audio/boss_iron_crown_heavy_weight.mp3'; /* "Iron Crown Heavy Weight" (King Shroomba) */
-const BGM_ENDING_SRC = 'audio/ending_sunlight_on_the_overworld.mp3'; /* "Sunlight on the Overworld": credits panel + stage results */
-/* BGM: user's tracks. title+map = "Beyond the Kingdom Gate", stage 1 = "Moonlight Over the Glade" */
-const BGM_TRACKS = { title: BGM_TITLE_SRC, stage1: BGM_STAGE1_SRC, stage2: BGM_STAGE2_SRC, tavern: BGM_TAVERN_SRC, boss: BGM_BOSS_SRC, ending: BGM_ENDING_SRC }; /* stage2 = "Tiptoeing Past the Gargoyles" (Wine Dungeon); used in the alchemy cellar until stage 2 exists */
-const bgm = { els: {}, unlocked: false, cur: null }; window.__bgm = bgm;
-function bgmUnlock() { bgm.unlocked = true; }
+/* Music and SFX live in audio.ts; the game only says which track fits the current scene. */
+function initAudio() { startAudio(); }
 function bgmWant() {
   if (scene === 'title' && titlePanel === 'credits') return 'ending';
   if (scene === 'results') return 'ending';
@@ -101,80 +86,10 @@ function bgmWant() {
   if (scene === 'tavern') return 'tavern';
   return null;
 }
-function bgmEl(id) { if (!bgm.els[id]) { const a = new Audio(BGM_TRACKS[id]); a.preload = 'auto'; a.loop = true; a.volume = 0.45; bgm.els[id] = a; } return bgm.els[id]; }
-function bgmSync() {
-  if (!bgm.unlocked) return;
-  const want = muted ? null : bgmWant();
-  if (want !== bgm.cur && bgm.cur) { const old = bgm.els[bgm.cur]; old.pause(); if (!muted) old.currentTime = 0; }
-  if (want) { const el = bgmEl(want); const vv = Math.min(1, (want === 'title' ? 0.55 : 0.45) * (scene === 'stage' && S && S.paused ? 0.4 : 1) * VOL.bgm / 8); if (Math.abs(el._vv - vv) > 0.001 || el._vv === undefined) { el.volume = vv; el._vv = vv; } if (el.paused) { const pr = el.play(); if (pr && pr.catch) pr.catch(() => {}); } }
-  bgm.cur = want; bgm.lastScene = scene;
-}
-function tone(freq, dur, type = 'square', vol = 0.06, slide = 0, delay = 0) {
-  if (!ac || muted || !VOL.sfx) return; vol *= VOL.sfx / 8;
-  const t = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain();
-  o.type = type; o.frequency.setValueAtTime(freq, t);
-  if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), t + dur);
-  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g).connect(ac.destination); o.start(t); o.stop(t + dur + 0.02);
-}
-function noise(dur, vol = 0.08, delay = 0) {
-  if (!ac || muted || !VOL.sfx) return; vol *= VOL.sfx / 8;
-  const len = Math.floor(ac.sampleRate * dur), buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
-  const s = ac.createBufferSource(), g = ac.createGain(); s.buffer = buf; g.gain.value = vol;
-  s.connect(g).connect(ac.destination); s.start(ac.currentTime + delay);
-}
-const SFX = {
-  slash: () => { noise(0.06, 0.05); tone(520, 0.06, 'square', 0.03, -200); },
-  hit: () => { tone(180, 0.08, 'square', 0.06, -80); noise(0.05, 0.05); },
-  jump: () => tone(300, 0.12, 'square', 0.04, 300),
-  swap: () => { tone(660, 0.05, 'triangle', 0.05); tone(990, 0.07, 'triangle', 0.05, 0, 0.05); },
-  coin: () => { tone(988, 0.06, 'square', 0.04); tone(1319, 0.12, 'square', 0.04, 0, 0.06); },
-  hurt: () => tone(220, 0.25, 'sawtooth', 0.06, -150),
-  special: () => { tone(330, 0.35, 'sawtooth', 0.05, 500); noise(0.3, 0.05); },
-  boom: () => { noise(0.5, 0.12); tone(90, 0.5, 'sine', 0.12, -50); },
-  arrow: () => tone(880, 0.08, 'triangle', 0.04, -400),
-  serve: () => { tone(784, 0.07, 'triangle', 0.05); tone(1046, 0.1, 'triangle', 0.05, 0, 0.07); },
-  fail: () => tone(200, 0.3, 'square', 0.05, -100),
-  punch: () => { noise(0.08, 0.1); tone(120, 0.12, 'square', 0.06, -60); },
-  harp: () => { [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.4, 'triangle', 0.035, 0, i * 0.06)); },
-  pour: () => noise(0.15, 0.03),
-  ult: () => { [262, 330, 392, 523, 659].forEach((f, i) => tone(f, 0.25, 'square', 0.05, 0, i * 0.08)); },
-  select: () => tone(660, 0.05, 'square', 0.035),
-};
-
-/* Gemini-made SFX (cut from the user's clips); synth above stays as fallback until a file loads */
-const SFX_FILE = { coin: 'sfx/coin.mp3', select: 'sfx/select.mp3', chest: 'sfx/chest.mp3', fail: 'sfx/fail.mp3', serve: 'sfx/serve.mp3', arrow: 'sfx/arrow.mp3', boom: 'sfx/boom.mp3', special: 'sfx/special.mp3', hit: 'sfx/hit.mp3', hurt: 'sfx/hurt.mp3', hitShot: 'sfx/hit1.mp3', jump: 'sfx/jump.mp3', step: 'sfx/step.mp3' };
-const SFX_GAIN = { coin: 0.22, select: 0.2, chest: 0.28, fail: 0.35, serve: 0.35, arrow: 0.2, boom: 0.4, special: 0.35, hit: 0.25, hurt: 0.28, hitShot: 0.22, jump: 0.2, step: 0.14 };
-const SFX_RATE = { hitShot: 1.45 };
+function bgmSync() { bgmPlay(bgmWant(), scene === 'stage' && !!S && !!S.paused); }
 let hitKind = 'melee';
-const SFX_BUF = {}; let sfxLoading = false;
-function sfxLoad() {
-  if (sfxLoading || !ac) return; sfxLoading = true;
-  const got = {}; for (const k in SFX_FILE) (got[SFX_FILE[k]] = got[SFX_FILE[k]] || fetch(SFX_FILE[k]).then(r => r.ok ? r.arrayBuffer() : Promise.reject()).then(b => new Promise((ok, no) => ac.decodeAudioData(b, ok, no)))).then(buf => { SFX_BUF[k] = buf; }).catch(() => {});
-  if (0) for (const k in SFX_FILE) fetch(SFX_FILE[k]).then(r => r.ok ? r.arrayBuffer() : Promise.reject()).then(b => new Promise((ok, no) => ac.decodeAudioData(b, ok, no))).then(buf => { SFX_BUF[k] = buf; }).catch(() => {});
-}
-function sfxPlay(k, rate) {
-  if (window.__sfxLog) window.__sfxLog(k, !!SFX_BUF[k], rate || 0);
-  if (!ac || muted || !VOL.sfx || !SFX_BUF[k]) return false;
-  const s = ac.createBufferSource(), g = ac.createGain(); s.buffer = SFX_BUF[k]; if (SFX_RATE[k]) s.playbackRate.value = SFX_RATE[k]; if (k === 'step') s.playbackRate.value = 0.9 + Math.random() * 0.2; if (rate) s.playbackRate.value = rate; g.gain.value = SFX_GAIN[k] * VOL.sfx / 8;
-  s.connect(g).connect(ac.destination); s.start(); return true;
-}
-SFX.hitShot = () => SFX.hit();
-/* QTE notes: the coin chime pitched per arrow (do-re-mi-sol), Perfect a step higher */
-const NOTE_RATE = { up: 1.5, right: 1.335, down: 1.122, left: 1.0 };
-SFX.note = (dir, perfect) => { const r = (NOTE_RATE[dir] || 1) * (perfect ? 1.122 : 1) * 0.8; if (!sfxPlay('coin', r)) tone(523 * r, 0.08, 'square', 0.04); };
-SFX.step = () => tone(140, 0.04, 'triangle', 0.025);
-SFX.chest = () => { [523, 659, 784, 1046, 1319].forEach((f, i) => tone(f, 0.2, 'triangle', 0.04, 0, i * 0.07)); };
-for (const k in SFX_FILE) { const syn = SFX[k]; SFX[k] = () => { if (!sfxPlay(k)) syn(); }; }
 
 /* ----------------------------------------------------------------- input */
-const keys = {}, pressed = {};
-const KEYMAP = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'up', KeyW: 'up', Space: 'sp', ArrowDown: 'down', KeyS: 'down',
-  KeyJ: 'atk', KeyZ: 'atk', KeyK: 'sp', KeyX: 'sp', KeyL: 'ult', KeyV: 'ult', Digit1: 'k1', Digit2: 'k2', Digit3: 'k3', KeyQ: 'prev', KeyE: 'next',
-  KeyC: 'sup', KeyH: 'help', Enter: 'ok', KeyP: 'pause', Escape: 'pause', KeyM: 'mute', KeyN: 'rename', KeyR: 'rank', Numpad1: 'k1', Numpad2: 'k2', Numpad3: 'k3' };
-function press(a) { if (!keys[a]) pressed[a] = true; keys[a] = true; initAudio(); }
-function release(a) { keys[a] = false; }
 { const hd = document.querySelector('header'); let ht = 0; const show = () => { hd.classList.add('show'); clearTimeout(ht); ht = setTimeout(() => hd.classList.remove('show'), 2200); }; window.addEventListener('mousemove', e => { if (e.clientY < 70) show(); }); window.addEventListener('touchstart', e => { if (e.touches[0] && e.touches[0].clientY < 70) show(); }, { passive: true }); }
 setTimeout(function styleTools() { const u = UI_ART_SRC.big.frame_dark; document.querySelectorAll('button.tool').forEach(b => { b.style.background = 'none'; b.style.border = '9px solid transparent'; b.style.borderImage = `url(${u}) 40 44 fill / 9px 11px stretch`; b.style.padding = '0 4px'; b.style.borderRadius = '0'; b.style.color = '#f6ead2'; b.style.textShadow = '0 1px 0 #000'; }); }, 0);
 window.addEventListener('keydown', e => { if (e.target && e.target.id === 'nameIn') { if (e.key === 'Enter') { e.preventDefault(); nameDone(true); } else if (e.key === 'Escape') { e.preventDefault(); nameDone(false); } return; } const a = KEYMAP[e.code]; if (!a) return; e.preventDefault(); if (a === 'mute' && !e.repeat) toggleMute(); press(a); });
@@ -188,7 +103,7 @@ document.querySelectorAll('#touch button').forEach(b => {
   b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up);
 });
 const btnMute = document.getElementById('btnMute');
-function toggleMute() { muted = !muted; btnMute.textContent = tr('เสียง: ') + tr(muted ? 'ปิด' : 'เปิด'); }
+function toggleMute() { audio.muted = !audio.muted; btnMute.textContent = tr('เสียง: ') + tr(audio.muted ? 'ปิด' : 'เปิด'); }
 btnMute.addEventListener('click', () => { initAudio(); toggleMute(); });
 const btnReset = document.getElementById('btnReset');
 let resetArm = 0;
@@ -1879,7 +1794,7 @@ function tavernAlert() {
 }
 
 function updateTavern(dt) {
-  if (T.over) { T.overT += dt; if (T.overT > 0.8 && anyConfirm()) { scene = 'alchemy'; alcSel = 0; } return; }
+  if (T.over) { T.overT += dt; if (T.overT > 0.8 && anyConfirm()) { scene = 'alchemy'; alchemy.enter(); } return; }
   if (pressed.pause) { T.paused = !T.paused; T.pauseSel = 0; }
   if (T.paused) {
     if (pressed.up || pressed.down) { T.pauseSel = 1 - (T.pauseSel || 0); SFX.select(); }
@@ -2243,171 +2158,15 @@ function drawCustomer(s, x) {
 }
 
 /* ======================================================= ALCHEMY ROOM */
-let alcSel = 0, alcMsg = null, alcFx = 0;
-const ING = { glowcap: 'Glowcap', chili: 'พริกเม็ดใหญ่', truffle: 'Truffle of Ages', crown: 'Shroom Crown', ember: 'Ember Spore', essence: 'Crown Essence', cork: '100-Year Vintage Cork', feather: 'Golden Gryphon Feather', kraken: 'Deep Sea Kraken Heart', salt: 'เกลือสวรรค์' };
-const TABS = [['gear', 'อาวุธ & ชุด'], ['cook', 'อาหารสวรรค์'], ['tool', 'เครื่องใช้']];
-let alcTab = 0;
-const RECIPES = [
-  { tab: 'gear', id: 'essence', th: 'สกัด Crown Essence', kind: 'Craft', desc: 'กลั่นมงกุฎราชาเห็ดเป็นหัวเชื้อเวทมนตร์', need: { crown: 1 }, gold: 0, can: () => true, apply: () => { save.ing.essence++; } },
-  { tab: 'cook', id: 'tomyum', th: 'ต้มยำกุ้งพญามังกร', kind: 'Cook', desc: 'บัฟด่านถัดไป: ATK +30% และเริ่มด้วยเกจ +50', need: { essence: 1, chili: 1, glowcap: 2 }, gold: 0, can: () => !save.buff, why: 'มีบัฟรออยู่แล้ว', apply: () => { save.buff = true; } },
-  { tab: 'gear', id: 'blade', th: 'ตีดาบ Tier ', kind: 'Craft', desc: 'ATK +20% ทั้งทีม', need: { glowcap: 1 }, gold: () => 40 + save.up.blade * 40, can: () => save.up.blade < 3, why: 'ดาบ Tier สูงสุดแล้ว', apply: () => { save.up.blade++; } },
-  { tab: 'gear', id: 'armor', th: 'เกราะหนังมังกร Tier ', kind: 'Craft', desc: 'HP สูงสุด +25 ต่อคน', need: {}, gold: () => 35 + save.up.stew * 35, can: () => save.up.stew < 3, why: 'เกราะ Tier สูงสุดแล้ว', apply: () => { save.up.stew++; } },
-  { tab: 'cook', id: 'brew', th: 'Dragon Froth Brew', kind: 'Cook', desc: 'ทุกด่านเริ่มด้วยเกจครึ่งหลอด', need: { chili: 2 }, gold: () => 50, can: () => !save.up.brew, why: 'ปรุงไว้แล้ว', apply: () => { save.up.brew = 1; } },
-  { tab: 'gear', id: 'legend', th: 'Master Chef Set ★', kind: 'Craft', desc: 'ชุดหมวก+ผ้ากันเปื้อน+ดาบกระทะ ATK +50%', need: { essence: 1, truffle: 1, ember: 1 }, gold: () => 80, can: () => !save.up.legend, why: 'มีชุดนี้แล้ว', apply: () => { save.up.legend = true; } },
-  { tab: 'gear', id: 'celestial', th: 'Celestial Tavern Set', kind: 'Craft', desc: 'ต้องใช้ Kraken Heart + Gryphon Feather จากด่าน 3-4', need: {}, gold: () => 0, can: () => false, why: 'วัตถุดิบยังไม่ปลดล็อก (ด่าน 3-4)', locked: true, apply: () => {} },
-  { tab: 'cook', id: 'drink', icon: 'drink', th: 'เครื่องดื่มเวทมนตร์', kind: 'Cook', desc: 'ด่านถัดไปเริ่มด้วยเกจ SPECIAL เต็ม (MAX)', need: { glowcap: 1, chili: 1 }, gold: 0, can: () => !save.drink, why: 'มีเครื่องดื่มรออยู่แล้ว', apply: () => { save.drink = true; } },
-  { tab: 'cook', id: 'ribs', icon: 'ribs', th: 'ซี่โครงบาร์บีคิวคธูลู', kind: 'Cook', desc: 'ต้องใช้ Kraken Heart จากด่าน 4', need: {}, gold: () => 0, can: () => false, locked: true, apply: () => {} },
-  { tab: 'cook', id: 'pudding', icon: 'pudding', th: 'พุดดิ้งเกลือสวรรค์', kind: 'Cook', desc: 'ต้องใช้เกลือสวรรค์จากด่าน 3', need: {}, gold: () => 0, can: () => false, locked: true, apply: () => {} },
-  { tab: 'tool', id: 'lucky', icon: 'lucky', th: 'ขวดเบียร์วุ้นนำโชค', kind: 'Craft', desc: 'เบียร์วุ้นในด่านเติมเกจ 55 แทน 35', need: { glowcap: 1 }, gold: () => 40, can: () => !save.tools.lucky, why: 'มีแล้ว', apply: () => { save.tools.lucky = true; } },
-  { tab: 'tool', id: 'spoon', icon: 'spoon', th: 'ช้อนทองคำ', kind: 'Craft', desc: 'รายได้กะดึกเพิ่ม 20%', need: { chili: 1 }, gold: () => 60, can: () => !save.tools.spoon, why: 'มีแล้ว', apply: () => { save.tools.spoon = true; } },
-  { tab: 'tool', id: 'bell', icon: 'bell', th: 'กระดิ่งเรียกพนักงาน', kind: 'Craft', desc: 'บาร์ตเฒ่าส่งเบียร์ฟื้นพลังได้ 3 ครั้ง', need: {}, gold: () => 45, can: () => !save.tools.bell, why: 'มีแล้ว', apply: () => { save.tools.bell = true; } },
-  { tab: 'tool', id: 'obsidian', icon: 'obsidian', th: 'จุกคอร์กเวทมนตร์', kind: 'Craft', desc: 'ต้องใช้ 100-Year Vintage Cork จากด่าน 2', need: {}, gold: () => 0, can: () => false, locked: true, apply: () => {} },
-];
-const recipeName = r => r.th + (r.id === 'blade' ? (1 + save.up.blade + 1) : r.id === 'armor' ? (1 + save.up.stew + 1) : '');
-const recipeGold = r => typeof r.gold === 'function' ? r.gold() : r.gold;
-function recipeOk(r) {
-  if (r.locked) return 'วัตถุดิบยังไม่ปลดล็อก';
-  if (!r.can()) return r.why;
-  for (const k in r.need) if ((save.ing[k] || 0) < r.need[k]) return 'วัตถุดิบไม่พอ: ' + ING[k];
-  if (save.gold < recipeGold(r)) return 'เงินไม่พอ';
-  return null;
-}
-const tabList = () => RECIPES.filter(r => r.tab === TABS[alcTab][0]);
-function updateAlchemy(dt) {
-  const list = tabList(), n = list.length + 1;
-  if (pressed.left || pressed.right || pressed.prev || pressed.next) { alcTab = (alcTab + ((pressed.left || pressed.prev) ? 2 : 1)) % 3; alcSel = 0; SFX.select(); return; }
-  for (let i = 0; i < 3; i++) if (pressed['ui:tab' + i]) { alcTab = i; alcSel = 0; SFX.select(); return; }
-  if (pressed.up) { alcSel = (alcSel + n - 1) % n; SFX.select(); }
-  if (pressed.down) { alcSel = (alcSel + 1) % n; SFX.select(); }
-  for (let i = 0; i < n; i++) if (pressed['ui:rec' + i]) { if (alcSel === i) pressed.ok = true; alcSel = i; SFX.select(); }
-  if (pressed['ui:craft']) pressed.ok = true;
-  if (alcMsg) { alcMsg.t -= dt; if (alcMsg.t <= 0) alcMsg = null; }
-  alcFx = Math.max(0, alcFx - dt);
-  if (pressed.ok || pressed.atk) {
-    if (alcSel === list.length) { scene = 'map'; mapSel = 0; return; }
-    const r = list[alcSel], why = recipeOk(r);
-    if (why) { SFX.fail(); alcMsg = { str: why, t: 1.6, col: '#ff8a7a' }; return; }
-    for (const k in r.need) save.ing[k] -= r.need[k];
-    save.gold -= recipeGold(r); r.apply(); persist(); alcFx = 1.2; SFX.ult();
-    track('craft', { item: r.id, kind: r.kind });
-    alcMsg = { str: (r.kind === 'Cook' ? 'ปรุงสำเร็จ: ' : 'คราฟต์สำเร็จ: ') + r.th, t: 1.8, col: '#9be15d' };
-  }
-}
-function drawCellar(t) {
-  if (ENV.cellar2) { ctx.drawImage(ENV.cellar2, 0, 0, W, H); ctx.fillStyle = 'rgba(10,6,12,0.12)'; ctx.fillRect(0, 0, W, H); return; }
-  if (ENV.cellar) { rect(0, 0, W, H, '#120c10'); ctx.drawImage(ENV.cellar, 72, 0, 383, 225); ctx.fillStyle = 'rgba(10,6,12,0.2)'; ctx.fillRect(0, 0, W, H); const cg = ctx.createLinearGradient(0, 186, 0, 198); cg.addColorStop(0, 'rgba(18,12,16,0)'); cg.addColorStop(1, 'rgba(18,12,16,1)'); ctx.fillStyle = cg; ctx.fillRect(0, 186, W, 12); rect(0, 198, W, 27, '#120c10'); return; }
-  const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#1a1420'); g.addColorStop(1, '#2a1c18'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  for (let y = 16; y < 180; y += 10) for (let x = (y / 10) % 2 ? -10 : 0; x < W; x += 20) { rect(x + 0.5, y + 0.5, 19, 9, '#2c2230'); rect(x + 0.5, y + 0.5, 19, 1, '#3a2e3c'); }
-  rect(0, 180, W, 45, '#1a120e'); for (let x = 0; x < W; x += 24) rect(x, 180, 0.5, 45, '#2a1c16');
-  // shelves of glowing jars
-  const jar = (x, y, col) => { glow(x + 3, y + 4, 10, col.replace('#', 'rgba(').length ? 'rgba(120,255,220,A)' : col, 0.0); rect(x, y, 6, 9, '#1b1020'); rect(x + 0.5, y + 2, 5, 6.5, col); rect(x + 1, y + 2.5, 1, 3, '#ffffff88'); rect(x + 1, y, 4, 2, '#8a6a4a'); };
-  for (const [sx, sy] of [[180, 30], [180, 56]]) { rect(sx, sy + 10, 108, 3, '#5a3a22'); }
-  const jars = ['#7cf5c8', '#b064d8', '#ff6b2c', '#e8c76a', '#4fb3d9', '#e2382c', '#9be15d', '#ffd35a'];
-  jars.forEach((c, i) => { const x = 184 + (i % 8) * 13, y = 31; glow(x + 3, y + 5, 9, 'rgba(255,255,255,A)', 0.08); jar(x, y, c); });
-  jars.slice().reverse().forEach((c, i) => { const x = 184 + i * 13, y = 57; jar(x, y, c); });
-  // forge on the right
-  rect(318, 70, 76, 110, '#3a2a2a'); for (let y = 72; y < 180; y += 8) for (let x = 318 + ((y / 8) % 2 ? 4 : 0); x < 392; x += 9) rect(x, y, 8.5, 7.5, '#4a3434');
-  rect(332, 120, 48, 30, '#1b1020'); glow(356, 138, 34, 'rgba(255,140,40,A)', 0.55);
-  for (let i = 0; i < 6; i++) { const fh = 8 + Math.abs(Math.sin(t * 9 + i)) * 12; rect(336 + i * 7, 148 - fh, 5, fh, i % 2 ? '#ff6b2c' : '#ffd35a'); }
-  rect(326, 166, 34, 6, '#4a4a55'); rect(334, 172, 16, 8, '#3a3a44'); rect(322, 164, 10, 4, '#4a4a55');
-  text('เตาหลอม', 356, 74, { size: 7, align: 'center', thai: true, color: '#ffb347' });
-}
-/* the rainbow smoke of the user's cauldron art (sheet C) sways in strips and a faint copy drifts up; the pot below stays still */
-function drawCauldronArt(cx, by, s, t) {
-  const im = fxImg('cauldron'); if (!im) return false;
-  const W0 = im.width, H0 = im.height, sc = s / RES, w = W0 * sc, x0 = cx - w / 2, y0 = by - H0 * sc, SPLIT = 146, STRIP = 1;
-  const smoke = (dy, scl, alpha, ph) => {
-    ctx.globalAlpha = alpha;
-    for (let y = 0; y < SPLIT; y += STRIP) {
-      const k = 1 - y / SPLIT, dx = Math.sin(t * 2.1 + y * 0.055 + ph) * 3.2 * k * k + Math.sin(t * 3.3 + y * 0.12) * 0.6 * k;
-      const yy = y0 + SPLIT * sc - (SPLIT - y) * sc * scl + dy, ww = w * (1 + (scl - 1) * 0.6);
-      ctx.drawImage(im, 0, y, W0, STRIP, cx - ww / 2 + dx, yy, ww, STRIP * sc * scl + 0.3);
-    }
-  };
-  const p = (t * 0.32) % 1;
-  smoke(-p * 14, 1 + p * 0.18, (1 - p) * 0.32, 1.7);
-  smoke(0, 1 + Math.sin(t * 1.6) * 0.035, 0.9 + Math.sin(t * 2.4) * 0.1, 0);
-  ctx.globalAlpha = 1;
-  ctx.drawImage(im, 0, SPLIT, W0, H0 - SPLIT, x0, y0 + SPLIT * sc, w, (H0 - SPLIT) * sc);
-  return true;
-}
-function drawCauldron(cx, cy, t) {
-  glow(cx, cy - 10, 60, 'rgba(160,120,255,A)', 0.25 + alcFx * 0.3);
-  // rainbow smoke
-  const cols = ['#ff6b6b', '#ffb347', '#ffe66b', '#7ff59a', '#6bd8ff', '#b28cff'];
-  if (!fxArtReady) for (let i = 0; i < 14; i++) { const ph = (t * 0.6 + i / 14) % 1; const x = cx + Math.sin(i * 1.7 + t * 2) * (6 + ph * 18), y = cy - 20 - ph * 70; ctx.globalAlpha = (1 - ph) * 0.7; ctx.fillStyle = cols[i % 6]; ctx.beginPath(); ctx.arc(x, y, 3 + ph * 7, 0, 7); ctx.fill(); }
-  ctx.globalAlpha = 1;
-  if (fxArtReady && drawCauldronArt(cx, cy + 30, 1.15, t)) { text('หม้อต้มยำเวทมนตร์', cx, cy + 30, { size: 7, align: 'center', thai: true, color: '#d8c8ff' }); return; }
-  for (let i = 0; i < 6; i++) { const ph = (t * 1.2 + i / 6) % 1; rect(cx - 20 + i * 8, cy - 18 - ph * 40, 1, 1, '#fff'); }
-  if (fxArtReady) { fxB('cauldron', cx, cy + 30, 1, 1.15); text('หม้อต้มยำเวทมนตร์', cx, cy + 30, { size: 7, align: 'center', thai: true, color: '#d8c8ff' }); return; }
-  rect(cx - 30, cy + 18, 6, 10, '#2a2a30'); rect(cx + 24, cy + 18, 6, 10, '#2a2a30');
-  ctx.fillStyle = '#1b1020'; ctx.beginPath(); ctx.ellipse(cx, cy + 2, 32, 24, 0, 0, Math.PI); ctx.fill();
-  ctx.fillStyle = '#3a3a48'; ctx.beginPath(); ctx.ellipse(cx, cy + 2, 30, 22, 0, 0, Math.PI); ctx.fill();
-  ctx.fillStyle = '#55556a'; ctx.beginPath(); ctx.ellipse(cx - 8, cy + 8, 12, 8, 0, 0, Math.PI); ctx.fill();
-  ctx.fillStyle = '#1b1020'; ctx.beginPath(); ctx.ellipse(cx, cy, 33, 7, 0, 0, 7); ctx.fill();
-  const brew = ctx.createLinearGradient(cx - 30, 0, cx + 30, 0); cols.forEach((c, i) => brew.addColorStop(i / 5, c));
-  ctx.fillStyle = '#e2552e'; ctx.beginPath(); ctx.ellipse(cx, cy, 29, 5, 0, 0, 7); ctx.fill();
-  ctx.globalAlpha = 0.45 + Math.sin(t * 3) * 0.15; ctx.fillStyle = brew; ctx.beginPath(); ctx.ellipse(cx, cy, 29, 5, 0, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
-  for (let i = 0; i < 4; i++) rect(cx - 18 + i * 11 + Math.sin(t * 4 + i) * 2, cy - 2 + Math.sin(t * 6 + i) * 1, 2.5, 2.5, '#ffe9c0');
-  text('หม้อต้มยำเวทมนตร์', cx, cy + 30, { size: 7, align: 'center', thai: true, color: '#d8c8ff' });
-}
-function ingIcon(k) { return icon(k === 'crown' ? 'crown' : k === 'essence' ? 'essence' : k, 1); }
-function drawAlchemy() {
-  const t = performance.now() / 1000;
-  drawCellar(t);
-  // knights around the cauldron
-  const cx = 240, cy = 150;
-  dimg(knightSprite(1, alcFx > 0 ? 'jump' : 'stand').r, cx - 4, cy - 62 - (alcFx > 0 ? 4 : 0)); dimg(knightSprite(0, 'stand').r, cx - 72, cy - 18); dimg(knightSprite(2, 'stand').l, cx + 34, cy - 18);
-  drawCauldron(cx, cy, t);
-  // title bar
-  if (!(uiArtReady && UI_BIG.frame_dark && (slice3(UI_BIG.frame_dark, -6, -1, W + 12, 16.5, 44), true))) rect(0, 0, W, 15, '#0c0810e8');
-  text('ห้องปรุงยา & ตีเหล็ก', 6, 1.5, { size: 9, thai: true, color: '#f2a93b', weight: 600 });
-  const order = ['glowcap', 'chili', 'crown', 'essence', 'truffle', 'ember'];
-  order.forEach((k, i) => { const x = 128 + i * 30; dimg(ingIcon(k), x, 3.5); textC('x' + (save.ing[k] || 0), x + 10, 3.5 + LH(ingIcon(k)) / 2, { size: 8, color: (save.ing[k] || 0) ? '#f6ead2' : '#6a5a6a' }); });
-  [['cork'], ['feather'], ['kraken']].forEach(([k], i) => { const x = 308 + i * 12 - 4; ctx.globalAlpha = 0.35; dimg(icon(k, 1), x, 3.5); ctx.globalAlpha = 1; });
-  dimg(icon('coin', 1), 350, 4); textC(save.gold + 'g', 358, 4 + LH(icon('coin', 1)) / 2, { size: 9, color: '#f2c94c', weight: 700 });
-  // recipe list (left)
-  const list = tabList(), lh = 35 + list.length * 25 + 17 + 7 - 19;
-  if (!nineBox('dialog', 3, 18, 152, lh + 2, 16, 6)) panel(4, 19, 150, lh, '#140d18f0', '#8a5a2e');
-  TABS.forEach(([id, th], i) => { const x = 7 + i * 49; btn('tab' + i, x, 21, 47, 11); uiBtn(x, 21, 47, 11, i === alcTab, '#f2a93b', '#2a1e30', '#5a3a12', '#1b1020'); textC(th, x + 23.5, 26.5, { size: 6, align: 'center', thai: true, color: i === alcTab ? '#ffe9c0' : '#8a7a8a', shadow: false }); });
-  list.forEach((r, i) => {
-    const y = 35 + i * 25, sel = alcSel === i, why = recipeOk(r);
-    btn('rec' + i, 8, y, 142, 24);
-    uiBtn(8, y, 142, 24, sel, '#f2a93b', '#2a1e30', '#3b2a12', '#1b1020');
-    const ic = r.icon || (uiArtReady ? { essence: 'essence', tomyum: 'bowl2', blade: ['sword', 'sword_fire', 'sword_gold'][Math.min(2, save.up.blade || 0)], armor: (save.up.armor || save.up.stew || 0) ? 'shield_steel' : 'shield_wood', brew: 'beer', legend: 'masterset', celestial: 'feather' } : { essence: 'essence', tomyum: 'bowl', blade: 'st_fire', armor: 'heart', brew: 'beer', legend: 'crown', celestial: 'feather' })[r.id];
-    ctx.globalAlpha = r.locked ? 0.4 : 1; dimg(icon(ic, 2), 18, y + 4); ctx.globalAlpha = 1;
-    textC(recipeName(r), 40, y + 8.5, { size: 7.5, thai: true, color: r.locked ? '#6a5a6a' : r.id === 'legend' ? '#ffb347' : '#f6ead2' });
-    textC(why ? (r.locked ? 'ล็อก' : why.replace('วัตถุดิบไม่พอ: ', 'ขาด ')) : 'พร้อม!', 40, y + 16, { size: 6, thai: true, weight: 400, color: why ? '#8a7a8a' : '#9be15d' });
-  });
-  const gy = 35 + list.length * 25, gsel = alcSel === list.length;
-  btn('rec' + list.length, 8, gy, 142, 17);
-  uiBtn(8, gy, 142, 17, gsel, '#9be15d', '#2a1e30', '#22381a', '#1b1020');
-  textC('ออกเดินทาง ▶ แผนที่โลก', 79, gy + 8.5, { size: 8, align: 'center', thai: true, color: '#d8ffc0' });
-  // right: recipe detail + Master Chef stats
-  const r = list[alcSel];
-  const nItems = r ? Object.keys(r.need).length + (recipeGold(r) ? 1 : 0) : 0, by = 70 + nItems * 9 + 4, ph = r ? by + 13 + 7 - 19 : 20;
-  if (!nineBox('dialog', 291, 18, 106, ph + 2, 16, 6)) panel(292, 19, 104, ph, '#140d18f0', '#8a5a2e');
-  if (r) {
-    wrapText(recipeName(r), 300, 26, 88, 9, { size: 8, thai: true, color: '#ffd76a' });
-    wrapText(r.desc, 300, 45, 88, 8, { size: 6.5, thai: true, weight: 400, color: '#cfc0d0' });
-    let y = 70; const items = Object.entries(r.need);
-    items.forEach(([k, n]) => { const have = save.ing[k] || 0; dimg(ingIcon(k), 300, y); textC(ING[k], 311, y + LH(ingIcon(k)) / 2, { size: 6.5, thai: true, weight: 400, color: '#e8dcc8' }); textC(have + '/' + n, 388, y + LH(ingIcon(k)) / 2, { size: 7, align: 'right', color: have >= n ? '#9be15d' : '#ff8a7a' }); y += 9; });
-    const gcost = recipeGold(r); if (gcost) { dimg(icon('coin', 1), 300, y + 1); textC(gcost + 'g', 311, y + 1 + LH(icon('coin', 1)) / 2, { size: 7, color: save.gold >= gcost ? '#f2c94c' : '#ff8a7a' }); }
-    const ok = !recipeOk(r);
-    btn('craft', 300, by, 88, 13);
-    uiBtn(300, by, 88, 13, ok, '#f2a93b', '#3a2a40', '#5a3a12', '#1b1020');
-    textC('[' + (r.kind === 'Cook' ? 'Cook / ปรุง' : 'Craft / คราฟต์') + ']', 344, by + 6.5, { size: 7, align: 'center', thai: true, color: ok ? '#ffe9c0' : '#6a5a6a' });
-  } else { text('กลับไปที่แผนที่โลก', 300, 26, { size: 8, thai: true }); }
-  if (!nineBox('dialog', 291, 125, 106, 87, 16, 6)) panel(292, 126, 104, 85, '#140d18f0', save.up.legend ? '#ffb347' : '#5a4a3a');
-  text('Master Chef Set', 300, 132, { size: 8, weight: 700, color: save.up.legend ? '#ffb347' : '#8a7a6a' });
-  const base = 1 + 0.2 * save.up.blade, withSet = base + 0.5;
-  const rows = [['ATK', Math.round((base + (save.up.legend ? 0.5 : 0)) * 100) + '%', save.up.legend ? '' : '→ ' + Math.round(withSet * 100) + '%'], ['HP', String(knightMax()), ''], ['ดาบ', 'Tier ' + (1 + save.up.blade + (save.up.legend ? 1 : 0)), ''], ['เกราะ', 'Tier ' + (1 + save.up.stew), ''], ['บัฟถัดไป', save.buff ? 'ต้มยำ +30%' : '-', '']];
-  rows.forEach(([a, b2, c2], i) => { const y = 144 + i * 10.5; text(a, 300, y, { size: 7, thai: true, weight: 400, color: '#bba8ba' }); text(b2, 352, y, { size: 7, align: 'right', color: '#f6ead2' }); if (c2) text(c2, 388, y, { size: 7, align: 'right', color: '#9be15d' }); });
-  text(save.up.legend ? 'สวมใส่แล้ว: +50% ATK' : 'โบนัสเซ็ต: +50% ATK', 300, 197, { size: 6.5, thai: true, color: save.up.legend ? '#ffb347' : '#8a7a8a' });
-  if (alcMsg) { panel(100, 186, 190, 14, '#140d18f0', alcMsg.col); text(alcMsg.str, 195, 188.5, { size: 8, align: 'center', thai: true, color: alcMsg.col }); }
-  if (alcFx > 0) { ctx.globalAlpha = alcFx * 0.3; rect(0, 0, W, H, '#fff6d8'); ctx.globalAlpha = 1; }
-  controlStripCustom([['← →', 'เปลี่ยนหมวด'], ['↑ ↓', 'เลือกสูตร'], ['Enter / J', 'ปรุง/คราฟต์'], ['H', 'วิธีเล่น']]);
-}
+const alchemy = createAlchemy({
+  ctx, W, H, RES, ENV, UI_BIG,
+  get fxArtReady() { return fxArtReady; },
+  get uiArtReady() { return uiArtReady; },
+  rect, glow, text, textC, wrapText, panel, nineBox, slice3, uiBtn, btn, dimg, icon, LH, fxImg, fxB, knightSprite, controlStripCustom,
+  get save() { return save; },
+  persist, track, knightMax,
+  goMap() { scene = 'map'; mapSel = 0; },
+});
 
 /* ========================================================== WORLD MAP */
 let mapSel = 0, mapMsg = null;
@@ -2481,7 +2240,7 @@ function updateMap(dt) {
   if (pressed.sup) toggleCrew(3);
   for (let i = 0; i < 4; i++) if (pressed['ui:crew' + i]) toggleCrew(i);
   if (pressed['ui:go']) pressed.ok = true;
-  if (pressed['ui:alc'] || pressed.sp) { scene = 'alchemy'; alcSel = 0; return; }
+  if (pressed['ui:alc'] || pressed.sp) { scene = 'alchemy'; alchemy.enter(); return; }
   if (mapMsg) { mapMsg.t -= dt; if (mapMsg.t <= 0) mapMsg = null; }
   if (pressed.ok || pressed.atk) {
     if (!STAGES[mapSel].open) { mapMsg = { str: mapSel === 1 ? (FULL ? 'เคลียร์ด่าน 1 ก่อนนะ' : 'ด่าน 2 มีในฉบับเต็ม') : 'ด่านนี้ยังไม่เปิด (กำลังสร้าง)', t: 1.5 }; SFX.fail(); return; }
@@ -2712,7 +2471,7 @@ function drawTitleMenuScreen() {
     btn('close', 70, 34, 260, titlePanel === 'options' || titlePanel === 'rank' ? 20 : 150);
     if (titlePanel === 'options') {
       text('ตัวเลือก (Options)', W / 2, 40, { size: 11, align: 'center', thai: true, color: '#f2a93b', weight: 600 });
-      const rows = [['เสียงทั้งหมด (M)', muted ? 'ปิด' : 'เปิด'], ['เพลง (BGM)', VOL.bgm], ['เอฟเฟกต์เสียง (SFX)', VOL.sfx], ['ภาษา (Language)', LANG === 'th' ? 'ไทย' : 'English']];
+      const rows = [['เสียงทั้งหมด (M)', audio.muted ? 'ปิด' : 'เปิด'], ['เพลง (BGM)', VOL.bgm], ['เอฟเฟกต์เสียง (SFX)', VOL.sfx], ['ภาษา (Language)', LANG === 'th' ? 'ไทย' : 'English']];
       rows.forEach((r, k) => { const y = 60 + k * 24; uiBtn(90, y - 4, 220, 22, k === optSel, '#5a3a22', '#2a1a10', '#5a3a22', '#2a1a10'); textC(r[0], 100, y + 7, { size: 9, thai: true, color: '#f6ead2' });
         if (k === 3) { btn('opt3', 90, y - 4, 220, 22); ctx.font = `700 9px ${THAI}`; const ah = Math.max(24, ctx.measureText(tr(r[1])).width / 2 + 10); keyLabel('←', 268 - ah, y + 7, 9, { color: '#ffd76a' }); textC(r[1], 268, y + 7, { size: 9, thai: true, align: 'center', color: '#ffd76a', weight: 700 }); keyLabel('→', 268 + ah, y + 7, 9, { color: '#ffd76a' }); }
         else if (k === 0) { btn('opt0', 90, y - 4, 220, 22); textC(r[1], 296.5, y + 7, { size: 9, thai: true, align: 'right', color: r[1] === 'เปิด' ? '#9be15d' : '#ff8a7a', weight: 700 }); }
@@ -2960,7 +2719,7 @@ function update(dt) {
   else if (scene === 'stage') updateStage(dt);
   else if (scene === 'results') updateResults(dt);
   else if (scene === 'tavern') updateTavern(dt);
-  else if (scene === 'alchemy') updateAlchemy(dt);
+  else if (scene === 'alchemy') alchemy.update(dt);
   else if (scene === 'gameover') updateOver(dt);
   shake = Math.max(0, shake - dt * 20);
   for (const k in pressed) delete pressed[k];
@@ -2975,7 +2734,7 @@ function draw() {
   else if (scene === 'stage' || scene === 'gameover') { drawStageWorld(); drawUltimate(); drawStageHud(); }
   else if (scene === 'results') drawResults();
   else if (scene === 'tavern') drawTavern();
-  else if (scene === 'alchemy') drawAlchemy();
+  else if (scene === 'alchemy') alchemy.draw();
   ctx.restore();
   if (scene === 'gameover') drawOver();
   if (help) drawHelp();
