@@ -2186,9 +2186,9 @@ function drawTavern() {
     text('ปิดร้าน! สรุปกะดึก', W / 2, 30, { size: 13, align: 'center', color: '#f2a93b', thai: true });
     const rows = [['รายได้', night.gold + 'g'], ['เสิร์ฟสำเร็จ', night.served], ['ลูกค้าหัวร้อนเดินออก', night.angry], ['ขี้เมาที่ถูกเคาะ', night.kicked], ['ต้มยำกุ้งพญามังกร', night.usedGlow]];
     rows.forEach(([a, b2], k) => { text(a, 100, 56 + k * 15, { size: 9, thai: true }); text(String(b2), 300, 56 + k * 15, { size: 10, align: 'right', color: '#ffd76a' }); });
-    for (let k = 0; k < 5; k++) text('★', 160 + k * 20, 136, { size: 16, align: 'center', color: k < night.stars ? '#f2c94c' : '#3a2a40', shadow: k < night.stars });
-    const nl = netLine(night.net, ['tavern_gold']); if (nl) text(nl.str, W / 2, 154, { size: 9, align: 'center', thai: true, color: nl.col, weight: 700 });
-    if (T.overT > 0.8) text('Enter / แตะ: ไปห้องปรุงยา & ตีเหล็ก', W / 2, 168, { size: 9, align: 'center', thai: true, color: Math.floor(T.overT * 2) % 2 ? '#f6ead2' : '#bba8ba' });
+    for (let k = 0; k < 5; k++) text('★', 160 + k * 20, 131, { size: 16, align: 'center', color: k < night.stars ? '#f2c94c' : '#3a2a40', shadow: k < night.stars });
+    const nl = netLine(night.net, ['tavern_gold']); if (nl) text(nl.str, W / 2, 149, { size: 9, align: 'center', thai: true, color: nl.col, weight: 700 });
+    if (T.overT > 0.8) text('Enter / แตะ: ไปห้องปรุงยา & ตีเหล็ก', W / 2, 162, { size: 9, align: 'center', thai: true, color: Math.floor(T.overT * 2) % 2 ? '#f6ead2' : '#bba8ba' });
   }
 }
 function fxDrawBub(k, cx, cy) { return uiBig(k, cx, cy, 0.95); }
@@ -2782,10 +2782,10 @@ function drawResults() {
   const m = Math.floor(results.time / 60), s = Math.floor(results.time % 60);
   const rows = [['เวลา', m + ':' + String(s).padStart(2, '0')], ['คะแนน', results.score], ['ปราบมอนสเตอร์', results.kills], ['Glowcap / พริก', '+' + results.loot.glowcap + ' / +' + results.loot.chili], ['Shroom Crown', '+' + results.loot.crown], ['ห้องลับ (เชฟกอร์น)', results.vault ? 'เจอ! Truffle of Ages' : 'พลาด'], ['ดรอปลับบอส', results.ember ? 'Ember Spore!' : 'พลาด (ปราบตอนติดไฟ)']];
   if (r2) rows.splice(4, 3, ['100-Year Vintage Cork', '+' + (results.loot.cork || 0)], ['อุโมงค์ลับ (ตุ่น)', results.vault ? 'เจอ! Truffle + Cork' : 'พลาด'], ['ดรอปลับบอส', results.ember ? 'Cork เพิ่ม!' : 'พลาด (ปราบตอนติดน้ำแข็ง)']);
-  rows.forEach(([a, b], i) => { text(a, 78, 72 + i * 13, { size: 8.5, thai: true, weight: 400 }); text(String(b), 322, 72 + i * 13, { size: 8.5, align: 'right', thai: true, color: /พลาด/.test(String(b)) ? '#7a6a6a' : '#ffd76a' }); });
+  rows.forEach(([a, b], i) => { text(a, 78, 72 + i * 12.5, { size: 8.5, thai: true, weight: 400 }); text(String(b), 322, 72 + i * 12.5, { size: 8.5, align: 'right', thai: true, color: /พลาด/.test(String(b)) ? '#7a6a6a' : '#ffd76a' }); });
   const nl = results.net ? netLine(results.net, ['stage1_score', 'stage1_time']) : null;
-  text(nl ? nl.str : 'กลับร้านกันเถอะ ลูกค้ากะดึกรออยู่!', W / 2, 165, { size: nl ? 9 : 8, align: 'center', thai: true, color: nl ? nl.col : '#bba8ba', weight: nl ? 700 : 400 });
-  if (results.t > 0.8 && (!results.net || results.net.state !== 'send' || results.t > 3)) text('Enter / แตะ: เริ่มกะดึก', W / 2, 182, { size: 10, align: 'center', thai: true, color: Math.floor(results.t * 2) % 2 ? '#ffd76a' : '#f6ead2' });
+  text(nl ? nl.str : 'กลับร้านกันเถอะ ลูกค้ากะดึกรออยู่!', W / 2, 159, { size: nl ? 9 : 8, align: 'center', thai: true, color: nl ? nl.col : '#bba8ba', weight: nl ? 700 : 400 });
+  if (results.t > 0.8 && (!results.net || results.net.state !== 'send' || results.t > 3)) text('Enter / แตะ: เริ่มกะดึก', W / 2, 172, { size: 10, align: 'center', thai: true, color: Math.floor(results.t * 2) % 2 ? '#ffd76a' : '#f6ead2' });
 }
 function updateOver(dt) {
   overT += dt;
