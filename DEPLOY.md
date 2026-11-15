@@ -10,6 +10,17 @@ The site is on Cloudflare Pages, connected to this repo. Every branch push deplo
 
 Cloudflare marks every non-production deploy `X-Robots-Tag: noindex`, so staging and previews do not show up in Google.
 
+## Build settings (Angular)
+
+The site is built by Cloudflare Pages from `package.json` (npm workspaces: `client`, `server`, `shared`). Set once in **Workers & Pages → tavern-knights → Settings → Build**:
+
+| Setting | Value |
+|---|---|
+| Build command | `if [ -f package.json ]; then npm run build; else mkdir -p client/dist/browser && cp -r $(ls -A \| grep -vx -e .git -e client) client/dist/browser/; fi` |
+| Build output directory | `client/dist/browser` |
+
+The `else` part keeps branches that still have the old single-file layout (e.g. `main` before the Angular release) deploying unchanged. Once `main` has the Angular layout the command can be shortened to `npm run build`. Node version comes from `.node-version`. Functions are always read from the repo's root `functions/` folder.
+
 ## Workflow
 
 1. Work on a feature branch (or straight on `develop` for small fixes).
@@ -23,7 +34,7 @@ After a release, `develop` and `main` are identical. If `main` ever gets a commi
 
 ## Backend (online ranking)
 
-The API lives in `functions/api/[[route]].js`. It is a Cloudflare **Pages Function**, so it deploys together with the site on every push: no separate Worker, no API token in GitHub. The game calls `/api/v1/...` on its own domain, so develop talks to the staging database and production talks to the production database. The store apps (Capacitor/Electron, `app://`) call production.
+The API lives in `server/src/app.ts` (Hono + TypeScript, types shared with the client in `shared/src/api.ts`); `functions/api/[[route]].ts` is its Pages entry. It is a Cloudflare **Pages Function**, so it deploys together with the site on every push: no separate Worker, no API token in GitHub. The game calls `/api/v1/...` on its own domain, so develop talks to the staging database and production talks to the production database. The store apps (Capacitor/Electron, `app://`) call production.
 
 Staging and production stay fully separate through the Pages project's bindings:
 
@@ -33,10 +44,10 @@ Staging and production stay fully separate through the Pages project's bindings:
    - **Production** environment (main) → `tavern-knights-prod`
 3. Redeploy develop (push any commit, or "Retry deployment" on the latest develop deploy).
 
-Tables are created on the first request, so there is no migration step yet. Until the binding exists the API answers `503 ranking_offline` and the game hides the online lines; check with `/api/v1/health` (`"db": true` once it is bound).
+Tables are created on the first request (`server/migrations/0001_ranking.sql` records the same schema), so there is no migration step yet. Until the binding exists the API answers `503 ranking_offline` and the game hides the online lines; check with `/api/v1/health` (`"db": true` once it is bound).
 
 Endpoints: `POST auth/guest`, `GET me`, `POST me/name`, `POST runs/start`, `POST runs/finish`, `GET boards/{stage1_score|stage1_time|tavern_gold}?period=week|all`. Weeks follow Thai time (UTC+7) and start on Monday.
 
-Later phases (shop, AI credits): payment keys go in Settings → Variables and Secrets, **test** keys on Preview, live keys on Production only. When schema changes start, add numbered SQL files under `migrations/` and run them on the dev database first, then on prod in the same release PR.
+Later phases (shop, AI credits): payment keys go in Settings → Variables and Secrets, **test** keys on Preview, live keys on Production only. When schema changes start, add numbered SQL files under `server/migrations/` and run them on the dev database first, then on prod in the same release PR.
 
-Local test: `npx wrangler pages dev . --d1 DB=tk-local` serves the site and the API with a local database.
+Local test: `npm install && npm run dev:api` builds the client and serves it with the API and a local database on http://localhost:8788.
