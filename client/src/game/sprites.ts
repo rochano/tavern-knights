@@ -1,4 +1,3 @@
-// @ts-nocheck -- moved out of legacy-game.ts unchanged; the pixel painters get their types in a follow-up step.
 // Sprites and character art: the sprite cache, pixel upscale / shading / outline helpers, the knights (hand-painted
 // fallback + hero atlas + hi-res Gemini sheets with gear levels), painted icons and enemies, and the enemy, crew and
 // FX art cut from the user's Gemini sheets (loaded here, in the same order as before).
@@ -6,6 +5,24 @@ import { CREW_ART_SRC, ENEMY_ART_SRC, FX_ART_SRC, HERO_ATLAS, HERO_ATLAS_SRC, HE
 import { clamp } from './util';
 import type { SaveData } from './save';
 import type { Img } from './scenes/host';
+
+/** a canvas this module paints, with the logical size and draw offset the game reads */
+type Cv = HTMLCanvasElement & { lw?: number; lh?: number; ox?: number; oy?: number; padL?: number; hero?: boolean };
+type Sprite = { r: Img; l: Img };
+type Pt = [number, number];
+type SprTable = Record<string, string[] | string[][] | Record<string, string>>;
+/** path helpers handed to an icon / enemy painter (16x16 or 24x24 design space) */
+interface PaintKit {
+  E(x: number, y: number, rx: number, ry: number, col: string, a0?: number, a1?: number): void;
+  P(pts: Pt[], col: string): void;
+  R(x: number, y: number, w: number, h: number, col: string): void;
+  L(pts: Pt[], w: number, col: string): void;
+  Q(x0: number, y0: number, cx: number, cy: number, x1: number, y1: number, w: number, col: string): void;
+  g: CanvasRenderingContext2D;
+}
+type Painter = (H2: PaintKit) => void;
+/** one enemy's art pair (l = native, faces right; r = flipped), or a crew / FX pair */
+type ArtPair = { l: Cv; r: Cv };
 
 export interface SpritesHost {
   readonly ctx: CanvasRenderingContext2D;
@@ -19,12 +36,12 @@ export interface SpritesHost {
 export function createSprites(host: SpritesHost) {
   const { ctx, RES } = host;
   /* --------------------------------------------------------------- sprites */
-  const spriteCache = new Map();
-  function scale2x(src) {
-    const w = src.width, h = src.height, sd = src.getContext('2d').getImageData(0, 0, w, h), a = new Uint32Array(sd.data.buffer);
-    const c = document.createElement('canvas'); c.width = w * 2; c.height = h * 2; const g = c.getContext('2d');
+  const spriteCache = new Map<string, Sprite>();
+  function scale2x(src: HTMLCanvasElement): Cv {
+    const w = src.width, h = src.height, sd = src.getContext('2d')!.getImageData(0, 0, w, h), a = new Uint32Array(sd.data.buffer);
+    const c = (document.createElement('canvas') as Cv); c.width = w * 2; c.height = h * 2; const g = c.getContext('2d')!;
     const od = g.createImageData(w * 2, h * 2), o = new Uint32Array(od.data.buffer), W2 = w * 2;
-    const at = (x, y) => a[clamp(y, 0, h - 1) * w + clamp(x, 0, w - 1)];
+    const at = (x: number, y: number) => a[clamp(y, 0, h - 1) * w + clamp(x, 0, w - 1)];
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const P = a[y * w + x], A = at(x, y - 1), B = at(x + 1, y), C = at(x - 1, y), D = at(x, y + 1);
       let e0 = P, e1 = P, e2 = P, e3 = P;
@@ -37,9 +54,9 @@ export function createSprites(host: SpritesHost) {
     g.putImageData(od, 0, 0); return c;
   }
   /* volume shading: lighten pixels just under a top edge, darken pixels just over a bottom edge */
-  function shade(c, outline = true, amt = 0.2) {
-    const w = c.width, h = c.height, g = c.getContext('2d'), d = g.getImageData(0, 0, w, h), p = d.data, src = new Uint8ClampedArray(p);
-    const solid = (x, y) => x >= 0 && y >= 0 && x < w && y < h && src[(y * w + x) * 4 + 3] > 0 && !(src[(y * w + x) * 4] === 27 && src[(y * w + x) * 4 + 1] === 16 && src[(y * w + x) * 4 + 2] === 32);
+  function shade<C extends HTMLCanvasElement>(c: C, outline = true, amt = 0.2): C {
+    const w = c.width, h = c.height, g = c.getContext('2d')!, d = g.getImageData(0, 0, w, h), p = d.data, src = new Uint8ClampedArray(p);
+    const solid = (x: number, y: number) => x >= 0 && y >= 0 && x < w && y < h && src[(y * w + x) * 4 + 3] > 0 && !(src[(y * w + x) * 4] === 27 && src[(y * w + x) * 4 + 1] === 16 && src[(y * w + x) * 4 + 2] === 32);
     const edgeDepth = Math.max(1, Math.round(w / 40));
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const i = (y * w + x) * 4; if (!solid(x, y)) continue;
@@ -57,38 +74,38 @@ export function createSprites(host: SpritesHost) {
     }
     g.putImageData(d, 0, 0); return c;
   }
-  function makeSprite(rows, pal, scale = 2) {
+  function makeSprite(rows: string[], pal: Record<string, string>, scale = 2): Cv {
     const h = rows.length, w = Math.max(...rows.map(r => r.length));
-    let c = document.createElement('canvas'); c.width = w; c.height = h;
-    const g = c.getContext('2d');
+    let c = (document.createElement('canvas') as Cv); c.width = w; c.height = h;
+    const g = c.getContext('2d')!;
     rows.forEach((r, y) => { for (let x = 0; x < r.length; x++) { const col = pal[r[x]]; if (!col) continue; g.fillStyle = col; g.fillRect(x, y, 1, 1); } });
     c = scale2x(c); if (scale >= 2) c = scale2x(c);
     shade(c, false, 0.16);
     c.lw = w * scale; c.lh = h * scale; return c;
   }
-  function flip(c) { const f = document.createElement('canvas'); f.width = c.width; f.height = c.height; f.lw = c.lw; f.lh = c.lh; const g = f.getContext('2d'); g.translate(c.width, 0); g.scale(-1, 1); g.drawImage(c, 0, 0); return f; }
-  const LW = c => c.lw || c.width, LH = c => c.lh || c.height;
-  function dimg(img, x, y, w, h) { if (w === undefined && img.ox) { x -= img.ox; y -= img.oy; } ctx.drawImage(img, x, y, w === undefined ? LW(img) : w, h === undefined ? LH(img) : h); }
-  const tintCache = new WeakMap();
+  function flip(c: Img): Cv { const f = (document.createElement('canvas') as Cv); f.width = c.width; f.height = c.height; f.lw = c.lw; f.lh = c.lh; const g = f.getContext('2d')!; g.translate(c.width, 0); g.scale(-1, 1); g.drawImage(c, 0, 0); return f; }
+  const LW = (c: Img) => c.lw || c.width, LH = (c: Img) => c.lh || c.height;
+  function dimg(img: Img, x: number, y: number, w?: number, h?: number) { if (w === undefined && img.ox) { x -= img.ox; y -= img.oy!; } ctx.drawImage(img, x, y, w === undefined ? LW(img) : w, h === undefined ? LH(img) : h); }
+  const tintCache = new WeakMap<Img, Map<string, Cv>>();
   /* temporary Stage 2 look: existing sheet art re-coloured with a canvas filter until the W1-W8 Art Kit sheets arrive */
-  const recolCache = new Map();
-  function recol(c, f) {
+  const recolCache = new Map<Img, Map<string, Cv>>();
+  function recol(c: Img, f: string): Cv {
     if (!c) return c; let m = recolCache.get(c); if (!m) { m = new Map(); recolCache.set(c, m); }
-    if (m.has(f)) return m.get(f);
-    const t = document.createElement('canvas'); t.width = c.width || c.naturalWidth; t.height = c.height || c.naturalHeight; t.lw = c.lw; t.lh = c.lh; t.padL = c.padL; t.ox = c.ox; t.oy = c.oy;
-    const g = t.getContext('2d'); g.filter = f; g.drawImage(c, 0, 0); g.filter = 'none';
+    if (m.has(f)) return m.get(f)!;
+    const t = (document.createElement('canvas') as Cv); t.width = c.width || (c as HTMLImageElement).naturalWidth; t.height = c.height || (c as HTMLImageElement).naturalHeight; t.lw = c.lw; t.lh = c.lh; t.padL = c.padL; t.ox = c.ox; t.oy = c.oy;
+    const g = t.getContext('2d')!; g.filter = f; g.drawImage(c, 0, 0); g.filter = 'none';
     m.set(f, t); return t;
   }
-  function tinted(c, color) {
+  function tinted(c: Img, color: string): Cv {
     let m = tintCache.get(c); if (!m) { m = new Map(); tintCache.set(c, m); }
-    if (m.has(color)) return m.get(color);
-    const t = document.createElement('canvas'); t.width = c.width; t.height = c.height; t.lw = c.lw; t.lh = c.lh; const g = t.getContext('2d');
+    if (m.has(color)) return m.get(color)!;
+    const t = (document.createElement('canvas') as Cv); t.width = c.width; t.height = c.height; t.lw = c.lw; t.lh = c.lh; const g = t.getContext('2d')!;
     g.drawImage(c, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = color; g.fillRect(0, 0, c.width, c.height);
     m.set(color, t); return t;
   }
-  function sprite(key, rows, pal, scale = 2) {
+  function sprite(key: string, rows: string[], pal: Record<string, string>, scale = 2) {
     if (!spriteCache.has(key)) { const r = makeSprite(rows, pal, scale); spriteCache.set(key, { r, l: flip(r) }); }
-    return spriteCache.get(key);
+    return spriteCache.get(key)!;
   }
   const BASE = { k: '#1b1020', s: '#f3c58e', S: '#c98e5a', b: '#5a3a22', B: '#2e1d12', w: '#f6efe0', W: '#cfc4b0', e: '#1b1020' };
 
@@ -107,19 +124,19 @@ export function createSprites(host: SpritesHost) {
     jump: ['...kLk..kLk...', '..kLk....kLk..', '..kBk.....kBk.', '..kk.......kk.'],
   };
   /* Knights are painted at 72x88 real pixels (36x44 world units), facing right, then shaded and outlined. */
-  function paintKnight(i, frame) {
+  function paintKnight(i: number, frame: string): Cv {
     const id = KNIGHTS[i].id;
-    const c = document.createElement('canvas'); c.width = 72; c.height = 88; const g = c.getContext('2d');
-    const R = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
-    const E = (cx, cy, rx, ry, col) => { g.fillStyle = col; for (let y = -ry; y <= ry; y++) { const half = Math.floor(rx * Math.sqrt(Math.max(0, 1 - (y / (ry + 0.5)) ** 2))); g.fillRect(cx - half, cy + y, half * 2 + 1, 1); } };
-    const poly = (pts, col) => { g.fillStyle = col; g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); pts.slice(1).forEach(q => g.lineTo(q[0], q[1])); g.closePath(); g.fill(); };
+    const c = (document.createElement('canvas') as Cv); c.width = 72; c.height = 88; const g = c.getContext('2d')!;
+    const R = (x: number, y: number, w: number, h: number, col: string) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
+    const E = (cx: number, cy: number, rx: number, ry: number, col: string) => { g.fillStyle = col; for (let y = -ry; y <= ry; y++) { const half = Math.floor(rx * Math.sqrt(Math.max(0, 1 - (y / (ry + 0.5)) ** 2))); g.fillRect(cx - half, cy + y, half * 2 + 1, 1); } };
+    const poly = (pts: Pt[], col: string) => { g.fillStyle = col; g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); pts.slice(1).forEach(q => g.lineTo(q[0], q[1])); g.closePath(); g.fill(); };
     const b = frame === 'run2' ? 1 : 0;
     const LOOK = {
       arthur: { skin: '#f0bf8a', hair: '#6b3b1e', pants: '#3e3a44', boot: '#6b4226', top: '#c0392b' },
       rosemary: { skin: '#f6d2b0', hair: '#9a5a32', pants: '#f4f0ea', boot: '#1f1a24', top: '#24202c' },
       percival: { skin: '#f0bf8a', hair: '#7a4a2a', pants: '#24407a', boot: '#5a3a22', top: '#3a5ab0' },
-    }[id];
-    const legs = { stand: [[27, 60, 18, 0], [38, 60, 18, 0]], run1: [[21, 60, 15, -5], [42, 59, 14, 5]], run2: [[31, 60, 18, 0], [35, 60, 15, 2]], jump: [[25, 58, 12, -5], [40, 57, 11, 5]] }[frame];
+    }[id]!;
+    const legs = { stand: [[27, 60, 18, 0], [38, 60, 18, 0]], run1: [[21, 60, 15, -5], [42, 59, 14, 5]], run2: [[31, 60, 18, 0], [35, 60, 15, 2]], jump: [[25, 58, 12, -5], [40, 57, 11, 5]] }[frame]!;
     // behind: tail / lute / cape
     if (id === 'rosemary') { g.strokeStyle = LOOK.hair; g.lineWidth = 4; g.beginPath(); g.moveTo(26, 56 + b); g.quadraticCurveTo(8, 58, 10, 40); g.quadraticCurveTo(11, 33, 6, 30); g.stroke(); R(4, 28, 4, 4, '#f6efe0'); }
     if (id === 'percival') { poly([[26, 38 + b], [14, 74], [32, 74]], '#24407a'); }
@@ -193,9 +210,9 @@ export function createSprites(host: SpritesHost) {
     shade(c, true, 0.18);
     c.lw = 36; c.lh = 44; return c;
   }
-  function shadeHex(hex, k) {
+  function shadeHex(hex: string, k: number) {
     const n = parseInt(hex.slice(1, 7), 16); let r = n >> 16, gg = (n >> 8) & 255, b = n & 255;
-    const f = v => Math.round(k > 0 ? v + (255 - v) * k : v * (1 + k));
+    const f = (v: number) => Math.round(k > 0 ? v + (255 - v) * k : v * (1 + k));
     return '#' + [f(r), f(gg), f(b)].map(v => clamp(v, 0, 255).toString(16).padStart(2, '0')).join('');
   }
   /* Hero frames are cut from the user's character sheet (atlas cells 200x120 px = 100x60 world units, feet at 50,58.5). */
@@ -203,41 +220,41 @@ export function createSprites(host: SpritesHost) {
   heroAtlas.onload = () => { heroReady = true; for (const k of [...spriteCache.keys()]) if (/^(kn|head)/.test(k)) spriteCache.delete(k); };
   heroAtlas.src = HERO_ATLAS_SRC;
   /* hi-res hero frames from the user's per-knight Gemini sheets (E1-E3), 4 px per world unit, same cell layout as the atlas */
-  const HERO_HI = {}; let heroHiReady = false;
+  const HERO_HI: Record<string, Cv | undefined> = {}; let heroHiReady = false;
   function gearLook() { return host.save.up.legend ? 5 : 1 + Math.min(3, Math.max(host.save.up.blade || 0, host.save.up.stew || 0)); }
-  function gearId(id) { if (!heroHiReady) return id; if (host.save.up.legend && HERO_HI[id + '5_stand']) return id + '5'; for (let l = 1 + Math.min(3, Math.max(host.save.up.blade || 0, host.save.up.stew || 0)); l > 1; l--) if (HERO_HI[id + l + '_stand']) return id + l; return id; }
-  (() => { const ks = Object.keys(HERO_HI_SRC); let n = ks.length; ks.forEach(k => { const im = new Image(); im.onload = () => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; c.getContext('2d').drawImage(im, 0, 0); c.lw = im.width / RES; c.lh = im.height / RES; c.hero = true; c.padL = k.endsWith('_head') ? 0 : (c.lw - 100) / 2; c.ox = k.endsWith('_head') ? 0 : 32 + c.padL; c.oy = k.endsWith('_head') ? 0 : c.lh - 45; HERO_HI[k] = c; if (--n === 0) { heroHiReady = true; for (const key of [...spriteCache.keys()]) if (/^(kn|head)/.test(key)) spriteCache.delete(key); } }; im.src = HERO_HI_SRC[k]; }); })();
-  function atlasCanvas(key, ox, oy) {
-    const [x, y, w, h] = HERO_ATLAS[key]; const c = document.createElement('canvas'); c.width = w; c.height = h;
-    c.getContext('2d').drawImage(heroAtlas, x, y, w, h, 0, 0, w, h); c.lw = w / 2; c.lh = h / 2; c.ox = ox; c.oy = oy; c.hero = true; return c;
+  function gearId(id: string): string { if (!heroHiReady) return id; if (host.save.up.legend && HERO_HI[id + '5_stand']) return id + '5'; for (let l = 1 + Math.min(3, Math.max(host.save.up.blade || 0, host.save.up.stew || 0)); l > 1; l--) if (HERO_HI[id + l + '_stand']) return id + l; return id; }
+  (() => { const ks = Object.keys(HERO_HI_SRC); let n = ks.length; ks.forEach(k => { const im = new Image(); im.onload = () => { const c = (document.createElement('canvas') as Cv); c.width = im.width; c.height = im.height; c.getContext('2d')!.drawImage(im, 0, 0); c.lw = im.width / RES; c.lh = im.height / RES; c.hero = true; c.padL = k.endsWith('_head') ? 0 : (c.lw - 100) / 2; c.ox = k.endsWith('_head') ? 0 : 32 + c.padL; c.oy = k.endsWith('_head') ? 0 : c.lh - 45; HERO_HI[k] = c; if (--n === 0) { heroHiReady = true; for (const key of [...spriteCache.keys()]) if (/^(kn|head)/.test(key)) spriteCache.delete(key); } }; im.src = HERO_HI_SRC[k]; }); })();
+  function atlasCanvas(key: string, ox: number, oy: number): Cv {
+    const [x, y, w, h] = HERO_ATLAS[key]; const c = (document.createElement('canvas') as Cv); c.width = w; c.height = h;
+    c.getContext('2d')!.drawImage(heroAtlas, x, y, w, h, 0, 0, w, h); c.lw = w / 2; c.lh = h / 2; c.ox = ox; c.oy = oy; c.hero = true; return c;
   }
-  function knightSprite(i, frame) {
+  function knightSprite(i: number, frame: string): Sprite {
     const id = KNIGHTS[i].id;
     if (heroHiReady && HERO_HI[id + '_stand']) {
       const gid = gearId(id), nm = HERO_HI[gid + '_' + frame] ? frame : 'stand', key = 'kn' + i + gid + 'hi' + nm;
-      if (!spriteCache.has(key)) { const r = HERO_HI[gid + '_' + nm], l = flip(r); l.ox = r.ox; l.oy = r.oy; l.padL = r.padL; l.hero = true; spriteCache.set(key, { r, l }); }
-      return spriteCache.get(key);
+      if (!spriteCache.has(key)) { const r = HERO_HI[gid + '_' + nm]!, l = flip(r); l.ox = r.ox; l.oy = r.oy; l.padL = r.padL; l.hero = true; spriteCache.set(key, { r, l }); }
+      return spriteCache.get(key)!;
     }
     if (heroReady) {
       const name = HERO_ATLAS[id + '_' + frame] ? frame : ({ run1: 'run1', run2: 'run3', atk2: 'atk1', atk3: 'atk1' }[frame] || 'stand');
       const key = 'kn' + i + name;
       if (!spriteCache.has(key)) { const r = atlasCanvas(id + '_' + name, 32, 15); const l = flip(r); l.ox = 32; l.oy = 15; l.hero = true; spriteCache.set(key, { r, l }); }
-      return spriteCache.get(key);
+      return spriteCache.get(key)!;
     }
     const key = 'pk' + i + frame;
     if (!spriteCache.has(key)) { const r = paintKnight(i, HERO_ATLAS ? (['stand', 'run1', 'run2', 'jump'].includes(frame) ? frame : 'stand') : frame); spriteCache.set(key, { r, l: flip(r) }); }
-    return spriteCache.get(key);
+    return spriteCache.get(key)!;
   }
-  function knightHead(i) {
+  function knightHead(i: number): Sprite {
     const key = (heroReady ? 'head' : 'phead') + i + (heroHiReady ? gearId(KNIGHTS[i].id) : '');
     if (!spriteCache.has(key)) {
-      let c;
-      if (heroHiReady && HERO_HI[gearId(KNIGHTS[i].id) + '_head']) c = HERO_HI[gearId(KNIGHTS[i].id) + '_head'];
+      let c: Cv;
+      if (heroHiReady && HERO_HI[gearId(KNIGHTS[i].id) + '_head']) c = HERO_HI[gearId(KNIGHTS[i].id) + '_head']!;
       else if (heroReady) c = atlasCanvas(KNIGHTS[i].id + '_head', 0, 0);
-      else { const src = knightSprite(i, 'stand').r; c = document.createElement('canvas'); c.width = 52; c.height = 44; c.getContext('2d').drawImage(src, -12, 0); c.lw = 26; c.lh = 22; }
+      else { const src = knightSprite(i, 'stand').r; c = (document.createElement('canvas') as Cv); c.width = 52; c.height = 44; c.getContext('2d')!.drawImage(src, -12, 0); c.lw = 26; c.lh = 22; }
       spriteCache.set(key, { r: c, l: flip(c) });
     }
-    return spriteCache.get(key);
+    return spriteCache.get(key)!;
   }
 
   const SPR = {
@@ -282,10 +299,10 @@ export function createSprites(host: SpritesHost) {
     featherPal: { k: '#1b1020', w: '#d8f0ff' },
   };
   /* Painted icons: drawn with paths in a 16x16 design space, hard-edged, then shaded and outlined. */
-  function paintCanvas(lw, lh, design, fn) {
-    const sc = (lw * 2) / design; const c = document.createElement('canvas'); c.width = lw * 2; c.height = lh * 2; const g = c.getContext('2d');
+  function paintCanvas(lw: number, lh: number, design: number, fn: Painter): Cv {
+    const sc = (lw * 2) / design; const c = (document.createElement('canvas') as Cv); c.width = lw * 2; c.height = lh * 2; const g = c.getContext('2d')!;
     g.scale(sc, sc);
-    const H2 = {
+    const H2: PaintKit = {
       E: (x, y, rx, ry, col, a0 = 0, a1 = Math.PI * 2) => { g.fillStyle = col; g.beginPath(); g.ellipse(x, y, rx, ry, 0, a0, a1); g.fill(); },
       P: (pts, col) => { g.fillStyle = col; g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]); g.closePath(); g.fill(); },
       R: (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); },
@@ -298,10 +315,10 @@ export function createSprites(host: SpritesHost) {
     const d = g.getImageData(0, 0, c.width, c.height); for (let i = 3; i < d.data.length; i += 4) d.data[i] = d.data[i] > 100 ? 255 : 0; g.putImageData(d, 0, 0);
     shade(c, true, 0.16); c.lw = lw; c.lh = lh; return c;
   }
-  const starAt = (H2, x, y, r, col) => { const pts = []; for (let k = 0; k < 10; k++) { const a = k * Math.PI / 5 - Math.PI / 2, rr = k % 2 ? r * 0.45 : r; pts.push([x + Math.cos(a) * rr, y + Math.sin(a) * rr]); } H2.P(pts, col); };
-  const ICON_PAINT = {
+  const starAt = (H2: PaintKit, x: number, y: number, r: number, col: string) => { const pts: Pt[] = []; for (let k = 0; k < 10; k++) { const a = k * Math.PI / 5 - Math.PI / 2, rr = k % 2 ? r * 0.45 : r; pts.push([x + Math.cos(a) * rr, y + Math.sin(a) * rr]); } H2.P(pts, col); };
+  const ICON_PAINT: Record<string, Painter> = {
     beer: ({ E, R, Q }) => { Q(11, 7, 15, 9, 11, 12, 1.6, '#e8c070'); R(3, 6, 8, 8.5, '#f2a72a'); R(4, 7, 2, 7, '#ffd36a'); R(3, 13.5, 8, 1.5, '#d8902a'); E(4, 5.5, 2, 1.8, '#fffbea'); E(7, 4.8, 2.4, 2, '#fffbea'); E(10, 5.6, 1.8, 1.6, '#fffbea'); R(9, 6, 1.2, 2.5, '#fffbea'); },
-    lucky: (H2) => { ICON_PAINT.beer(H2); starAt(H2, 13, 3, 2.6, '#ffe14a'); starAt(H2, 2, 11, 1.8, '#ffe14a'); },
+    lucky: (H2) => { ICON_PAINT['beer'](H2); starAt(H2, 13, 3, 2.6, '#ffe14a'); starAt(H2, 2, 11, 1.8, '#ffe14a'); },
     chili: ({ P, Q, E }) => { Q(11, 3, 12, 1.5, 13, 2, 1.4, '#3cbf5a'); P([[10, 3], [12, 4], [11, 9], [7, 13], [3, 14.5], [5, 12], [8, 8]], '#e2382c'); E(9.5, 6, 0.8, 1.6, '#ff9a7a'); },
     glowcap: ({ E, R }) => { R(6.5, 8, 3, 6, '#efe2c4'); E(8, 8, 6.5, 5, '#4ad86a', Math.PI, 0); R(1.5, 8, 13, 1.5, '#2a9a48'); E(5, 5.5, 1.2, 1, '#e8fff0'); E(9.5, 4.5, 1.4, 1.1, '#e8fff0'); E(12, 7, 0.9, 0.8, '#e8fff0'); },
     coin: ({ E }) => { E(8, 8, 6, 6, '#e8a81c'); E(8, 8, 4.5, 4.5, '#f2c94c'); E(7, 6.5, 1.5, 2.5, '#fff2b0'); },
@@ -311,7 +328,7 @@ export function createSprites(host: SpritesHost) {
     cork: ({ R, E }) => { R(4, 2, 5, 7, '#b07a48'); E(6.5, 2, 2.5, 1, '#d8a070'); R(8, 9, 5, 5, '#9a6a3a'); E(10.5, 9, 2.5, 1, '#c89060'); },
     feather: ({ P, L }) => { P([[13, 2], [9, 3], [4, 9], [3, 13], [7, 12], [12, 6]], '#f2c94c'); L([[13, 2], [2, 14.5]], 0.8, '#b07a1a'); P([[11, 4], [12, 5], [8, 8]], '#fff2b0'); },
     kraken: ({ E, P, L }) => { E(6, 8, 3.8, 4, '#c0283a'); E(10, 8, 3.8, 4, '#c0283a'); P([[2.5, 9], [13.5, 9], [8, 15]], '#c0283a'); L([[7, 4], [6, 1.5]], 1.6, '#3a6ad8'); L([[10, 4], [11, 1.5]], 1.6, '#d8452e'); E(6, 7, 1.2, 1.6, '#ff8a8a'); L([[9, 7], [10, 10], [9, 12]], 0.7, '#3a6ad8'); },
-    cthulhu: (H2) => ICON_PAINT.kraken(H2),
+    cthulhu: (H2) => ICON_PAINT['kraken'](H2),
     truffle: ({ E }) => { E(8, 9, 5.5, 4.5, '#5a3a24'); E(6, 7.5, 2, 1.5, '#7a5a3a'); E(10, 10, 0.7, 0.7, '#e8c76a'); E(5, 10.5, 0.6, 0.6, '#e8c76a'); E(9, 6.5, 0.6, 0.6, '#e8c76a'); },
     ember: ({ P, E }) => { P([[8, 1.5], [12, 7], [12, 11], [8, 14.5], [4, 11], [4, 7], [6.5, 5]], '#ff6b2c'); P([[8, 6], [10.5, 9.5], [8, 13], [5.5, 9.5]], '#ffd35a'); E(8, 10, 1, 1.5, '#fff6c0'); },
     crown: ({ P, R, E }) => { P([[2, 12], [2, 5], [5, 8], [8, 3], [11, 8], [14, 5], [14, 12]], '#f2c94c'); R(2, 11, 12, 2, '#d8a01c'); E(8, 9.5, 1.2, 1.2, '#c0283a'); E(4.5, 10, 0.9, 0.9, '#4fb3d9'); E(11.5, 10, 0.9, 0.9, '#4fb3d9'); },
@@ -335,19 +352,19 @@ export function createSprites(host: SpritesHost) {
     st_poison: ({ E, R }) => { E(8, 7, 6, 5.5, '#5ad84a'); R(5, 10, 6, 4, '#5ad84a'); E(5.8, 7, 1.6, 1.8, '#1b1020'); E(10.2, 7, 1.6, 1.8, '#1b1020'); R(6, 12, 1, 2, '#1b1020'); R(9, 12, 1, 2, '#1b1020'); },
     happy: ({ E, L }) => { E(8, 8, 6.5, 6.5, '#ffd84a'); E(5.8, 6.5, 0.9, 1.2, '#1b1020'); E(10.2, 6.5, 0.9, 1.2, '#1b1020'); L([[4.8, 9.5], [8, 12], [11.2, 9.5]], 1, '#1b1020'); },
   };
-  const icon = (name, scale = 2) => {
+  const icon = (name: string, scale = 2): Img => {
     const key = 'ic_' + name + scale;
     if (!spriteCache.has(key)) {
       let r;
-      if (host.ui.uiArtReady && host.ui.UI_ICON[name]) { const src = host.ui.UI_ICON[name][scale > 1 ? 1 : 0]; if (scale === 1 || scale === 2) r = src; else { r = document.createElement('canvas'); r.width = r.height = RES * 8 * scale; const g = r.getContext('2d'); g.drawImage(src, 0, 0, r.width, r.height); r.lw = r.lh = 8 * scale; } }
+      if (host.ui.uiArtReady && host.ui.UI_ICON[name]) { const src = host.ui.UI_ICON[name][scale > 1 ? 1 : 0]; if (scale === 1 || scale === 2) r = src; else { r = (document.createElement('canvas') as Cv); r.width = r.height = RES * 8 * scale; const g = r.getContext('2d')!; g.drawImage(src, 0, 0, r.width, r.height); r.lw = r.lh = 8 * scale; } }
       else if (ICON_PAINT[name]) r = paintCanvas(8 * scale, 8 * scale, 16, ICON_PAINT[name]);
-      else r = makeSprite(SPR[name], SPR[name + 'Pal'], scale);
+      else r = makeSprite((SPR as SprTable)[name] as string[], (SPR as SprTable)[name + 'Pal'] as Record<string, string>, scale);
       spriteCache.set(key, { r, l: flip(r) });
     }
-    return spriteCache.get(key).r;
+    return spriteCache.get(key)!.r;
   };
 
-  const PAINTED_ENEMY = {
+  const PAINTED_ENEMY: Record<string, (f: number) => Cv> = {
     sporeling: f => paintCanvas(24, 22, 24, ({ E, R, P, L }) => {
       const st = f ? 1 : 0;
       E(8 - st, 20.5, 3.5, 1.8, '#7a2a1a'); E(16 + st, 20.5, 3.5, 1.8, '#7a2a1a');
@@ -368,9 +385,9 @@ export function createSprites(host: SpritesHost) {
     }),
   };
   /* enemy + boss frames cut from the user's Gemini sheet (faces right; l = right-facing, r = flipped) */
-  const ENEMY_ART = {}; let enemyArtReady = false;
-  (() => { const ks = Object.keys(ENEMY_ART_SRC); let n = ks.length; ks.forEach(k => { const im = new Image(); im.onload = () => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; c.getContext('2d').drawImage(im, 0, 0); c.lw = im.width / RES; c.lh = im.height / RES; ENEMY_ART[k] = { l: c, r: flip(c) }; if (--n === 0) enemyArtReady = true; }; im.src = ENEMY_ART_SRC[k]; }); })();
-  function enemyArtFor(e, frame) {
+  const ENEMY_ART: Record<string, ArtPair | undefined> = {}; let enemyArtReady = false;
+  (() => { const ks = Object.keys(ENEMY_ART_SRC); let n = ks.length; ks.forEach(k => { const im = new Image(); im.onload = () => { const c = (document.createElement('canvas') as Cv); c.width = im.width; c.height = im.height; c.getContext('2d')!.drawImage(im, 0, 0); c.lw = im.width / RES; c.lh = im.height / RES; ENEMY_ART[k] = { l: c, r: flip(c) }; if (--n === 0) enemyArtReady = true; }; im.src = ENEMY_ART_SRC[k]; }); })();
+  function enemyArtFor(e: { type: string; flash: number; vx: number; state: string; puffT?: number; squashT?: number; throwT?: number }, frame: number) {
     if (!enemyArtReady) return null;
     let k = null;
     if (e.type === 'sporeling') k = e.flash > 0 ? 'walker_hurt' : (Math.abs(e.vx) < 4 ? 'walker_idle' : (frame ? 'walker_w2' : 'walker_w1'));
@@ -383,29 +400,29 @@ export function createSprites(host: SpritesHost) {
     else if (e.type === 'grape' || e.type === 'grapelet') { k = e.flash > 0 ? 'puff_ball' : e.squashT ? 'puff_inflate' : (frame ? 'puff_walk' : 'puff_idle'); fl = 'hue-rotate(200deg) saturate(1.5)'; }
     else if (e.type === 'imp') { k = e.flash > 0 ? 'walker_hurt' : e.throwT ? 'walker_w2' : (Math.abs(e.vx) < 4 ? 'walker_idle' : (frame ? 'walker_w2' : 'walker_w1')); fl = 'hue-rotate(140deg) saturate(1.3)'; }
     if (!k || !ENEMY_ART[k]) return null;
-    const spr = fl ? { l: recol(ENEMY_ART[k].l, fl), r: recol(ENEMY_ART[k].r, fl) } : ENEMY_ART[k];
+    const spr = fl ? { l: recol(ENEMY_ART[k]!.l, fl), r: recol(ENEMY_ART[k]!.r, fl) } : ENEMY_ART[k]!;
     return { key: k, spr, hurt: /hurt|ball/.test(k) };
   }
   /* crew, customers and robber cut from the user's Gemini sheet B (all face right: l = native, r = flipped) */
-  const CREW_ART = {}; let crewArtReady = false;
-  (() => { const ks = Object.keys(CREW_ART_SRC); let n = ks.length; ks.forEach(k => { const im = new Image(); im.onload = () => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; c.getContext('2d').drawImage(im, 0, 0); c.lw = im.width / RES; c.lh = im.height / RES; CREW_ART[k] = { l: c, r: flip(c) }; if (--n === 0) crewArtReady = true; }; im.src = CREW_ART_SRC[k]; }); })();
+  const CREW_ART: Record<string, ArtPair | undefined> = {}; let crewArtReady = false;
+  (() => { const ks = Object.keys(CREW_ART_SRC); let n = ks.length; ks.forEach(k => { const im = new Image(); im.onload = () => { const c = (document.createElement('canvas') as Cv); c.width = im.width; c.height = im.height; c.getContext('2d')!.drawImage(im, 0, 0); c.lw = im.width / RES; c.lh = im.height / RES; CREW_ART[k] = { l: c, r: flip(c) }; if (--n === 0) crewArtReady = true; }; im.src = CREW_ART_SRC[k]; }); })();
   /* attack FX, wall, chests and tavern props cut from the user's Gemini sheet C (native art faces right: n = native, f = flipped) */
-  const FX_ART = {}; let fxArtReady = false;
-  (() => { const ks = Object.keys(FX_ART_SRC); let n = ks.length; ks.forEach(k => { const im = new Image(); im.onload = () => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; c.getContext('2d').drawImage(im, 0, 0); c.lw = im.width / RES; c.lh = im.height / RES; FX_ART[k] = { n: c, f: flip(c) }; if (--n === 0) fxArtReady = true; }; im.src = FX_ART_SRC[k]; }); })();
-  function fxImg(k, face = 1) { const a = FX_ART[k]; return a ? (face < 0 ? a.f : a.n) : null; }
-  function fxC(k, cx, cy, face = 1, s = 1) { const im = fxImg(k, face); if (!im) return false; const w = LW(im) * s, h = LH(im) * s; ctx.drawImage(im, Math.round(cx - w / 2), Math.round(cy - h / 2), w, h); return true; }
-  function fxB(k, cx, by, face = 1, s = 1) { const im = fxImg(k, face); if (!im) return false; const w = LW(im) * s, h = LH(im) * s; ctx.drawImage(im, Math.round(cx - w / 2), Math.round(by - h), w, h); return true; }
-  const enemySprite = (type, frame) => {
+  const FX_ART: Record<string, { n: Cv; f: Cv } | undefined> = {}; let fxArtReady = false;
+  (() => { const ks = Object.keys(FX_ART_SRC); let n = ks.length; ks.forEach(k => { const im = new Image(); im.onload = () => { const c = (document.createElement('canvas') as Cv); c.width = im.width; c.height = im.height; c.getContext('2d')!.drawImage(im, 0, 0); c.lw = im.width / RES; c.lh = im.height / RES; FX_ART[k] = { n: c, f: flip(c) }; if (--n === 0) fxArtReady = true; }; im.src = FX_ART_SRC[k]; }); })();
+  function fxImg(k: string, face = 1): Cv | null { const a = FX_ART[k]; return a ? (face < 0 ? a.f : a.n) : null; }
+  function fxC(k: string, cx: number, cy: number, face = 1, s = 1) { const im = fxImg(k, face); if (!im) return false; const w = LW(im) * s, h = LH(im) * s; ctx.drawImage(im, Math.round(cx - w / 2), Math.round(cy - h / 2), w, h); return true; }
+  function fxB(k: string, cx: number, by: number, face = 1, s = 1) { const im = fxImg(k, face); if (!im) return false; const w = LW(im) * s, h = LH(im) * s; ctx.drawImage(im, Math.round(cx - w / 2), Math.round(by - h), w, h); return true; }
+  const enemySprite = (type: string, frame: number): Sprite => {
     const key = 'en_' + type + frame;
     if (!spriteCache.has(key)) {
       let r;
       if (PAINTED_ENEMY[type]) r = PAINTED_ENEMY[type](frame % 2);
-      else r = makeSprite(SPR[type][frame % SPR[type].length], SPR[type + 'Pal']);
+      else r = makeSprite(((SPR as SprTable)[type] as string[][])[frame % ((SPR as SprTable)[type] as string[][]).length], (SPR as SprTable)[type + 'Pal'] as Record<string, string>);
       spriteCache.set(key, { r, l: flip(r) });
     }
-    return spriteCache.get(key);
+    return spriteCache.get(key)!;
   };
-  const thiefSprite = f => {
+  const thiefSprite = (f: number): Sprite => {
     const key = 'thief' + f;
     if (!spriteCache.has(key)) spriteCache.set(key, { r: paintCanvas(24, 34, 24, ({ E, R, P, L }) => {
       const st = f ? 2 : 0;
@@ -414,8 +431,8 @@ export function createSprites(host: SpritesHost) {
       E(12, 8.5, 5.5, 5.5, '#e8b080'); E(12, 5, 6, 3, '#6a3a1a', Math.PI, 0); R(6.5, 8, 11, 3, '#3a8a4a'); E(10, 9.5, 0.8, 0.8, '#1b1020'); E(14, 9.5, 0.8, 0.8, '#1b1020');
       L([[18, 18], [23, 10]], 1.4, '#d8dce8'); R(16.5, 17.5, 3, 1.2, '#c9a24a');
       E(4, 20, 4, 4.5, '#c9a24a'); R(2.5, 15, 3, 2, '#8a6a2a'); E(4, 21, 1, 1, '#fff2b0');
-    }), l: null });
-    const o = spriteCache.get(key); if (!o.l) o.l = flip(o.r); return o;
+    }), l: null as unknown as Img });
+    const o = spriteCache.get(key)!; if (!o.l) o.l = flip(o.r); return o;
   };
 
   return {
