@@ -3,6 +3,10 @@
 // It runs as one module for now; scenes are split out into typed modules one at a time.
 // Everything on screen is drawn on the canvas from the Gemini art sheets.
 
+import { I18N_EN, TOUCH_TXT } from './i18n/en';
+import { createNet } from './net';
+import { CREW_ART_SRC, ENEMY_ART_SRC, FX_ART_SRC, HERO_ATLAS, HERO_ATLAS_SRC, HERO_HI_SRC, UI_ART_SRC } from './data/art';
+
 let started = false;
 
 /** Starts the game on the #game canvas. Call once, after the game screen's markup is in the page. */
@@ -12,244 +16,6 @@ started = true;
 const W = 400, H = 225, GROUND = 190;
 const cv = document.getElementById('game');
 const ctx = cv.getContext('2d');
-const I18N_EN = {
-'กดปุ่มลูกทีม เรียกเชฟกอร์นมาทุบกำแพงร้าว!': 'Press Crew to call Chef Gorn to smash the cracked wall!', 'แตะที่จอเพื่อเล่นต่อ': 'Tap to resume',
-'ดันจอยหรือแตะปุ่มลูกศร ให้ตรงตอนโน้ตเข้าวงกลม!': 'Push the stick or tap arrows as notes hit the circle!', 'แตะปุ่มดาบอีกครั้งให้หยุดในแถบทอง': 'Tap the sword again to stop in the gold zone',
-'ขี้เมาอาละวาด! แตะโต๊ะให้อาเธอร์ไปเคาะ หรือใช้สกิลพิณ': 'Rowdy drunk! Tap the table for Arthur, or use the harp skill', 'โจรบุกปล้นร้าน! สลับเป็นอาเธอร์ แล้วกดปุ่มสกิล': 'Thief! Swap to Arthur and press Skill',
-'แตะเพื่อเลือก': 'Tap to choose', 'แตะ: ไปห้องปรุงยา & ตีเหล็ก': 'Tap: go to the alchemy & forge', 'ลุยเลย!': 'Go!', 'แตะเพื่อเลือกและปรับ · แตะ X เพื่อปิด': 'Tap to choose and adjust · Tap X to close',
-'แตะเพื่อปิด': 'Tap to close', 'แตะเพื่อเริ่ม': 'Tap to start', 'วิธีเล่นจะขึ้นตอนเริ่มเล่น · เปิดดูอีกได้จากปุ่มหยุด': 'Tap pause, then "How to play" to see the controls', 'แตะ: เริ่มกะดึก': 'Tap: start night shift', 'แตะ: ': 'Tap: ',
-'รัวปุ่มสกิลดับไฟ!': 'Mash Skill to put out the fire!', 'เตาไฟไหม้! แตะที่ครัว แล้วรัวปุ่มสกิล (สีส้ม)': 'Stove fire! Tap the kitchen, then mash Skill (orange)',
-'ดันจอยซ้าย-ขวาเพื่อเดิน ดันขึ้นเพื่อกระโดด · ดันเฉียงขึ้น/ลงพร้อมกดดาบเพื่อเล็งยิง': 'Push the stick left/right to move, up to jump · Push diagonally while attacking to aim shots',
-'กดดาบ = โจมตี ดาวและเวทเล็งมอนตัวที่ใกล้สุดด้านที่หันอยู่ให้เอง · แตะที่จอเพื่อยิงไปจุดนั้น': 'Sword = attack; stars and spells auto-aim at the nearest monster you face · Tap the screen to shoot at that spot',
-'แตะจอ': 'Tap', 'หยุดเกมชั่วคราว': 'Pause the game',
-'แตะที่ครัว อ่าง โต๊ะ หรือก๊อก แล้วคนที่ถูกงานจะเดินไปทำให้เลย': 'Tap the kitchen, sink, table or taps and the right worker goes there',
-'ทำงานตรงที่ยืนอยู่: ปรุงอาหาร ล้างจาน เสิร์ฟ รินเบียร์ (แตะอีกครั้งให้หยุดในแถบทอง)': 'Work at your spot: cook, wash, serve, pour (tap again to stop in the gold zone)',
-'ตอนปรุงอาหาร: ดันจอยหรือแตะปุ่มลูกศรให้ตรงโน้ตที่วิ่งมาถึงวงกลม': 'While cooking: push the stick or tap arrows as notes reach the circle',
-'ซ้าย-ขวา เปลี่ยนหมวด · ขึ้น-ลง เลือกสูตร': 'Left/right: tabs · Up/down: pick a recipe',
-'แตะที่ไหนก็ได้เพื่อปิด': 'Tap anywhere to close',
-// names
-'อาเธอร์': 'Arthur', 'โรสแมรี่': 'Rosemary', 'เพอร์ซิวาล': 'Percival',
-'เชฟกอร์น': 'Chef Gorn', 'บาร์ตเฒ่า': 'Old Bart', 'พิกซี่': 'Pixie', 'ตุ่น': 'Mole',
-'ราชาเห็ด': 'King Shroomba', 'ราชาเห็ดสปอร์พิษ': 'Poison Spore King', 'โจรป่า': 'Bandit',
-'ท่านหญิงแมรีโกลด์มาแล้ว จ่ายสองเท่า อย่าให้รอนาน!': 'Lady Marigold is here! She pays double, don\'t keep her waiting!',
-// DOM
-'โจมตี': 'Attack', 'ท่าพิเศษ': 'Special', 'ประสาน': 'Combo', 'สลับตัว': 'Swap', 'ผู้ช่วย': 'Crew', 'เริ่ม/ตกลง': 'Start/OK',
-'กระโดด': 'Jump', 'วิธีเล่น (H)': 'How to play (H)', 'คู่มือ': 'Guides', 'เสียง: ': 'Sound: ', 'ปิด': 'Off', 'เปิด': 'On',
-'ล้างแล้ว': 'Cleared', 'ล้างเซฟ': 'Reset save', 'กดอีกครั้งเพื่อยืนยัน': 'Click again to confirm',
-'สามอัศวินต้มยำกุ้ง · prototype': 'Three Tom Yum Knights · prototype',
-// stage
-'ป่าเห็ดพิษ · Poison Mushroom Forest': 'Poison Mushroom Forest',
-'คลื่นเพลิง! เผามันให้เกรียม!': 'Flame Wave! Burn them to a crisp!',
-'พลังแห่งต้มยำกุ้ง! เมี้ยว!': 'Power of Tom Yum! Meow!',
-'คาถาฝนดาวตก!': 'Meteor Shower!',
-'พลังแห่งต้มยำกุ้ง! ย้ากกก!': 'Power of Tom Yum! Hyaaah!',
-'ไม่นะ... มงกุฎของข้า...': 'No... my crown...',
-'เบียร์วุ้น! +SP': 'Jelly Beer! +SP', '+1 พริกเม็ดใหญ่': '+1 Big Chili',
-'กด C เรียกเชฟกอร์นมาทุบกำแพงร้าว!': 'Press C: call Chef Gorn to smash the cracked wall!',
-'กำแพงร้าว... ต้องพาเชฟกอร์นมา (เลือกที่แผนที่โลก)': 'Cracked wall... bring Chef Gorn (pick on the world map)',
-'ใครกล้าบุกป่าเห็ดของข้า! จงกลายเป็นปุ๋ยซะ!': 'Who dares invade my forest? Become fertilizer!',
-'หลีกไป! พุงพลุ้ยมาแล้ว!': 'Out of the way! Big belly coming through!',
-'ไม่ได้พาบาร์ตเฒ่ามา': 'Old Bart isn\'t with you',
-'รับไปเลยไอ้หนู! เบียร์ฟื้นพลัง!': 'Here, kid! Healing beer!',
-'พลัง: ': 'ATK: ', 'ดาบ Tier ': 'Sword Tier ', 'บัฟต้มยำ ATK+30%': 'Tom Yum buff ATK+30%',
-'เวลา: ': 'Time: ', 'คะแนน: ': 'Score: ', 'ลูกทีม: ': 'Crew: ',
-'ด่านที่ 1: ป่าเห็ดพิษ': 'Stage 1: Poison Mushroom Forest',
-'ด่านที่ 2: ดันเจี้ยนไวน์โบราณ': 'Stage 2: Ancient Wine Dungeon', 'ดันเจี้ยนไวน์โบราณ · Ancient Wine Dungeon': 'Ancient Wine Dungeon',
-'เคลียร์ด่านที่ 2!': 'Stage 2 Clear!', 'บารอนฟอนบาร์เรล': 'Baron von Barrel', 'บารอนแห่งถังไวน์': 'Lord of the Wine Barrels',
-'ใครบังอาจย่องเข้าห้องเก็บไวน์ของข้า! ชิมนี่ซะ!': 'Who dares sneak into my wine cellar? Have a taste of this!', 'ไวน์ร้อยปีของข้า... เสียของหมดเลย!': 'My hundred-year wine... all wasted!',
-'ตุ่น': 'Mole', 'พิกซี่': 'Pixie', 'ขุดดินเป็นงานถนัดของข้าเอง!': 'Digging is my specialty!', 'จับมือไว้นะ! บินแล้ว~': 'Hold on tight! Up we go~', 'ถึงแล้ว! ตรงนี้มีหีบลับด้วยนะ~': 'Here we are! There is a secret chest up here~',
-'กด C เรียกตุ่นมาขุดกองดิน!': 'Press C: the Mole digs through the dirt!', 'กองดินขวางทาง... ต้องพาตุ่นมา (เลือกที่แผนที่โลก)': 'Dirt blocks the way... bring the Mole (pick on the world map)',
-'กด C เรียกพิกซี่พาบินขึ้นชั้นบน!': 'Press C: the Pixie flies you up!', 'ชั้นบนสูงเกินกระโดด... ต้องพาพิกซี่มา': 'Too high to jump... bring the Pixie',
-'ไม่มีอะไรให้ลูกทีมช่วยตรงนี้': 'Nothing for the crew to do here', 'ไวน์เหนียว! เดินช้าลง': 'Sticky wine! Slowed down', '-15 ตกหลุม!': '-15 Fell in!', 'หีบบนชั้นลับ! +SP': 'Secret shelf chest! +SP',
-'100-Year Vintage Cork': '100-Year Vintage Cork', 'อุโมงค์ลับ (ตุ่น)': 'Secret tunnel (Mole)', 'เจอ! Truffle + Cork': 'Found! Truffle + Cork', 'Cork เพิ่ม!': 'Extra Cork!', 'พลาด (ปราบตอนติดน้ำแข็ง)': 'Missed (defeat while frozen)',
-'เคลียร์ด่าน 1 ก่อนนะ': 'Clear Stage 1 first', 'ด่าน 2 มีในฉบับเต็ม': 'Stage 2 is in the full version', 'มีในฉบับเต็ม · Full version': 'Full version only',
-'พิกซี่ มีในฉบับเต็ม': 'Pixie is in the full version', 'ตุ่น มีในฉบับเต็ม': 'Mole is in the full version', 'บินพาขึ้นที่สูง (ด่าน 2)': 'Flies you up high (Stage 2)',
-'ปราบราชาเห็ดสำเร็จ!': 'King Shroomba defeated!',
-'ดรอปลับ: Ember Spore (ปราบตอนติดไฟ!)': 'Secret drop: Ember Spore (defeated while burning!)',
-'ได้รับ: Shroom Crown': 'Got: Shroom Crown',
-'หยุดชั่วคราว': 'Paused', 'กด P หรือ Enter เพื่อเล่นต่อ': 'Press P or Enter to resume',
-'เดิน': 'Move', 'สลับคน': 'Swap', 'J / คลิก': 'J / Click', 'ทำงาน': 'Work', 'K / คลิกขวา': 'K / R-click', 'Space / K / คลิกขวา': 'Space / K / R-click',
-'สกิล': 'Skill', 'หยุด/ออก': 'Pause/Exit', 'วิธีเล่น': 'Help', 'ท่าประสาน': 'Combo', 'ลูกทีม': 'Crew',
-'หม้อต้มยำมหาภัยกระทะเหล็กเดือด!': 'Boiling Iron Wok Tom Yum Calamity!',
-// tavern
-'กะดึกที่ร้าน The Tipsy Dragon เริ่มแล้ว!': 'Night shift at The Tipsy Dragon begins!',
-'กดลูกศร หรือคลิกปุ่มลูกศร ให้ตรงตอนโน้ตเข้าวงกลม!': 'Press the arrow as the note hits the circle!',
-'กด J หรือคลิกอีกครั้งให้หยุดในแถบทอง': 'Press J or click again to stop in the gold zone',
-'รัว K ดับไฟ!': 'Mash K to put out the fire!',
-'ไม่มีจานสะอาด! ให้อาเธอร์ล้างจาน': 'No clean bowls! Have Arthur wash dishes',
-'J/คลิก: ปรุงอาหาร (มินิเกมจังหวะ)': 'J/Click: cook (rhythm game)',
-'สลับเป็นโรสแมรี่ (2) เพื่อทำอาหาร': 'Swap to Rosemary (2) to cook',
-'J/คลิก: ล้างจาน (เหลือ # ใบ)': 'J/Click: wash dishes (# left)',
-'อ่างว่าง ไปเก็บจานที่โต๊ะ': 'Sink empty. Collect dishes from tables',
-'อาเธอร์ (1) ล้างจานที่นี่': 'Arthur (1) washes dishes here',
-'J/คลิก: รินเบียร์วุ้น': 'J/Click: pour jelly beer',
-'สลับเป็นเพอร์ซิวาล (3) เพื่อรินเบียร์': 'Swap to Percival (3) to pour beer',
-'J/คลิก: เก็บจานไปล้าง': 'J/Click: collect dishes',
-'โต๊ะสกปรก: ให้อาเธอร์ (1) เก็บ': 'Dirty table: Arthur (1) cleans it',
-'J/คลิก: เคาะกระทะเรียกสติขี้เมา!': 'J/Click: bonk the drunk with a pan!',
-'ขี้เมาอาละวาด! อาเธอร์ (1) หรือ K พิณ': 'Drunk rampage! Arthur (1) or K harp',
-'J/คลิก: เสิร์ฟ': 'J/Click: serve', 'J/คลิก: เสิร์ฟเบียร์': 'J/Click: serve beer', 'J/คลิก: เสิร์ฟอาหาร': 'J/Click: serve food', '\u200bปิด': 'Close', 'เบียร์': 'beer', 'อาหาร': 'food',
-'เพอร์ซิวาล (3) เป็นคนเสิร์ฟ': 'Percival (3) serves',
-'ดีดพิณสงบลูกค้า': 'Calming harp', 'จับโจร': 'Catch thief', 'ดับไฟ': 'Put out fire',
-'ลูกค้า VIP กำลังจะเดินเข้าร้าน!': 'A VIP customer is about to arrive!',
-'มีโจรด้อม ๆ มองหน้าร้าน! อาเธอร์เตรียมตัว': 'A thief is lurking outside! Arthur, get ready',
-'เตาไฟเริ่มมีควันขึ้นแล้ว!': 'The stove is starting to smoke!',
-'โจรบุกปล้นร้าน! สลับเป็นอาเธอร์ (1) แล้วกด K': 'Robbery! Swap to Arthur (1) and press K',
-'เตาไฟไหม้! โรสแมรี่ (2) ไปที่ครัวแล้วรัว K': 'Stove fire! Rosemary (2): go to the kitchen, mash K',
-'ลูกค้า # คนเริ่มหัวร้อน! เสิร์ฟด่วน หรือดีดพิณ': '# customers getting angry! Serve fast or play the harp',
-'เร็วไป!': 'Too early!', 'โรสแมรี่เท่านั้นที่ทำอาหาร!': 'Only Rosemary cooks!', 'ครัวไฟไหม้อยู่!': 'Kitchen is on fire!',
-'ไม่มีจานสะอาด!': 'No clean bowls!', 'ช่องส่งอาหารเต็ม': 'Serving hatch full',
-'อาเธอร์คนล้างจาน!': 'Arthur washes dishes!', 'ไม่มีจานรอล้าง': 'No dishes to wash', 'จานสะอาด +1': 'Clean bowl +1',
-'เพอร์ซิวาลเป็นคนรินเบียร์!': 'Percival pours the beer!', 'ถาดเต็มแล้ว': 'Tray is full',
-'พิณยังไม่พร้อม # วิ': 'Harp ready in #s', 'บทเพลงสงบใจ ♪': 'Soothing song ♪',
-'จับโจรได้! +10g': 'Thief caught! +10g', 'ยังไม่มีโจร...': 'No thief yet...', 'ดับไฟแล้ว!': 'Fire out!',
-'ไปที่ครัวก่อน!': 'Go to the kitchen first!', 'ไม่มีไฟให้ดับ': 'No fire to put out',
-'ขี้เมาทุบแก้ว! -6g': 'Drunk smashed a glass! -6g', 'ช้าจริง! ไม่กินแล้ว!': 'Too slow! I\'m leaving!',
-'โดนปล้น! -': 'Robbed! -', 'ไฟไหม้จนมอด ค่าซ่อม -10g': 'Burned out! Repairs -10g',
-'โป๊ง! สร่างเมาซะ! +4g': 'BONK! Sober up! +4g', 'เก็บจานไปอ่าง': 'Dishes to the sink', 'ตรงนี้ไม่มีงาน': 'Nothing to do here',
-'อาเธอร์เป็นคนเก็บโต๊ะ': 'Arthur clears tables', 'ไม่มีออเดอร์': 'No order',
-'ยังไม่ได้รินเบียร์!': 'No beer poured yet!', 'อาหารยังไม่เสร็จ!': 'Food isn\'t ready!',
-'โรสแมรี่ต้องอยู่ในครัว': 'Rosemary must be in the kitchen',
-'ล้นแก้ว! เสียของ': 'Overflow! Wasted', 'รินเป๊ะ!': 'Perfect pour!', 'รินพอดี': 'Good pour', 'ฟองล้วน...': 'All foam...',
-'สุดยอด! ': 'Amazing! ', 'ไหม้นิดหน่อย... ': 'Slightly burnt... ',
-'ต้มยำกุ้งพญามังกร': 'Dragon King Tom Yum', 'ข้าวผัดร้าน': 'House Fried Rice',
-'โรงเตี๊ยมมังกรเมา': 'Tavern', 'ครัว': 'Kitchen', 'อ่างล้างจาน': 'Sink', 'จานสะอาด ': 'Clean bowls ',
-'ก๊อกเบียร์': 'Beer taps', 'โอ๊ย!': 'Ouch!', 'โป๊ง!': 'BONK!', 'โรสแมรี่ปรุง: ': 'Rosemary cooks: ',
-'กะดึก': 'Night', 'จาน ': 'Bowls ', 'เล่นต่อ': 'Resume',
-'ออกจากร้าน (กลับหน้าแรก)': 'Leave tavern (to title)', 'ออกจากร้าน (กลับแผนที่)': 'Leave tavern (to map)',
-'↑↓ เลือก · Enter ตกลง · Esc เล่นต่อ': '↑↓ Select · Enter OK · Esc Resume',
-'ปิดร้าน! สรุปกะดึก': 'Closing time! Shift summary',
-'รายได้': 'Earnings', 'เสิร์ฟสำเร็จ': 'Served', 'ลูกค้าหัวร้อนเดินออก': 'Angry walkouts', 'ขี้เมาที่ถูกเคาะ': 'Drunks bonked',
-'Enter / แตะ: ไปห้องปรุงยา & ตีเหล็ก': 'Enter / Tap: to the Alchemy & Forge',
-'ฮึก!': 'Hic!', 'อาละวาด!': 'Rampage!',
-// alchemy
-'พริกเม็ดใหญ่': 'Big Chili', 'เกลือสวรรค์': 'Heavenly Salt',
-'อาวุธ & ชุด': 'Gear', 'อาหารสวรรค์': 'Heavenly Food', 'เครื่องใช้': 'Tools',
-'สกัด Crown Essence': 'Extract Crown Essence', 'กลั่นมงกุฎราชาเห็ดเป็นหัวเชื้อเวทมนตร์': 'Distill the Shroom Crown into magic essence',
-'บัฟด่านถัดไป: ATK +30% และเริ่มด้วยเกจ +50': 'Next stage buff: ATK +30%, start with +50 gauge',
-'มีบัฟรออยู่แล้ว': 'Buff already ready',
-'ตีดาบ Tier ': 'Forge Sword Tier ', 'ATK +20% ทั้งทีม': 'ATK +20% for the team', 'ดาบ Tier สูงสุดแล้ว': 'Sword at max tier',
-'เกราะหนังมังกร Tier ': 'Dragonhide Armor Tier ', 'HP สูงสุด +25 ต่อคน': 'Max HP +25 each', 'เกราะ Tier สูงสุดแล้ว': 'Armor at max tier',
-'ทุกด่านเริ่มด้วยเกจครึ่งหลอด': 'Start every stage with half gauge', 'ปรุงไว้แล้ว': 'Already brewed',
-'ชุดหมวก+ผ้ากันเปื้อน+ดาบกระทะ ATK +50%': 'Hat + apron + wok sword set, ATK +50%', 'มีชุดนี้แล้ว': 'Already owned',
-'ต้องใช้ Kraken Heart + Gryphon Feather จากด่าน 3-4': 'Needs Kraken Heart + Gryphon Feather (stages 3-4)',
-'วัตถุดิบยังไม่ปลดล็อก (ด่าน 3-4)': 'Ingredients locked (stages 3-4)',
-'เครื่องดื่มเวทมนตร์': 'Magic Drink', 'ด่านถัดไปเริ่มด้วยเกจ SPECIAL เต็ม (MAX)': 'Next stage starts with full SPECIAL gauge',
-'มีเครื่องดื่มรออยู่แล้ว': 'Drink already ready',
-'ซี่โครงบาร์บีคิวคธูลู': 'Cthulhu BBQ Ribs', 'ต้องใช้ Kraken Heart จากด่าน 4': 'Needs Kraken Heart (stage 4)',
-'พุดดิ้งเกลือสวรรค์': 'Heavenly Salt Pudding', 'ต้องใช้เกลือสวรรค์จากด่าน 3': 'Needs Heavenly Salt (stage 3)',
-'ขวดเบียร์วุ้นนำโชค': 'Lucky Jelly Beer Bottle', 'เบียร์วุ้นในด่านเติมเกจ 55 แทน 35': 'Jelly beer fills 55 gauge instead of 35',
-'มีแล้ว': 'Owned', 'ช้อนทองคำ': 'Golden Spoon', 'รายได้กะดึกเพิ่ม 20%': 'Night shift earnings +20%',
-'กระดิ่งเรียกพนักงาน': 'Service Bell', 'บาร์ตเฒ่าส่งเบียร์ฟื้นพลังได้ 3 ครั้ง': 'Old Bart can send healing beer 3 times',
-'จุกคอร์กเวทมนตร์': 'Magic Cork', 'ต้องใช้ 100-Year Vintage Cork จากด่าน 2': 'Needs 100-Year Vintage Cork (stage 2)',
-'วัตถุดิบยังไม่ปลดล็อก': 'Ingredients locked', 'วัตถุดิบไม่พอ: ': 'Missing: ', 'เงินไม่พอ': 'Not enough gold',
-'ปรุงสำเร็จ: ': 'Cooked: ', 'คราฟต์สำเร็จ: ': 'Crafted: ', 'เตาหลอม': 'Forge', 'หม้อต้มยำเวทมนตร์': 'Magic Tom Yum Pot',
-'ห้องปรุงยา & ตีเหล็ก': 'Alchemy & Forge', 'ล็อก': 'Locked', 'ขาด ': 'Need ', 'พร้อม!': 'Ready!',
-'ออกเดินทาง ▶ แผนที่โลก': 'Set out ▶ World map', 'Cook / ปรุง': 'Cook', 'Craft / คราฟต์': 'Craft',
-'กลับไปที่แผนที่โลก': 'Back to the world map', 'ดาบ': 'Sword', 'เกราะ': 'Armor', 'บัฟถัดไป': 'Next buff', 'ต้มยำ +30%': 'Tom Yum +30%',
-'สวมใส่แล้ว: +50% ATK': 'Equipped: +50% ATK', 'โบนัสเซ็ต: +50% ATK': 'Set bonus: +50% ATK',
-'เปลี่ยนหมวด': 'Tab', 'เลือกสูตร': 'Recipe', 'ปรุง/คราฟต์': 'Cook/Craft',
-// map
-'ป่าเห็ดพิษ': 'Poison Mushroom Forest', 'King Shroomba (ราชาเห็ด)': 'King Shroomba',
-'ดันเจี้ยนไวน์โบราณ': 'Ancient Wine Dungeon', 'ดันเจี้ยนไวน์': 'Wine Dungeon',
-'เหมืองเกลือ & ยอดเขากังหันลม': 'Salt Mine & Windmill Peak', 'ยอดเขากังหันลม': 'Windmill Peak',
-'ท่าเรือซากราเคน': 'Kraken Wreck Harbor', 'ท่าเรือคราเคน': 'Kraken Harbor',
-'หอคอยกระจกมิติ': 'Mirror Dimension Tower', 'หอคอยกระจก': 'Mirror Tower',
-'ปราสาทลอยฟ้าจอมมาร': 'Archmage\'s Sky Castle', 'ปราสาทลอยฟ้า': 'Sky Castle',
-'ทุบกำแพงร้าว': 'Smashes cracked walls', 'ส่งเบียร์ฟื้นพลัง': 'Sends healing beer',
-'บินข้ามเหว (ด่าน 2)': 'Flies over gaps (stage 2)', 'ขุดอุโมงค์ (ด่าน 2)': 'Digs tunnels (stage 2)',
-' จะเข้าร่วมในด่าน 2': ' joins in stage 2', 'ด่านนี้ยังไม่เปิด (กำลังสร้าง)': 'Stage not open yet (in development)',
-'โรงเตี๊ยม The Tipsy Dragon': 'The Tipsy Dragon Tavern', 'ด่านที่ ': 'Stage ', 'บอส: ': 'Boss: ',
-'  ความลับ ': '  Secrets ', 'ยังไม่เคยเคลียร์': 'Not cleared yet', 'ยังไม่เปิด · Coming soon': 'Coming soon',
-'ลูกทีม (เลือก 2):': 'Crew (pick 2):', 'ลุยเลย! (Enter)': 'Go! (Enter)', 'ยังไม่เปิด': 'Locked',
-'ห้องปรุงยา/ตีเหล็ก': 'Alchemy/Forge', 'ลุยเลย!': 'Go!', 'ห้องปรุงยา': 'Alchemy', 'เลือกด่าน': 'Stage', 'เลือกลูกทีม': 'Crew', 'เริ่มด่าน': 'Start',
-// title
-'ตัวเลือก (Options)': 'Options', 'เสียงทั้งหมด (M)': 'All sound (M)', 'เพลง (BGM)': 'Music (BGM)', 'เอฟเฟกต์เสียง (SFX)': 'Sound effects (SFX)',
-'ภาษา (Language)': 'Language',
-'ล้างเซฟได้จากปุ่ม "ล้างเซฟ" ด้านบนเกม': 'Reset your save with the "Reset save" button',
-'ขึ้น/ลง เลือก · ซ้าย/ขวา ปรับ · Enter เปิด/ปิด · Esc ปิด': 'Up/Down select · Left/Right adjust · Enter toggle · Esc close',
-'เกี่ยวกับ (About)': 'About',
-'อัศวินตกอับสามคนเปิดร้าน The Tipsy Dragon บังหน้า กลางวันลุยดันเจี้ยนล่าวัตถุดิบหายากจากบอส กลางคืนเปิดร้านทำต้มยำกุ้งเลี้ยงลูกค้า แล้วนำของที่ได้ไปปรุงยาและตีอาวุธ เพื่อสู้กับกลุ่ม Obsidian Syndicate': 'Three down-on-their-luck knights run The Tipsy Dragon as a cover. By day they raid dungeons for rare boss ingredients; by night they serve tom yum to customers, then turn their loot into potions and weapons to fight the Obsidian Syndicate.',
-'เวอร์ชันต้นแบบนี้มี: ด่าน 1 ป่าเห็ดพิษ + บอสราชาเห็ด, กะกลางคืนในร้าน, ห้องปรุงยา/ตีเหล็ก และแผนที่โลก': 'This prototype has: Stage 1 Poison Mushroom Forest + King Shroomba, the tavern night shift, the Alchemy/Forge room and the world map.',
-'กด Enter / แตะ เพื่อปิด': 'Press Enter / tap to close',
-'ฉากจบ / เครดิต': 'Ending / Credits', 'ฉากจบ': 'Ending',
-'คุณชนะราชาเห็ดมาแล้ว # รอบ ฉากจบจะปลดล็อกเมื่อปราบ Archmage Malacor ที่ด่าน # (ยังไม่มีในต้นแบบนี้)': 'You have beaten King Shroomba # times. The ending unlocks after defeating Archmage Malacor in stage # (not in this prototype yet).',
-'ฉากจบจะปลดล็อกเมื่อปราบ Archmage Malacor ที่ด่าน 6 (ยังไม่มีในต้นแบบนี้)': 'The ending unlocks after defeating Archmage Malacor in stage 6 (not in this prototype yet).',
-'เครดิต': 'Credits', 'หมุนมือถือเป็นแนวนอนเพื่อเล่น': 'Turn your phone sideways to play', 'ทีมพัฒนา: Rochano Developer Teams': 'Developed by: Rochano Developer Teams',
-'ออกแบบเกม ตัวละคร และฉาก: Rochano Developer Teams': 'Game, character and scene design: Rochano Developer Teams',
-'ต้นแบบที่เล่นได้: สร้างร่วมกับ Claude': 'Playable prototype: built with Claude',
-'ตกลง': 'OK', 'เสียง': 'Sound', 'เลือกเมนู': 'Select',
-'พระสหาย · สาวใช้ · จอมขมังเวทย์ ผู้กอบกู้ร้านเหล้า': 'Squire · Maid · Mage, saviors of the tavern',
-'คลิก / แตะ / กด Enter เพื่อเริ่ม': 'Click / tap / press Enter to start',
-'กด H หรือปุ่ม "วิธีเล่น" เพื่อดูปุ่มบังคับ': 'Press H or "Help" to see the controls',
-'เซฟ: #g · เล่นแล้ว # รอบ': 'Save: #g · # runs played', 'เริ่ม': 'Start', 'เปิด/ปิดเสียง': 'Sound on/off',
-// results
-'เคลียร์ด่านที่ 1!': 'Stage 1 clear!', 'เวลา': 'Time', 'คะแนน': 'Score', 'ปราบมอนสเตอร์': 'Monsters defeated',
-'Glowcap / พริก': 'Glowcap / Chili', 'ห้องลับ (เชฟกอร์น)': 'Secret room (Chef Gorn)', 'เจอ! Truffle of Ages': 'Found! Truffle of Ages',
-'พลาด': 'Missed', 'ดรอปลับบอส': 'Secret boss drop', 'พลาด (ปราบตอนติดไฟ)': 'Missed (defeat it while burning)',
-'กลับร้านกันเถอะ ลูกค้ากะดึกรออยู่!': 'Back to the tavern, the night shift is waiting!', 'Enter / แตะ: เริ่มกะดึก': 'Enter / Tap: start night shift',
-// help
-'วิธีเล่น: ลุยด่าน': 'How to play: Stages', 'เดินซ้าย-ขวา': 'Move left/right', 'J / คลิกซ้าย': 'J / L-click',
-'โจมตี: อาเธอร์ฟันดาบไฟคอมโบ 3 จังหวะ, โรสแมรี่ยิงดาวจากไม้ไผ่, เพอร์ซิวาลยิงลูกพลังน้ำแข็ง': 'Attack: Arthur\'s 3-hit fire sword combo, Rosemary\'s bamboo stars, Percival\'s ice bolts',
-'ท่าพิเศษ (เกจครึ่งหลอด): คลื่นเพลิง / พลังแห่งต้มยำกุ้ง / คาถาฝนดาวตก': 'Special (half gauge): Flame Wave / Power of Tom Yum / Meteor Shower',
-'L / คลิกกลาง': 'L / M-click',
-'ท่าประสาน 3 อัศวิน "ต้มยำมหาภัยกระทะเหล็กเดือด" เมื่อเกจ MAX': '3-knight combo "Tom Yum Calamity" at MAX gauge',
-'สลับตัวละครได้ตลอดเวลา': 'Swap characters any time',
-'เรียกลูกทีม: เชฟกอร์นทุบกำแพงร้าว / บาร์ตเฒ่าส่งเบียร์ฟื้นพลัง': 'Call crew: Chef Gorn smashes walls / Old Bart sends healing beer',
-'เกจ SPECIAL เพิ่มเมื่อโจมตีโดนและเก็บเบียร์วุ้น · ปราบบอสตอนติดไฟ (คลื่นเพลิง/ต้มยำ) = ดรอปลับ': 'SPECIAL fills on hits and jelly beer · Defeat the boss while burning (Flame Wave/Tom Yum) = secret drop',
-'วิธีเล่น: กะดึกร้านเหล้า': 'How to play: Tavern night shift',
-'เดินไป ครัว / อ่างล้างจาน / โต๊ะลูกค้า / ก๊อกเบียร์': 'Walk to kitchen / sink / tables / beer taps',
-'สลับคนทำงาน (อาเธอร์ / โรสแมรี่ / เพอร์ซิวาล)': 'Swap worker (Arthur / Rosemary / Percival)',
-'J ที่ครัว': 'J at kitchen', 'โรสแมรี่ปรุงอาหาร: กดลูกศรให้ตรงโน้ตที่วิ่งมาถึงวงกลม': 'Rosemary cooks: press arrows as notes reach the circle',
-'J ที่ก๊อก': 'J at taps', 'เพอร์ซิวาลรินเบียร์ กด J อีกครั้งให้หยุดในแถบทอง': 'Percival pours: press J again to stop in the gold zone',
-'J ที่โต๊ะ': 'J at table', 'เพอร์ซิวาลเสิร์ฟ · อาเธอร์เก็บจาน/เคาะขี้เมา': 'Percival serves · Arthur clears dishes/bonks drunks',
-'J ที่อ่าง': 'J at sink', 'อาเธอร์ล้างจาน (ไม่มีจานสะอาด = ทำอาหารไม่ได้)': 'Arthur washes dishes (no clean bowls = no cooking)',
-'สกิล: พิณสงบลูกค้า / อาเธอร์จับโจร / โรสแมรี่ดับไฟ': 'Skills: harp calms customers / Arthur catches thieves / Rosemary fights fires',
-'คลิก': 'Click',
-'คลิกที่ครัว อ่าง โต๊ะ หรือก๊อก = เปลี่ยนคนที่ถูกงานแล้วทำให้เลย · คลิกขวา = สกิล · ปรุงอาหารคลิกปุ่มลูกศรได้': 'Click kitchen, sink, table or taps = the right worker does it · R-click = skill · Click arrow buttons to cook',
-'ดูแถบแจ้งเตือนด้านล่าง: VIP, โจร, เตาไฟไหม้ · Glowcap ทำต้มยำกุ้งพญามังกรขายได้แพง': 'Watch the alerts below: VIP, thief, stove fire · Glowcap makes pricey Dragon King Tom Yum',
-'วิธีเล่น: แผนที่โลก': 'How to play: World map', 'เลือกด่าน (ตอนนี้เปิดด่าน 1)': 'Pick a stage (stage 1 open now)',
-'เลือก/ถอดลูกทีม (พาได้ 2 คน)': 'Pick/drop crew (bring 2)', 'เริ่มลุยด่าน': 'Start the stage',
-'แตะหมุด ลูกทีม หรือปุ่มได้เลย': 'Tap pins, crew or buttons directly',
-'ดาว = อันดับการเคลียร์ · หัวใจ = ความลับที่เจอ (ห้องลับ + ดรอปลับบอส)': 'Stars = clear rank · Hearts = secrets found (secret room + boss drop)',
-'วิธีเล่น: ห้องปรุงยา & ตีเหล็ก': 'How to play: Alchemy & Forge',
-'เปลี่ยนหมวด: อาวุธ & ชุด / อาหารสวรรค์ / เครื่องใช้': 'Change tab: Gear / Heavenly Food / Tools',
-'ปรุง (Cook) หรือ คราฟต์ (Craft)': 'Cook or Craft', 'แตะสูตร แล้วแตะปุ่ม [Craft / Cook]': 'Tap a recipe, then [Craft / Cook]',
-'Shroom Crown → Essence → ต้มยำกุ้งพญามังกร (บัฟ) หรือ Master Chef Set (ตำนาน)': 'Shroom Crown → Essence → Dragon King Tom Yum (buff) or Master Chef Set (legendary)',
-'กด Enter / J / แตะ เพื่อปิด · กด H เปิดหน้านี้ได้ทุกเมื่อ': 'Enter / J / tap to close · H opens this any time',
-"อันดับ (Ranking)": "Ranking",
-"คะแนนด่าน #": "Stage # Score",
-"เวลาผ่านด่าน #": "Stage # Best Time",
-"รายได้ร้านในคืนเดียว": "Best Night Takings",
-"สัปดาห์นี้": "This week",
-"ตลอดกาล": "All time",
-"กำลังโหลด...": "Loading...",
-"ยังไม่มีใครติดอันดับ เป็นคนแรกเลย!": "No one on the board yet. Be the first!",
-"ระบบอันดับออนไลน์ยังไม่เปิด หรือไม่ได้ต่อเน็ต": "Online ranking is closed, or you are offline",
-"คุณ:": "You:",
-"(ยังไม่ได้ตั้งชื่อ)": "(no name yet)",
-"อันดับที่ #": "Rank #",
-"เปลี่ยนชื่อ (N)": "Rename (N)",
-"เปลี่ยนชื่อแล้ว": "Name changed",
-"ชื่อนี้ใช้ไม่ได้": "Name not allowed",
-"ต่อไม่ได้ ลองใหม่": "Offline, try again",
-"ชื่อนี้ใช้ไม่ได้ (2-16 ตัวอักษร ห้ามคำหยาบ)": "Name not allowed (2-16 letters, no rude words)",
-"ต่อระบบอันดับไม่ได้ ลองใหม่อีกครั้ง": "Could not reach the ranking. Try again",
-"ชื่อที่จะแสดงบนตารางอันดับ (2-16 ตัวอักษร)": "Name to show on the ranking (2-16 letters)",
-"ตั้งชื่อที่จะแสดงบนตารางอันดับ": "Your name on the ranking",
-"ใช้ได้ 2-16 ตัวอักษร": "2-16 letters",
-"ยกเลิก": "Cancel",
-"แตะเพื่อพิมพ์ชื่อ": "Tap to type your name",
-"กำลังส่งคะแนนขึ้นตารางอันดับ...": "Sending your score to the ranking...",
-"คะแนนรอบนี้ไม่ผ่านการตรวจ จึงไม่ขึ้นตารางอันดับ": "This run failed the score check, so it is not ranked",
-"อันดับสัปดาห์นี้: คะแนนที่ # · เวลาที่ #": "This week: score rank # · time rank #",
-"อันดับสัปดาห์นี้: คะแนนที่ # · เวลาที่ # · สถิติใหม่!": "This week: score rank # · time rank # · New record!",
-"อันดับรายได้สัปดาห์นี้: ที่ #": "This week's takings: rank #",
-"อันดับรายได้สัปดาห์นี้: ที่ # · สถิติใหม่!": "This week's takings: rank # · New record!",
-"ตาราง": "Board",
-"ช่วงเวลา": "Period",
-"เปลี่ยนชื่อ": "Rename", "อันดับ": "Ranking",
-};
 
 let LANG = (() => { try { const q = new URLSearchParams(location.search).get('lang'); if (q) return q === 'en' ? 'en' : 'th'; const v = localStorage.getItem('tk-lang'); if (v === 'en' || v === 'th') return v; } catch (e) {} return /^th/i.test(navigator.language || 'th') ? 'th' : 'en'; })();
 const _TH = /[฀-๿]/, _trC = new Map(); let _trF = null;
@@ -261,23 +27,6 @@ function tr(s) {
   if (r === undefined) { if (!_trF) _trF = Object.keys(I18N_EN).filter(k => !k.includes('#')).sort((a, b) => b.length - a.length); r = s; for (const f of _trF) if (r.includes(f)) r = r.split(f).join(I18N_EN[f]); if (_TH.test(r)) (window.__trMiss = window.__trMiss || new Set()).add(s); }
   _trC.set(s, r); return r;
 }
-const TOUCH_TXT = {
-  'กด C เรียกเชฟกอร์นมาทุบกำแพงร้าว!': 'กดปุ่มลูกทีม เรียกเชฟกอร์นมาทุบกำแพงร้าว!',
-  'กด P หรือ Enter เพื่อเล่นต่อ': 'แตะที่จอเพื่อเล่นต่อ',
-  'กดลูกศร หรือคลิกปุ่มลูกศร ให้ตรงตอนโน้ตเข้าวงกลม!': 'ดันจอยหรือแตะปุ่มลูกศร ให้ตรงตอนโน้ตเข้าวงกลม!',
-  'กด J หรือคลิกอีกครั้งให้หยุดในแถบทอง': 'แตะปุ่มดาบอีกครั้งให้หยุดในแถบทอง',
-  'ขี้เมาอาละวาด! อาเธอร์ (1) หรือ K พิณ': 'ขี้เมาอาละวาด! แตะโต๊ะให้อาเธอร์ไปเคาะ หรือใช้สกิลพิณ',
-  'โจรบุกปล้นร้าน! สลับเป็นอาเธอร์ (1) แล้วกด K': 'โจรบุกปล้นร้าน! สลับเป็นอาเธอร์ แล้วกดปุ่มสกิล',
-  '↑↓ เลือก · Enter ตกลง · Esc เล่นต่อ': 'แตะเพื่อเลือก',
-  'Enter / แตะ: ไปห้องปรุงยา & ตีเหล็ก': 'แตะ: ไปห้องปรุงยา & ตีเหล็ก',
-  'ลุยเลย! (Enter)': 'ลุยเลย!',
-  'ขึ้น/ลง เลือก · ซ้าย/ขวา ปรับ · Enter เปิด/ปิด · Esc ปิด': 'แตะเพื่อเลือกและปรับ · แตะ X เพื่อปิด',
-  'กด Enter / แตะ เพื่อปิด': 'แตะเพื่อปิด',
-  'คลิก / แตะ / กด Enter เพื่อเริ่ม': 'แตะเพื่อเริ่ม',
-  'กด H หรือปุ่ม "วิธีเล่น" เพื่อดูปุ่มบังคับ': 'วิธีเล่นจะขึ้นตอนเริ่มเล่น · เปิดดูอีกได้จากปุ่มหยุด',
-  'Enter / แตะ: เริ่มกะดึก': 'แตะ: เริ่มกะดึก',
-  'Enter / tap: retry from the boss': 'Tap: retry from the boss', 'Enter / tap: try again': 'Tap: try again',
-};
 let tpOnTxt = false;
 function touchT(s) { if (!tpOnTxt || typeof s !== 'string') return s; const r = TOUCH_TXT[s]; if (r !== undefined) return r; return s.startsWith('J/คลิก: ') ? 'แตะ: ' + s.slice(8) : s; }
 { const ft = ctx.fillText.bind(ctx), mt = ctx.measureText.bind(ctx);
@@ -298,57 +47,7 @@ function track(name, params) { try { const p = Object.assign({ lang: LANG }, par
 // Talks to functions/api (Cloudflare Pages Function + D1). Same origin on the web (develop -> staging DB, main -> production DB);
 // the store apps (app:// or capacitor://) use production. Everything fails soft: with no network or no database NET.on
 // becomes false and the game shows its offline lines instead.
-const NET = (() => {
-  const base = /^https?:$/.test(location.protocol) ? '' : 'https://tavern-knights.pages.dev';
-  let st = {}; try { st = JSON.parse(localStorage.getItem('tk-net') || '{}') || {}; } catch (e) {}
-  const keep = () => { try { localStorage.setItem('tk-net', JSON.stringify(st)); } catch (e) {} };
-  const N = { on: null, name: st.name || '', boards: {}, msg: null, msgT: 0 };
-  const offline = j => { if (!j.error || j.status === 503) N.on = false; };
-  async function call(path, body) {
-    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null, to = setTimeout(() => ctl && ctl.abort(), 8000);
-    try {
-      const h = { 'Content-Type': 'application/json' }; if (st.token) h.Authorization = 'Bearer ' + st.token;
-      const r = await fetch(base + '/api/v1/' + path, { method: body ? 'POST' : 'GET', headers: h, body: body ? JSON.stringify(body) : undefined, signal: ctl ? ctl.signal : undefined, cache: 'no-store' });
-      const j = await r.json().catch(() => ({})); j.status = r.status;
-      if (r.status === 401 && st.token) { st.token = null; keep(); }
-      return j;
-    } catch (e) { return { ok: false, status: 0, error: 'network' }; } finally { clearTimeout(to); }
-  }
-  let acct = null;
-  function ensure() {
-    if (st.token) return Promise.resolve(true);
-    if (!acct) acct = call('auth/guest', {}).then(j => { acct = null; if (j.ok) { st.token = j.token; st.id = j.player.id; st.name = N.name = j.player.name; keep(); N.on = true; return true; } offline(j); return false; });
-    return acct;
-  }
-  N.start = mode => { const run = { id: null }; run.p = ensure().then(ok => ok ? call('runs/start', { mode, v: '1.0.1' }) : null).then(j => { if (j && j.ok) { run.id = j.run.id; N.on = true; } else if (j) offline(j); return run.id; }); return run; };
-  N.finish = (run, data) => {
-    const out = { state: 'send' };
-    if (!run || N.on === false) { out.state = 'off'; return out; }
-    run.p.then(id => id ? call('runs/finish', Object.assign({ run: id }, data)) : null).then(j => {
-      if (!j || !j.ok) { out.state = 'off'; return; }
-      out.state = j.accepted ? 'ok' : 'rejected'; out.boards = j.boards || {}; N.stale();
-    });
-    return out;
-  };
-  try { const c = JSON.parse(localStorage.getItem('tk-boards') || '{}'); for (const k in c) N.boards[k] = { state: 'ok', at: 0, rows: c[k].rows || [], me: c[k].me || null }; } catch (e) {}
-  N.stale = () => { for (const k in N.boards) if (N.boards[k].state !== 'load') N.boards[k].at = 0; };
-  N.board = (b, period) => {
-    const k = b + '|' + period; let e = N.boards[k];
-    if (e && (e.state === 'load' || Date.now() - e.at < 30000)) return e;
-    e = N.boards[k] = { state: 'load', at: Date.now(), rows: e ? e.rows : [], me: e ? e.me : null };
-    call('boards/' + b + '?period=' + period + '&limit=8').then(j => { if (j.ok) { e.state = 'ok'; e.rows = j.rows; e.me = j.me; N.on = true; try { const c = {}; for (const q in N.boards) if (N.boards[q].rows.length) c[q] = { rows: N.boards[q].rows, me: N.boards[q].me }; localStorage.setItem('tk-boards', JSON.stringify(c)); } catch (x) {} } else { e.state = 'off'; offline(j); } e.at = Date.now(); });
-    return e;
-  };
-  N.rename = v => {
-    for (const k in keys) keys[k] = false;
-    if (v == null || !v.trim()) return;
-    ensure().then(ok => ok ? call('me/name', { name: v }) : null).then(j => {
-      if (j && j.ok) { st.name = N.name = j.player.name; keep(); N.stale(); N.msg = 'ok'; } else N.msg = j && j.error === 'bad_name' ? 'bad' : 'off';
-      N.msgT = Date.now();
-    });
-  };
-  return N;
-})();
+const NET = createNet(() => { for (const k in keys) keys[k] = false; });
 const NET_BOARDS = [['stage1_score', 'คะแนนด่าน 1'], ['stage1_time', 'เวลาผ่านด่าน 1'], ['tavern_gold', 'รายได้ร้านในคืนเดียว']];
 function netVal(b, v) { if (b === 'stage1_time') { const t = v / 1000, m = Math.floor(t / 60), s = t - m * 60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(1); } return b === 'tavern_gold' ? v + 'g' : String(v); }
 // one line for the results screens: null when offline (the screen keeps its own line)
@@ -684,15 +383,11 @@ function shadeHex(hex, k) {
   const f = v => Math.round(k > 0 ? v + (255 - v) * k : v * (1 + k));
   return '#' + [f(r), f(gg), f(b)].map(v => clamp(v, 0, 255).toString(16).padStart(2, '0')).join('');
 }
-const HERO_ATLAS_SRC="art/689f8264aa38.webp";
-const HERO_ATLAS={"arthur_stand": [0, 0, 200, 120], "arthur_idle2": [200, 0, 200, 120], "arthur_jump": [400, 0, 200, 120], "arthur_run1": [600, 0, 200, 120], "arthur_run2": [800, 0, 200, 120], "arthur_run3": [1000, 0, 200, 120], "arthur_run4": [1200, 0, 200, 120], "arthur_atk1": [1400, 0, 200, 120], "arthur_atk2": [0, 120, 200, 120], "arthur_atk3": [200, 120, 200, 120], "arthur_spec": [400, 120, 200, 120], "arthur_dead": [600, 120, 200, 120], "arthur_head": [800, 120, 52, 44], "rosemary_stand": [852, 120, 200, 120], "rosemary_idle2": [1052, 120, 200, 120], "rosemary_jump": [1252, 120, 200, 120], "rosemary_run1": [0, 240, 200, 120], "rosemary_run2": [200, 240, 200, 120], "rosemary_run3": [400, 240, 200, 120], "rosemary_run4": [600, 240, 200, 120], "rosemary_atk1": [800, 240, 200, 120], "rosemary_atk2": [1000, 240, 200, 120], "rosemary_spec": [1200, 240, 200, 120], "rosemary_head": [1400, 240, 52, 44], "percival_stand": [0, 360, 200, 120], "percival_idle2": [200, 360, 200, 120], "percival_jump": [400, 360, 200, 120], "percival_run1": [600, 360, 200, 120], "percival_run2": [800, 360, 200, 120], "percival_run3": [1000, 360, 200, 120], "percival_run4": [1200, 360, 200, 120], "percival_atk1": [1400, 360, 200, 120], "percival_spec": [0, 480, 200, 120], "percival_dead": [200, 480, 200, 120], "percival_head": [400, 480, 52, 44], "bowl": [452, 480, 120, 102]};
 /* Hero frames are cut from the user's character sheet (atlas cells 200x120 px = 100x60 world units, feet at 50,58.5). */
 const heroAtlas = new Image(); let heroReady = false;
 heroAtlas.onload = () => { heroReady = true; for (const k of [...spriteCache.keys()]) if (/^(kn|head)/.test(k)) spriteCache.delete(k); };
 heroAtlas.src = HERO_ATLAS_SRC;
 /* hi-res hero frames from the user's per-knight Gemini sheets (E1-E3), 4 px per world unit, same cell layout as the atlas */
-const HERO_HI_SRC = {"arthur_stand": "art/06c848fe0a22.webp", "arthur_idle2": "art/f54a61e45172.webp", "arthur_run1": "art/d103df37cc09.webp", "arthur_run2": "art/ac7fb1099ba6.webp", "arthur_run3": "art/d103df37cc09.webp", "arthur_run4": "art/ac7fb1099ba6.webp", "arthur_jump": "art/6c4cce0bf846.webp", "arthur_atk1": "art/bd7096c1c0c1.webp", "arthur_atk2": "art/e3137ca66386.webp", "arthur_atk3": "art/412cee0ecc51.webp", "arthur_spec": "art/4d0862ffac8d.webp", "arthur_dead": "art/6e880c2d7090.webp", "arthur_head": "art/ecfbc9eaad64.webp", "rosemary_stand": "art/37aa4d4e44b4.webp", "rosemary_idle2": "art/97358ffa9202.webp", "rosemary_run1": "art/f2f1e550485c.webp", "rosemary_run2": "art/ff6f7b78a147.webp", "rosemary_run3": "art/7f67d14469ab.webp", "rosemary_run4": "art/416cd4469bd2.webp", "rosemary_jump": "art/9b0129000b92.webp", "rosemary_atk1": "art/8888cd1f3f75.webp", "rosemary_atk2": "art/2b824c58c597.webp", "rosemary_atk3": "art/a013df411c98.webp", "rosemary_spec": "art/0cdd9d727127.webp", "rosemary_dead": "art/106a395106e2.webp", "rosemary_head": "art/b9941fed2618.webp", "percival_stand": "art/2880a045d900.webp", "percival_idle2": "art/2880a045d900.webp", "percival_run1": "art/fbdbd7fd3474.webp", "percival_run2": "art/2b3200d4e528.webp", "percival_run3": "art/19e0382ecc32.webp", "percival_run4": "art/2b3200d4e528.webp", "percival_jump": "art/2076edbe904a.webp", "percival_atk1": "art/1b614503ed5a.webp", "percival_atk2": "art/404d86490f83.webp", "percival_atk3": "art/69e6d6159f84.webp", "percival_spec": "art/5696ded86c74.webp", "percival_dead": "art/5928ccd840a5.webp", "percival_head": "art/bce6f377e2ea.webp"};
-Object.assign(HERO_HI_SRC, {"arthur2_stand": "art/dea4974beee0.webp", "arthur2_idle2": "art/2020d736a93c.webp", "arthur2_run1": "art/83d893280c19.webp", "arthur2_run2": "art/b4b08e93bd4c.webp", "arthur2_run3": "art/9c0d96dcc7e8.webp", "arthur2_run4": "art/b4b08e93bd4c.webp", "arthur2_jump": "art/7c471d7d58c2.webp", "arthur2_atk1": "art/7fa4d1163ddb.webp", "arthur2_atk2": "art/8ee2682a6734.webp", "arthur2_atk3": "art/abf200ce579c.webp", "arthur2_spec": "art/3724f6dfcb63.webp", "arthur2_dead": "art/dbee00f2101f.webp", "arthur2_head": "art/c30f55a39719.webp", "arthur3_stand": "art/24f7157dd4f8.webp", "arthur3_idle2": "art/cc139d034af8.webp", "arthur3_run1": "art/1cb91e0dbace.webp", "arthur3_run2": "art/4eaedc2dfbd3.webp", "arthur3_run3": "art/e10ed2331f30.webp", "arthur3_run4": "art/4eaedc2dfbd3.webp", "arthur3_jump": "art/10ad53c15394.webp", "arthur3_atk1": "art/b183582dd749.webp", "arthur3_atk2": "art/bce4093e1402.webp", "arthur3_atk3": "art/a5d7be1c2582.webp", "arthur3_spec": "art/e3dd97756c6e.webp", "arthur3_dead": "art/a11737cfa5d2.webp", "arthur3_head": "art/e4d02d9ca348.webp", "arthur4_stand": "art/efd9c022cf7d.webp", "arthur4_idle2": "art/efd9c022cf7d.webp", "arthur4_run1": "art/83a8b86f763d.webp", "arthur4_run2": "art/54ee5043c83b.webp", "arthur4_run3": "art/83a8b86f763d.webp", "arthur4_run4": "art/54ee5043c83b.webp", "arthur4_jump": "art/d0e85749e3a2.webp", "arthur4_atk1": "art/55f4a000d34d.webp", "arthur4_atk2": "art/8f48dfcbd9df.webp", "arthur4_atk3": "art/85ee034a6092.webp", "arthur4_spec": "art/0232da02ce3e.webp", "arthur4_dead": "art/652ff6d95c6a.webp", "arthur4_head": "art/39981ae658c7.webp", "arthur5_stand": "art/2122d44f9919.webp", "arthur5_idle2": "art/2122d44f9919.webp", "arthur5_run1": "art/512b1d0c4893.webp", "arthur5_run2": "art/2099746c4518.webp", "arthur5_run3": "art/8ab3b44f6493.webp", "arthur5_run4": "art/901825f617e7.webp", "arthur5_jump": "art/8ae4c71aeb88.webp", "arthur5_atk1": "art/5637149a8930.webp", "arthur5_atk2": "art/60a340d0e2d4.webp", "arthur5_atk3": "art/63c7e08ba0b5.webp", "arthur5_spec": "art/07ab264c5025.webp", "arthur5_dead": "art/c870119aa480.webp", "arthur5_head": "art/d15f9f5cd9c2.webp", "rosemary2_stand": "art/9d6f0c59feae.webp", "rosemary2_idle2": "art/9d6f0c59feae.webp", "rosemary2_run1": "art/17b52d1dd910.webp", "rosemary2_run2": "art/af8896a6c043.webp", "rosemary2_run3": "art/ba42fd4db1d5.webp", "rosemary2_run4": "art/480725af69f4.webp", "rosemary2_jump": "art/d96311e37317.webp", "rosemary2_atk1": "art/cbd5026c5df5.webp", "rosemary2_atk2": "art/79a92f2bba9f.webp", "rosemary2_atk3": "art/e00f928fc177.webp", "rosemary2_spec": "art/a5d5784d1ac9.webp", "rosemary2_dead": "art/77a3b58ab11e.webp", "rosemary2_head": "art/048e148394c3.webp", "rosemary3_stand": "art/28bbdc169136.webp", "rosemary3_idle2": "art/f8188a35c366.webp", "rosemary3_run1": "art/0e478646cba1.webp", "rosemary3_run2": "art/63da26d244b7.webp", "rosemary3_run3": "art/38e18ccec490.webp", "rosemary3_run4": "art/199c4428304c.webp", "rosemary3_jump": "art/4dd2e5a6ccb4.webp", "rosemary3_atk1": "art/e7e1a09c685e.webp", "rosemary3_atk2": "art/1fbf9b9f3434.webp", "rosemary3_atk3": "art/07eed0a7f29b.webp", "rosemary3_spec": "art/c194255e2d8b.webp", "rosemary3_dead": "art/03c3632c6373.webp", "rosemary3_head": "art/e1334fc47e2c.webp", "rosemary4_stand": "art/fc2150e3bdde.webp", "rosemary4_idle2": "art/fc2150e3bdde.webp", "rosemary4_run1": "art/48a24c2717a7.webp", "rosemary4_run2": "art/d2741ee1d2dd.webp", "rosemary4_run3": "art/162b6e4ff9dc.webp", "rosemary4_run4": "art/93c1a1e8efeb.webp", "rosemary4_jump": "art/e91e676b9815.webp", "rosemary4_atk1": "art/6935219e5346.webp", "rosemary4_atk2": "art/00a8f99e9997.webp", "rosemary4_atk3": "art/f5017ba712f9.webp", "rosemary4_spec": "art/3b4d1a07b887.webp", "rosemary4_dead": "art/5010b78d4ae1.webp", "rosemary4_head": "art/25bcf1b96d48.webp", "rosemary5_stand": "art/77c74762ca5b.webp", "rosemary5_idle2": "art/77c74762ca5b.webp", "rosemary5_run1": "art/6f0afa4cf3d9.webp", "rosemary5_run2": "art/478e2ca570d9.webp", "rosemary5_run3": "art/440329a7de6e.webp", "rosemary5_run4": "art/52323a7b164e.webp", "rosemary5_jump": "art/820f28765c60.webp", "rosemary5_atk1": "art/20b12e112451.webp", "rosemary5_atk2": "art/09cd7d9449c9.webp", "rosemary5_atk3": "art/96f39c9473b5.webp", "rosemary5_spec": "art/10a124c545ef.webp", "rosemary5_dead": "art/ac752e5f8208.webp", "rosemary5_head": "art/e54967f7cc08.webp", "percival2_stand": "art/6de9f5272c70.webp", "percival2_idle2": "art/6de9f5272c70.webp", "percival2_run1": "art/bb3fac20cb91.webp", "percival2_run2": "art/028aa087ed87.webp", "percival2_run3": "art/92aaf026019a.webp", "percival2_run4": "art/255915e4bdfd.webp", "percival2_jump": "art/2cc1ad4a231c.webp", "percival2_atk1": "art/20b632c97698.webp", "percival2_atk2": "art/0d5f6d89cd5c.webp", "percival2_atk3": "art/b8dc08eaf25f.webp", "percival2_spec": "art/8315221a7cc2.webp", "percival2_dead": "art/31ab7bb93e68.webp", "percival2_head": "art/3b4248c48a74.webp", "percival3_stand": "art/0aed31fb1fab.webp", "percival3_idle2": "art/0aed31fb1fab.webp", "percival3_run1": "art/619109891447.webp", "percival3_run2": "art/2f8571dc129e.webp", "percival3_run3": "art/a0d51e0837f4.webp", "percival3_run4": "art/ccf6cfeb25a1.webp", "percival3_jump": "art/a15889d93d6e.webp", "percival3_atk1": "art/4c5c454b29b5.webp", "percival3_atk2": "art/dd9b1039e151.webp", "percival3_atk3": "art/9f29dca377fd.webp", "percival3_spec": "art/3bbc941019bd.webp", "percival3_dead": "art/595661e454f1.webp", "percival3_head": "art/8f9584ef90b4.webp", "percival4_stand": "art/6815a26dadde.webp", "percival4_idle2": "art/6815a26dadde.webp", "percival4_run1": "art/feb143b98afc.webp", "percival4_run2": "art/7c42ff820afe.webp", "percival4_run3": "art/5dad9eb7fc51.webp", "percival4_run4": "art/f74f18b803b4.webp", "percival4_jump": "art/e8e624096b7e.webp", "percival4_atk1": "art/0beff53f5f83.webp", "percival4_atk2": "art/cc7ccda2e412.webp", "percival4_atk3": "art/a932a9a83205.webp", "percival4_spec": "art/d482926083d7.webp", "percival4_dead": "art/1ebfad5ebe40.webp", "percival4_head": "art/a8a36f7ffc49.webp", "percival5_stand": "art/590aa3c8b774.webp", "percival5_idle2": "art/590aa3c8b774.webp", "percival5_run1": "art/1810493f8207.webp", "percival5_run2": "art/69bef1442a51.webp", "percival5_run3": "art/b123ddcade32.webp", "percival5_run4": "art/b048d465f0df.webp", "percival5_jump": "art/4c54bf6aebb1.webp", "percival5_atk1": "art/bf977badb320.webp", "percival5_atk2": "art/ee704d8eca7d.webp", "percival5_atk3": "art/202b9dcde076.webp", "percival5_spec": "art/d7d45f6b4c53.webp", "percival5_dead": "art/0b7c573dab5f.webp", "percival5_head": "art/25b3a6d4ff6d.webp"}); /* gear looks: <id><look>_<frame>, look 2 iron, 3 dragon, 4 royal, 5 master chef */
 const HERO_HI = {}; let heroHiReady = false;
 function gearLook() { return save.up.legend ? 5 : 1 + Math.min(3, Math.max(save.up.blade || 0, save.up.stew || 0)); }
 function gearId(id) { if (!heroHiReady) return id; if (save.up.legend && HERO_HI[id + '5_stand']) return id + '5'; for (let l = 1 + Math.min(3, Math.max(save.up.blade || 0, save.up.stew || 0)); l > 1; l--) if (HERO_HI[id + l + '_stand']) return id + l; return id; }
@@ -857,7 +552,6 @@ const PAINTED_ENEMY = {
     }
   }),
 };
-const ENEMY_ART_SRC={"boss_idle": "art/75ef005e2128.webp", "boss_stomp": "art/5fbe838eda1a.webp", "boss_fists": "art/c1b7e426a158.webp", "boss_slam": "art/4cdc2626734b.webp", "boss_spit": "art/f42a86a34fca.webp", "boss_dead": "art/71b58c52b949.webp", "moth_up": "art/99228046f73c.webp", "moth_down": "art/80a8f6ddd1e2.webp", "moth_down2": "art/6f15639c754d.webp", "moth_hurt": "art/86d11c6847e6.webp", "mimic_sleep": "art/3e06801ff9e9.webp", "mimic_wake": "art/3c278279e5c4.webp", "mimic_mouth": "art/3843b6e9a209.webp", "mimic_hop": "art/63f110d7b395.webp", "walker_idle": "art/1d66222b82a1.webp", "walker_w1": "art/0031f48f5f66.webp", "walker_w2": "art/c02b941eead2.webp", "walker_hurt": "art/fb5f6e83fe44.webp", "puff_idle": "art/c7e235f505a8.webp", "puff_walk": "art/afe474c62429.webp", "puff_ball": "art/f20ba449da5c.webp", "puff_inflate": "art/c37fa948ff02.webp", "puff_cloud": "art/cc0a84924379.webp"};
 /* enemy + boss frames cut from the user's Gemini sheet (faces right; l = right-facing, r = flipped) */
 const ENEMY_ART = {}; let enemyArtReady = false;
 (() => { const ks = Object.keys(ENEMY_ART_SRC); let n = ks.length; ks.forEach(k => { const im = new Image(); im.onload = () => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; c.getContext('2d').drawImage(im, 0, 0); c.lw = im.width / RES; c.lh = im.height / RES; ENEMY_ART[k] = { l: c, r: flip(c) }; if (--n === 0) enemyArtReady = true; }; im.src = ENEMY_ART_SRC[k]; }); })();
@@ -877,18 +571,15 @@ function enemyArtFor(e, frame) {
   const spr = fl ? { l: recol(ENEMY_ART[k].l, fl), r: recol(ENEMY_ART[k].r, fl) } : ENEMY_ART[k];
   return { key: k, spr, hurt: /hurt|ball/.test(k) };
 }
-const CREW_ART_SRC={"gorn_idle": "art/c90043622a84.webp", "gorn_chop": "art/0bda727062c3.webp", "cust_dwarf": "art/c102a872d5b6.webp", "cust_mug": "art/22074b9c9c1f.webp", "cust_elf": "art/587f0d3bb0d2.webp", "cust_archer": "art/000068ed4e9e.webp", "cust_merchant": "art/c0812131f573.webp", "cust_bard": "art/de1f914458f3.webp", "cust_noble": "art/3551cc2ed4bd.webp", "cust_lady": "art/b3d2646a6d72.webp", "rowdy": "art/706ae2a86ff2.webp", "vip": "art/122c310616f6.webp", "robber_a": "art/7d25217a61db.webp", "robber_b": "art/c9a2a79c6893.webp", "face_gorn": "art/cacd056f7347.webp", "face_bart": "art/e0c680b8d956.webp", "face_pixie": "art/e00cdaeb7edf.webp", "face_mole": "art/0a0594b996fe.webp"};
 /* crew, customers and robber cut from the user's Gemini sheet B (all face right: l = native, r = flipped) */
 const CREW_ART = {}; let crewArtReady = false;
 (() => { const ks = Object.keys(CREW_ART_SRC); let n = ks.length; ks.forEach(k => { const im = new Image(); im.onload = () => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; c.getContext('2d').drawImage(im, 0, 0); c.lw = im.width / RES; c.lh = im.height / RES; CREW_ART[k] = { l: c, r: flip(c) }; if (--n === 0) crewArtReady = true; }; im.src = CREW_ART_SRC[k]; }); })();
-const FX_ART_SRC={"slash": "art/12829c42bde2.webp", "crescent": "art/3e3d98d3206c.webp", "flame": "art/43de0bc3498e.webp", "star": "art/829f769a8b7b.webp", "tomyum": "art/38948f2a721c.webp", "meteor": "art/8c8fe07d8b16.webp", "boom": "art/802d70083fb8.webp", "dust": "art/1da7b2f1021c.webp", "tip": "art/e17858243ed6.webp", "boil": "art/2506aba9af43.webp", "wave": "art/4526973d512e.webp", "hit": "art/e110c2a2b577.webp", "poison": "art/dd5563be9ccd.webp", "wall_ok": "art/19e45df9e780.webp", "wall_crack": "art/7153fc9bd96b.webp", "rubble": "art/c1f0789c2f2d.webp", "chest": "art/21868f4f8e05.webp", "chest_open": "art/7bffbcf0c249.webp", "chest_gem": "art/92f35ea4ea79.webp", "stove": "art/3c214057ee3d.webp", "sink": "art/386b5cb1c4d6.webp", "taps": "art/c6eea071c9ae.webp", "cauldron": "art/055b316f97a6.webp", "anvil": "art/faeb13208a7e.webp", "b_spark": "art/d54c9cc636e6.webp", "b_small": "art/1bb86c24759f.webp", "b_big": "art/5a6a4277036a.webp", "b_smoke": "art/df1c1b86f187.webp", "fire": "art/aec7977a44fb.webp", "icebolt": "art/3f4158abf723.webp"};
 /* attack FX, wall, chests and tavern props cut from the user's Gemini sheet C (native art faces right: n = native, f = flipped) */
 const FX_ART = {}; let fxArtReady = false;
 (() => { const ks = Object.keys(FX_ART_SRC); let n = ks.length; ks.forEach(k => { const im = new Image(); im.onload = () => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; c.getContext('2d').drawImage(im, 0, 0); c.lw = im.width / RES; c.lh = im.height / RES; FX_ART[k] = { n: c, f: flip(c) }; if (--n === 0) fxArtReady = true; }; im.src = FX_ART_SRC[k]; }); })();
 function fxImg(k, face = 1) { const a = FX_ART[k]; return a ? (face < 0 ? a.f : a.n) : null; }
 function fxC(k, cx, cy, face = 1, s = 1) { const im = fxImg(k, face); if (!im) return false; const w = LW(im) * s, h = LH(im) * s; ctx.drawImage(im, Math.round(cx - w / 2), Math.round(cy - h / 2), w, h); return true; }
 function fxB(k, cx, by, face = 1, s = 1) { const im = fxImg(k, face); if (!im) return false; const w = LW(im) * s, h = LH(im) * s; ctx.drawImage(im, Math.round(cx - w / 2), Math.round(by - h), w, h); return true; }
-const UI_ART_SRC={"icons": {"chili": ["art/513a479ba1d3.webp", "art/aeecd899e485.webp"], "glowcap": ["art/2100aa268b25.webp", "art/ab601985c7f6.webp"], "coin": ["art/d0225e39a95b.webp", "art/793df7fc9418.webp"], "bag": ["art/4fd96ff91644.webp", "art/6b41ce314003.webp"], "chest": ["art/e52008b0da78.webp", "art/9ad3b17fe256.webp"], "ironchest": ["art/7e8230ca3bdc.webp", "art/7798eb5dcad8.webp"], "truffle": ["art/6b8209ef698d.webp", "art/cdc9aa19e1af.webp"], "sword": ["art/ba5a88fdd76b.webp", "art/4c1b37d84f42.webp"], "sword_fire": ["art/41cf174a47d6.webp", "art/a49659e360ac.webp"], "sword_gold": ["art/5e560fcda323.webp", "art/d2de4441406f.webp"], "staff_wood": ["art/e7e9ba4b6809.webp", "art/b0777dc957fa.webp"], "staff_jade": ["art/5e4a21191131.webp", "art/9dcc1d3010a5.webp"], "staff_moon": ["art/5be5f7e07ecc.webp", "art/eeb012cc0cce.webp"], "ember": ["art/3cc96cf4901a.webp", "art/e68b2aba5419.webp"], "crown": ["art/f9c804f35da3.webp", "art/99a9bc6ce2cd.webp"], "beer": ["art/28d39ede963c.webp", "art/5b504b2c348a.webp"], "bowl": ["art/62f1ad4fbec4.webp", "art/e78174948a44.webp"], "bowl2": ["art/89c8a60f1e12.webp", "art/a2f6f33f0f58.webp"], "crystal": ["art/ab31563c9cd7.webp", "art/81afde6e541e.webp"], "salt": ["art/5656002627ce.webp", "art/fa8cf186a454.webp"], "shield_wood": ["art/aadac84ba6ca.webp", "art/39d952631a19.webp"], "shield_steel": ["art/6b81e02ce78f.webp", "art/c5d5bf067b09.webp"], "chefhat": ["art/5bab3fd979f4.webp", "art/435224a57109.webp"], "chefcoat": ["art/3f05c5ee9e9f.webp", "art/37585b85db1a.webp"], "spoon": ["art/bc351c5b635b.webp", "art/488080744d0f.webp"], "masterset": ["art/524ffe4e6d95.webp", "art/0d0aa4e630ca.webp"], "tentacle": ["art/2b24eeb1b647.webp", "art/c41ef0463297.webp"], "milk": ["art/d16acf9b6fcf.webp", "art/218a9b83e984.webp"], "heart": ["art/1dd1a1db4c14.webp", "art/5ad65ab530a8.webp"], "happy": ["art/d1e5a5f18dac.webp", "art/1a243998eb0f.webp"], "angry": ["art/e03f59366877.webp", "art/a232cbd6c486.webp"], "alert": ["art/679d70d51fbd.webp", "art/6704d233fed8.webp"], "lock": ["art/a34cfe4cd7ad.webp", "art/fb06c901d351.webp"], "skull": ["art/561a337b3609.webp", "art/30085e64c62d.webp"], "star": ["art/d4302180b5ff.webp", "art/756796dfd9d4.webp"], "star_empty": ["art/2cbe197c4aaf.webp", "art/1b41e708e760.webp"], "heart_full": ["art/d75f468d8f75.webp", "art/c17cd52387df.webp"], "heart_empty": ["art/33e3afbce049.webp", "art/9cb928fce51e.webp"], "flag_red": ["art/7f34d6996c53.webp", "art/02a34b717380.webp"], "flag_gold": ["art/9034676c257d.webp", "art/3c1b88dad134.webp"], "burst": ["art/8cb96aa110a8.webp", "art/4a8021fc9033.webp"]}, "big": {"ar_up": "art/fc5e9d8adc46.webp", "ar_down": "art/331290a1e7d4.webp", "ar_left": "art/7df5b2c3a9c8.webp", "ar_right": "art/0372e7c6b70c.webp", "ar_silver": "art/4213276dd97d.webp", "bub_beer": "art/3f24e2506648.webp", "bub_bowl": "art/481cb509c537.webp", "bub_note": "art/dab6ab50e68b.webp", "bust_gorn": "art/b50143f38d01.webp", "bust_bart": "art/ece74a782f2c.webp", "bust_pixie": "art/cf3dedc27e63.webp", "bust_mole": "art/f727dfb2a778.webp", "pointer": "art/b3785fecb1df.webp", "frame_blue": "art/093efa188024.webp", "frame_dark": "art/c5ead8f134cf.webp", "dialog": "art/b8436e571fe0.webp"}};
 /* item icons, tavern/map icons, bar frames, dialog box and crew busts cut from the user's Gemini sheet D */
 const UI_ICON = {}, UI_BIG = {}; let uiArtReady = false;
 (() => {
