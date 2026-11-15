@@ -20,11 +20,12 @@ npm run typecheck    # server TypeScript check
 
 ## ไฟล์ / Files
 
-กำลังย้ายเป็น Angular client-server ทีละเฟส (เฟส 1-2 เสร็จ: โครง Angular + API TypeScript; เฟส 3 เริ่มแล้ว: โค้ดเกมอยู่ใน bundle ของ Angular)
+เป็น Angular client-server แล้ว: โครง Angular + API TypeScript, โค้ดเกมแยกเป็นโมดูล TypeScript ที่มี type ครบ, หน้าเนื้อหา SEO ทำเป็น Angular และ prerender เป็น HTML ตอน build
 
 - `client/` Angular app (หน้าเกม). `client/src/index.html` = head/meta/SEO + หน้าจอโหลด, `client/src/app/play/` = markup + CSS ของจอเกม
-- `client/src/game/legacy-game.ts` โค้ดเกม เป็นโมดูล TypeScript ที่ Angular bundle เป็น chunk แยก (ยังเป็นไฟล์เดียว จะแยกเป็นโมดูลทีละฉากต่อไป)
-- `client/public/` ไฟล์ static: `art/` รูป, `audio/` เพลง, `sfx/` เสียง, `img/`, `about.html`, `guide/`, `robots.txt`, `sitemap.xml`, `llms.txt`, `_headers`
+- `client/src/game/` โค้ดเกม (TypeScript, โหลดเป็น chunk แยก): `legacy-game.ts` ต่อทุกส่วนเข้าด้วยกันและวน loop, `scenes/` ฉากต่าง ๆ, `draw.ts` `sprites.ts` `touch.ts` `lang.ts` ฯลฯ
+- `client/src/app/pages/` หน้า about และคู่มือ (ไทย/อังกฤษ) เนื้อหาอยู่ในไฟล์ .html ของแต่ละหน้า, head/meta/JSON-LD อยู่ใน `page-data.ts`. ตอน build Angular prerender เป็น HTML ล้วนที่ URL เดิม (ไม่มี JS ของ Angular), ดู `app.routes.server.ts` และ `scripts/postbuild.mjs`
+- `client/public/` ไฟล์ static: `art/` รูป, `audio/` เพลง, `sfx/` เสียง, `img/`, `404.html`, `robots.txt`, `sitemap.xml`, `llms.txt`, `_headers`
 - `server/src/app.ts` API อันดับ (Hono + TypeScript), `server/migrations/` SQL ของ D1
 - `functions/api/[[route]].ts` จุดเข้า Cloudflare Pages Function ที่เรียก server
 - `shared/src/api.ts` types ของ API ที่ client และ server ใช้ร่วมกัน
