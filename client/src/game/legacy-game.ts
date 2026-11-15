@@ -1,5 +1,14 @@
-(() => {
-'use strict';
+// @ts-nocheck
+// Tavern Knights game code, moved from the old single-file index.html (migration phase 3).
+// It runs as one module for now; scenes are split out into typed modules one at a time.
+// Everything on screen is drawn on the canvas from the Gemini art sheets.
+
+let started = false;
+
+/** Starts the game on the #game canvas. Call once, after the game screen's markup is in the page. */
+export function startGame(): void {
+if (started) return;
+started = true;
 const W = 400, H = 225, GROUND = 190;
 const cv = document.getElementById('game');
 const ctx = cv.getContext('2d');
@@ -3376,4 +3385,4 @@ function frame(now) {
 }
 window.__tk = { sfxBuf: SFX_BUF, makeEnemy, get help() { return help; }, set help(v) { help = v; }, set scene(v) { scene = v; }, get scene() { return scene; }, get S() { return S; }, get T() { return T; }, startStage, startTavern, finishStage, endTavern, setLang, NET, titleAct, get results() { return results; }, set T(v) { T = v; }, set titlePanel(v) { titlePanel = v; }, set titleSel(v) { titleSel = v; }, set rank(v) { rkB = v[0]; rkP = v[1]; }, step: n => { for (let i = 0; i < n; i++) update(STEP); draw(); }, press, release, pressed, keys, save: () => save };
 (document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 1500))]) : Promise.resolve()).then(() => requestAnimationFrame(frame));
-})();
+}
