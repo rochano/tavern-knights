@@ -13,6 +13,10 @@ export interface SaveData {
   crew: string[];
   stages: Record<number, { stars: number; hearts: number }>;
   seen: Record<string, boolean>;
+  /** full version: outfit tier worn as a bought look (cosmetic), bought looks, gold/crate purchases already added */
+  look?: number;
+  owned?: string[];
+  applied?: string[];
   [k: string]: unknown;
 }
 

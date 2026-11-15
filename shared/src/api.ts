@@ -31,3 +31,47 @@ export type RunFinishResponse =
 export interface BoardRow { rank: number; name: string; value: number; me: boolean }
 export interface BoardResponse { ok: true; board: BoardId; period: Period; week: string; rows: BoardRow[]; me: { value: number; rank: number } | null }
 export interface HealthResponse { ok: true; db: boolean; week: string }
+
+/* ---------------------------------------------------------------- shop + AI advisor (full version only) */
+// One premium currency (working name "Dragon Coins"). Coins live only in the server ledger; the client never
+// decides a balance. Real-money coin packs come with in-app payments (phase 4); until then the develop site
+// can grant test coins.
+
+export type ShopKind = 'look' | 'gold' | 'crate';
+export interface ShopItem {
+  id: string;
+  kind: ShopKind;
+  /** Thai name; the client translates it with tr() */
+  th: string;
+  /** coins */
+  price: number;
+  /** a look can be bought once; gold and crates can be bought again */
+  once: boolean;
+  /** look: outfit tier art to wear (2-5); gold: gold added; crate: ingredients added */
+  look?: number;
+  gold?: number;
+  ing?: Record<string, number>;
+}
+
+/** The catalog. Looks are cosmetic only (they reuse the upgrade outfit art, no stats). */
+export const SHOP: ShopItem[] = [
+  { id: 'look2', kind: 'look', th: 'ชุดอัศวินเหล็ก', price: 20, once: true, look: 2 },
+  { id: 'look3', kind: 'look', th: 'ชุดเกราะมังกร', price: 40, once: true, look: 3 },
+  { id: 'look4', kind: 'look', th: 'ชุดราชองครักษ์', price: 60, once: true, look: 4 },
+  { id: 'look5', kind: 'look', th: 'ชุดมาสเตอร์เชฟ', price: 100, once: true, look: 5 },
+  { id: 'gold150', kind: 'gold', th: 'ถุงทอง 150g', price: 10, once: false, gold: 150 },
+  { id: 'crate1', kind: 'crate', th: 'ลังวัตถุดิบ', price: 15, once: false, ing: { glowcap: 2, truffle: 1, chili: 1 } },
+];
+
+/** Coins per advisor question: a short hint or a full coaching answer. */
+export const AI_COST = { hint: 1, coach: 5 } as const;
+export type AiMode = keyof typeof AI_COST;
+
+export interface Grant { id: string; item: string; at: number }
+export interface WalletResponse { ok: true; coins: number; owned: string[]; grants: Grant[]; ai: boolean; dev: boolean }
+export interface BuyRequest { item: string }
+export interface BuyResponse { ok: true; coins: number; grant: Grant }
+/** Player progress sent with a question so the advisor can give advice that fits. */
+export interface AiContext { lang: 'th' | 'en'; gold?: number; stages?: Record<string, { stars: number; hearts: number }>; up?: Record<string, number | boolean>; ing?: Record<string, number>; crew?: string[]; runs?: number }
+export interface AskRequest { mode: AiMode; question: string; ctx: AiContext }
+export interface AskResponse { ok: true; coins: number; answer: string }

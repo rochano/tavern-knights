@@ -4,9 +4,20 @@
 // a different database for Preview and Production. Without it every call answers 503 and the game hides the
 // online parts. Tables are created on first use (see SCHEMA); numbered files in server/migrations/ document them.
 import { Hono, type Context } from 'hono';
-import { BOARDS, LIMITS, type BoardId } from '@tk/shared';
+import { AI_COST, BOARDS, LIMITS, SHOP, type AiMode, type BoardId, type Grant } from '@tk/shared';
+import { AI_MODELS, ask, cleanCtx } from './advisor';
 
-export type Bindings = { DB?: D1Database };
+export type Bindings = {
+  DB?: D1Database;
+  /** Claude key for the advisor (Pages secret). Without it the advisor says it is closed and takes no coins. */
+  ANTHROPIC_API_KEY?: string;
+  /** most advisor answers per calendar month (UTC) for the whole game; default 3000 */
+  AI_MONTHLY_LIMIT?: string;
+  AI_MODEL_HINT?: string;
+  AI_MODEL_COACH?: string;
+  /** '1' lets this environment hand out free test coins (the develop site and localhost always can) */
+  DEV_COINS?: string;
+};
 type Env = { Bindings: Bindings };
 type Ctx = Context<Env>;
 interface PlayerRow { id: string; name: string; banned: number }
@@ -26,6 +37,18 @@ const SCHEMA = [
      value INTEGER NOT NULL, created_at INTEGER NOT NULL, PRIMARY KEY (board, period, player_id))`,
   `CREATE INDEX IF NOT EXISTS scores_rank ON scores (board, period, value)`,
   `CREATE TABLE IF NOT EXISTS rate (k TEXT PRIMARY KEY, n INTEGER NOT NULL, reset_at INTEGER NOT NULL)`,
+  // shop + advisor: every coin change is one ledger row; the balance is their sum
+  `CREATE TABLE IF NOT EXISTS coin_ledger (
+     id TEXT PRIMARY KEY, player_id TEXT NOT NULL, delta INTEGER NOT NULL, reason TEXT NOT NULL, ref TEXT, created_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS coin_ledger_player ON coin_ledger (player_id)`,
+  `CREATE TABLE IF NOT EXISTS owned_items (player_id TEXT NOT NULL, item TEXT NOT NULL, created_at INTEGER NOT NULL, PRIMARY KEY (player_id, item))`,
+  `CREATE TABLE IF NOT EXISTS grants (
+     id TEXT PRIMARY KEY, player_id TEXT NOT NULL, item TEXT NOT NULL, created_at INTEGER NOT NULL, claimed_at INTEGER)`,
+  `CREATE INDEX IF NOT EXISTS grants_player ON grants (player_id, claimed_at)`,
+  `CREATE TABLE IF NOT EXISTS ai_log (
+     id TEXT PRIMARY KEY, player_id TEXT NOT NULL, mode TEXT NOT NULL, cost INTEGER NOT NULL, model TEXT,
+     in_tok INTEGER, out_tok INTEGER, status TEXT NOT NULL, created_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS ai_log_time ON ai_log (created_at)`,
 ];
 
 let schemaReady = false;
@@ -229,6 +252,98 @@ signedIn.post('/runs/finish', async c => {
   const out: Record<string, unknown> = {};
   for (const [board, value] of boards) out[board] = await submit(db, board, me.id, run.id, value, now);
   return json({ ok: true, accepted: true, boards: out });
+});
+
+/* ---------------------------------------------------------------- shop + advisor (full version only) */
+
+async function balance(db: D1Database, playerId: string): Promise<number> {
+  const r = await db.prepare('SELECT COALESCE(SUM(delta), 0) AS c FROM coin_ledger WHERE player_id = ?').bind(playerId).first<{ c: number }>();
+  return r ? r.c : 0;
+}
+
+/** Takes coins only if the balance covers them (one statement, so two taps can't both spend the same coins). */
+function spendStmt(db: D1Database, id: string, playerId: string, cost: number, reason: string, ref: string, now: number) {
+  return db.prepare('INSERT INTO coin_ledger (id, player_id, delta, reason, ref, created_at) SELECT ?, ?, ?, ?, ?, ? WHERE (SELECT COALESCE(SUM(delta), 0) FROM coin_ledger WHERE player_id = ?) >= ?')
+    .bind(id, playerId, -cost, reason, ref, now, playerId, cost);
+}
+
+/** The develop site and localhost may hand out test coins; production never does unless DEV_COINS is set there. */
+function devCoins(c: { env: Bindings; req: { url: string } }): boolean {
+  if (c.env.DEV_COINS === '1') return true;
+  const h = new URL(c.req.url).hostname;
+  return /^(localhost|127\.0\.0\.1)$/.test(h) || h.startsWith('develop.');
+}
+
+signedIn.get('/wallet', async c => {
+  const db = c.env.DB!, me = c.get('me');
+  const owned = await db.prepare('SELECT item FROM owned_items WHERE player_id = ?').bind(me.id).all<{ item: string }>();
+  const grants = await db.prepare('SELECT id, item, created_at AS at FROM grants WHERE player_id = ? AND claimed_at IS NULL ORDER BY created_at LIMIT 50').bind(me.id).all<Grant>();
+  return json({ ok: true, coins: await balance(db, me.id), owned: (owned.results || []).map(r => r.item), grants: grants.results || [], ai: !!c.env.ANTHROPIC_API_KEY, dev: devCoins(c) });
+});
+
+signedIn.post('/shop/buy', async c => {
+  const db = c.env.DB!, me = c.get('me'), now = Date.now();
+  const b = await body(c.req.raw); const item = SHOP.find(x => x.id === (b && b['item']));
+  if (!item) return fail(400, 'no_item');
+  if (!(await allow(db, 'buy:' + me.id, 60, 3600000, now))) return fail(429, 'too_many');
+  if (item.once && await db.prepare('SELECT 1 FROM owned_items WHERE player_id = ? AND item = ?').bind(me.id, item.id).first()) return fail(409, 'owned');
+  const id = randomHex(12);
+  const stmts = [item.once
+    ? db.prepare('INSERT INTO coin_ledger (id, player_id, delta, reason, ref, created_at) SELECT ?, ?, ?, ?, ?, ? WHERE (SELECT COALESCE(SUM(delta), 0) FROM coin_ledger WHERE player_id = ?) >= ? AND NOT EXISTS (SELECT 1 FROM owned_items WHERE player_id = ? AND item = ?)')
+      .bind(id, me.id, -item.price, 'buy', item.id, now, me.id, item.price, me.id, item.id)
+    : spendStmt(db, id, me.id, item.price, 'buy', item.id, now)];
+  stmts.push(item.once
+    ? db.prepare('INSERT OR IGNORE INTO owned_items (player_id, item, created_at) SELECT ?, ?, ? WHERE EXISTS (SELECT 1 FROM coin_ledger WHERE id = ?)').bind(me.id, item.id, now, id)
+    : db.prepare('INSERT INTO grants (id, player_id, item, created_at) SELECT ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM coin_ledger WHERE id = ?)').bind(id, me.id, item.id, now, id));
+  const res = await db.batch(stmts);
+  if (!res[0]!.meta.changes) return fail(402, 'no_coins');
+  return json({ ok: true, coins: await balance(db, me.id), grant: { id, item: item.id, at: now } });
+});
+
+/** The client marks a gold/crate purchase as added to its save (it also remembers the id, so this is safe to repeat). */
+signedIn.post('/shop/claim', async c => {
+  const db = c.env.DB!, me = c.get('me');
+  const b = await body(c.req.raw); const ids = Array.isArray(b && b['ids']) ? (b!['ids'] as unknown[]).filter(x => typeof x === 'string').slice(0, 50) as string[] : [];
+  for (const id of ids) await db.prepare('UPDATE grants SET claimed_at = ? WHERE id = ? AND player_id = ? AND claimed_at IS NULL').bind(Date.now(), id, me.id).run();
+  return json({ ok: true });
+});
+
+signedIn.post('/dev/coins', async c => {
+  const db = c.env.DB!, me = c.get('me'), now = Date.now();
+  if (!devCoins(c)) return fail(403, 'not_here');
+  if (await balance(db, me.id) >= 500) return fail(409, 'enough');
+  await db.prepare('INSERT INTO coin_ledger (id, player_id, delta, reason, ref, created_at) VALUES (?, ?, 50, ?, NULL, ?)').bind(randomHex(12), me.id, 'dev_grant', now).run();
+  return json({ ok: true, coins: await balance(db, me.id) });
+});
+
+signedIn.post('/ai/ask', async c => {
+  const db = c.env.DB!, me = c.get('me'), now = Date.now();
+  const key = c.env.ANTHROPIC_API_KEY; if (!key) return fail(503, 'ai_offline');
+  const b = await body(c.req.raw); if (!b) return fail(400, 'bad_json');
+  const mode: AiMode = b['mode'] === 'coach' ? 'coach' : 'hint', cost = AI_COST[mode];
+  const question = String(b['question'] || '').normalize('NFC').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
+  if ([...question].length < 2) return fail(400, 'bad_question');
+  if (me.banned) return fail(403, 'banned');
+  if (!(await allow(db, 'ai:' + me.id, 20, 3600000, now))) return fail(429, 'too_many');
+  const month = new Date(now); month.setUTCDate(1); month.setUTCHours(0, 0, 0, 0);
+  const used = await db.prepare("SELECT COUNT(*) AS c FROM ai_log WHERE created_at >= ? AND status = 'ok'").bind(month.getTime()).first<{ c: number }>();
+  if ((used ? used.c : 0) >= (+(c.env.AI_MONTHLY_LIMIT || '') || 3000)) return fail(503, 'ai_busy');
+  const id = randomHex(12);
+  const spent = await spendStmt(db, id, me.id, cost, 'ai_' + mode, id, now).run();
+  if (!spent.meta.changes) return fail(402, 'no_coins');
+  const models = { hint: c.env.AI_MODEL_HINT || AI_MODELS.hint, coach: c.env.AI_MODEL_COACH || AI_MODELS.coach };
+  try {
+    const r = await ask(key, mode, question, cleanCtx(b['ctx']), models);
+    await db.prepare('INSERT INTO ai_log (id, player_id, mode, cost, model, in_tok, out_tok, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(id, me.id, mode, cost, r.model, r.inTok, r.outTok, 'ok', now).run();
+    return json({ ok: true, coins: await balance(db, me.id), answer: r.answer });
+  } catch (e) {
+    console.error('advisor failed', (e as Error)?.message || e);
+    await db.batch([
+      db.prepare('INSERT INTO coin_ledger (id, player_id, delta, reason, ref, created_at) VALUES (?, ?, ?, ?, ?, ?)').bind(randomHex(12), me.id, cost, 'refund', id, Date.now()),
+      db.prepare('INSERT INTO ai_log (id, player_id, mode, cost, model, status, created_at) VALUES (?, ?, ?, 0, ?, ?, ?)').bind(id, me.id, mode, models[mode], 'failed', now),
+    ]);
+    return fail(502, 'ai_failed');
+  }
 });
 
 app.route('/v1', signedIn);
