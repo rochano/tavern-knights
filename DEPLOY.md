@@ -48,6 +48,25 @@ Tables are created on the first request (`server/migrations/0001_ranking.sql` re
 
 Endpoints: `POST auth/guest`, `GET me`, `POST me/name`, `POST runs/start`, `POST runs/finish`, `GET boards/{stage1_score|stage1_time|tavern_gold}?period=week|all`. Weeks follow Thai time (UTC+7) and start on Monday.
 
-Later phases (shop, AI credits): payment keys go in Settings → Variables and Secrets, **test** keys on Preview, live keys on Production only. When schema changes start, add numbered SQL files under `server/migrations/` and run them on the dev database first, then on prod in the same release PR.
+## Shop and advisor (full version only)
+
+The shop and Old Bart's advisor show only in the full version (store builds with `window.TK_FULL = true`, the develop site, localhost). The free web demo never shows them.
+
+- Coins ("Dragon Coins") live only in the database: `coin_ledger` has one row per change, the balance is the sum. Purchases take coins in one conditional statement, so a double tap can't spend the same coins twice.
+- Catalog: `SHOP` in `shared/src/api.ts` (cosmetic looks that reuse the outfit-tier art, a gold pouch, an ingredient crate). Prices and items change there.
+- Endpoints: `GET wallet`, `POST shop/buy`, `POST shop/claim`, `POST ai/ask`, `POST dev/coins` (test coins, develop/localhost only, up to 500).
+- There are no real payments yet. Coin packs come with in-app payments (phase 4).
+
+To turn the advisor on, add a secret in **Settings → Variables and Secrets**:
+
+| Name | Where | Value |
+|---|---|---|
+| `ANTHROPIC_API_KEY` (secret) | Preview first, Production when approved | a Claude API key from console.anthropic.com |
+| `AI_MONTHLY_LIMIT` (optional) | both | most answers per month for the whole game, default 3000 |
+| `AI_MODEL_HINT` / `AI_MODEL_COACH` (optional) | both | model ids, default `claude-haiku-5-5` / `claude-opus-5-5` |
+
+Without the key the advisor says it is closed and takes no coins. If Claude fails to answer, the coins are refunded. Also set a monthly spend limit in the Anthropic Console.
+
+Payment keys later go in the same place: **test** keys on Preview, live keys on Production only. When schema changes start, add numbered SQL files under `server/migrations/` and run them on the dev database first, then on prod in the same release PR.
 
 Local test: `npm install && npm run dev:api` builds the client and serves it with the API and a local database on http://localhost:8788.
