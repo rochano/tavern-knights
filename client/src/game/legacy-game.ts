@@ -2171,7 +2171,7 @@ const alchemy = createAlchemy({
 
 /* ========================================================== WORLD MAP */
 const map = createMap({
-  ctx, W, H, RES, ENV, UI_BIG, FULL, FONT, CREW_ART,
+  ctx, W, H, RES, ENV, UI_BIG, FULL, FONT, THAI, CREW_ART,
   get fxArtReady() { return fxArtReady; },
   get uiArtReady() { return uiArtReady; },
   get crewArtReady() { return crewArtReady; },

@@ -7,6 +7,7 @@ import type { DrawKit, GameState, Img } from './host';
 export interface MapHost extends DrawKit, GameState {
   readonly FULL: boolean;
   readonly FONT: string;
+  readonly THAI: string;
   readonly crewArtReady: boolean;
   readonly CREW_ART: Record<string, { l: Img; r?: Img } | undefined>;
   /** touch controls are showing (phones use on-screen Go/Alchemy buttons) */
@@ -172,7 +173,10 @@ export function createMap(g: MapHost) {
     // info panel
     if (!nineBox('dialog', 3, 171, 394, 42, 16, 7)) panel(4, 172, 392, 40, '#1b120cf2', '#8a5a2e');
     const st = STAGES[mapSel], rec = g.save.stages[st.n];
-    text('ด่านที่ ' + st.n + ': ' + st.th, 12, 177, { size: 8.5, thai: true, color: '#f2a93b' });
+    /* long names (Thai stage 3, English stages 3-6) shrink so they stop before the crew label at x=160 */
+    const title = 'ด่านที่ ' + st.n + ': ' + st.th;
+    let tsz = 8.5; ctx.font = `600 ${tsz}px ${g.THAI}`; const tw = ctx.measureText(title).width; if (tw > 136) tsz = Math.max(6.5, tsz * 136 / tw);
+    text(title, 12, 177 + (8.5 - tsz) / 2, { size: tsz, thai: true, color: '#f2a93b' });
     text('บอส: ' + st.boss, 12, 189, { size: 6.5, thai: true, color: '#cfc0b0' });
     text(st.open ? (rec ? 'Clear Rank: ' + '★'.repeat(rec.stars) + '☆'.repeat(3 - rec.stars) + '  ความลับ ' + rec.hearts + '/2' : 'ยังไม่เคยเคลียร์') : st.n === 2 ? (FULL ? 'เคลียร์ด่าน 1 ก่อนนะ' : 'มีในฉบับเต็ม · Full version') : 'ยังไม่เปิด · Coming soon', 12, 198, { size: 7, thai: true, color: st.open ? '#ffd76a' : '#8a7a6a' });
     text('ลูกทีม (เลือก 2):', 160, 176, { size: 6.5, thai: true, color: '#bba8ba' });
