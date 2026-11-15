@@ -16,10 +16,10 @@ The site is built by Cloudflare Pages from `package.json` (npm workspaces: `clie
 
 | Setting | Value |
 |---|---|
-| Build command | `if [ -f package.json ]; then npm run build; else mkdir -p client/dist/browser && cp -r $(ls -A \| grep -vx -e .git -e client) client/dist/browser/; fi` |
+| Build command | `npm run build` |
 | Build output directory | `client/dist/browser` |
 
-The `else` part keeps branches that still have the old single-file layout (e.g. `main` before the Angular release) deploying unchanged. Once `main` has the Angular layout the command can be shortened to `npm run build`. Node version comes from `.node-version`. Functions are always read from the repo's root `functions/` folder.
+Node version comes from `.node-version`. Functions are always read from the repo's root `functions/` folder.
 
 ## Workflow
 
