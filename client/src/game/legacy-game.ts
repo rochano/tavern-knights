@@ -12,6 +12,7 @@ import { createAlchemy } from './scenes/alchemy';
 import { createMap } from './scenes/map';
 import { createRanking } from './scenes/ranking';
 import { createTitle } from './scenes/title';
+import { createHelp } from './scenes/help';
 import { CREW_ART_SRC, ENEMY_ART_SRC, FX_ART_SRC, HERO_ATLAS, HERO_ATLAS_SRC, HERO_HI_SRC, UI_ART_SRC } from './data/art';
 
 let started = false;
@@ -2238,43 +2239,13 @@ function drawOver() {
 
 /* ================================================================= HELP */
 let help = null;
-const HELP = {
-  stage: { title: 'วิธีเล่น: ลุยด่าน', rows: [['← → / A D', 'เดินซ้าย-ขวา', 'Move'], ['↑ / W', 'กระโดด', 'Jump'], ['J / คลิกซ้าย', 'โจมตี: อาเธอร์ฟันดาบไฟคอมโบ 3 จังหวะ, โรสแมรี่ยิงดาวจากไม้ไผ่, เพอร์ซิวาลยิงลูกพลังน้ำแข็ง', 'Attack'], ['Space / K / คลิกขวา', 'ท่าพิเศษ (เกจครึ่งหลอด): คลื่นเพลิง / พลังแห่งต้มยำกุ้ง / คาถาฝนดาวตก', 'Special'], ['L / คลิกกลาง', 'ท่าประสาน 3 อัศวิน "ต้มยำมหาภัยกระทะเหล็กเดือด" เมื่อเกจ MAX', 'Ultimate'], ['1 2 3 / Q E', 'สลับตัวละครได้ตลอดเวลา', 'Swap'], ['C', 'เรียกลูกทีม: เชฟกอร์นทุบกำแพงร้าว / บาร์ตเฒ่าส่งเบียร์ฟื้นพลัง', 'Crew'], ['P', 'หยุดเกมชั่วคราว', 'Pause']], tip: 'เกจ SPECIAL เพิ่มเมื่อโจมตีโดนและเก็บเบียร์วุ้น · ปราบบอสตอนติดไฟ (คลื่นเพลิง/ต้มยำ) = ดรอปลับ' },
-  tavern: { title: 'วิธีเล่น: กะดึกร้านเหล้า', rows: [['← →', 'เดินไป ครัว / อ่างล้างจาน / โต๊ะลูกค้า / ก๊อกเบียร์', 'Move'], ['1 2 3', 'สลับคนทำงาน (อาเธอร์ / โรสแมรี่ / เพอร์ซิวาล)', 'Swap'], ['J ที่ครัว', 'โรสแมรี่ปรุงอาหาร: กดลูกศรให้ตรงโน้ตที่วิ่งมาถึงวงกลม', 'Cook'], ['J ที่ก๊อก', 'เพอร์ซิวาลรินเบียร์ กด J อีกครั้งให้หยุดในแถบทอง', 'Pour'], ['J ที่โต๊ะ', 'เพอร์ซิวาลเสิร์ฟ · อาเธอร์เก็บจาน/เคาะขี้เมา', 'Serve / Bonk'], ['J ที่อ่าง', 'อาเธอร์ล้างจาน (ไม่มีจานสะอาด = ทำอาหารไม่ได้)', 'Wash'], ['Space / K', 'สกิล: พิณสงบลูกค้า / อาเธอร์จับโจร / โรสแมรี่ดับไฟ', 'Skill'], ['คลิก', 'คลิกที่ครัว อ่าง โต๊ะ หรือก๊อก = เปลี่ยนคนที่ถูกงานแล้วทำให้เลย · คลิกขวา = สกิล · ปรุงอาหารคลิกปุ่มลูกศรได้', 'Mouse']], tip: 'ดูแถบแจ้งเตือนด้านล่าง: VIP, โจร, เตาไฟไหม้ · Glowcap ทำต้มยำกุ้งพญามังกรขายได้แพง' },
-  map: { title: 'วิธีเล่น: แผนที่โลก', rows: [['← →', 'เลือกด่าน (ตอนนี้เปิดด่าน 1)', 'Select'], ['1 2 3 C', 'เลือก/ถอดลูกทีม (พาได้ 2 คน)', 'Crew'], ['Enter / J', 'เริ่มลุยด่าน', 'Start'], ['คลิก', 'แตะหมุด ลูกทีม หรือปุ่มได้เลย', 'Tap']], tip: 'ดาว = อันดับการเคลียร์ · หัวใจ = ความลับที่เจอ (ห้องลับ + ดรอปลับบอส)' },
-  alchemy: { title: 'วิธีเล่น: ห้องปรุงยา & ตีเหล็ก', rows: [['← →', 'เปลี่ยนหมวด: อาวุธ & ชุด / อาหารสวรรค์ / เครื่องใช้', 'Tabs'], ['↑ ↓', 'เลือกสูตร', 'Select'], ['Enter / J', 'ปรุง (Cook) หรือ คราฟต์ (Craft)', 'Make'], ['คลิก', 'แตะสูตร แล้วแตะปุ่ม [Craft / Cook]', 'Tap']], tip: 'Shroom Crown → Essence → ต้มยำกุ้งพญามังกร (บัฟ) หรือ Master Chef Set (ตำนาน)' },
-};
-const HELP_TOUCH = {
-  stage: { title: 'วิธีเล่น: ลุยด่าน', rows: [['@stick', 'ดันจอยซ้าย-ขวาเพื่อเดิน ดันขึ้นเพื่อกระโดด · ดันเฉียงขึ้น/ลงพร้อมกดดาบเพื่อเล็งยิง', 'Move / Jump'], ['@atk', 'กดดาบ = โจมตี ดาวและเวทเล็งมอนตัวที่ใกล้สุดด้านที่หันอยู่ให้เอง · แตะที่จอเพื่อยิงไปจุดนั้น', 'Attack'], ['@sp', 'ท่าพิเศษ (เกจครึ่งหลอด): คลื่นเพลิง / พลังแห่งต้มยำกุ้ง / คาถาฝนดาวตก', 'Special'], ['@ult', 'ท่าประสาน 3 อัศวิน "ต้มยำมหาภัยกระทะเหล็กเดือด" เมื่อเกจ MAX', 'Ultimate'], ['@swap', 'สลับตัวละครได้ตลอดเวลา', 'Swap'], ['@crew', 'เรียกลูกทีม: เชฟกอร์นทุบกำแพงร้าว / บาร์ตเฒ่าส่งเบียร์ฟื้นพลัง', 'Crew'], ['@pause', 'หยุดเกมชั่วคราว', 'Pause']], tip: 'เกจ SPECIAL เพิ่มเมื่อโจมตีโดนและเก็บเบียร์วุ้น · ปราบบอสตอนติดไฟ (คลื่นเพลิง/ต้มยำ) = ดรอปลับ' },
-  tavern: { title: 'วิธีเล่น: กะดึกร้านเหล้า', rows: [['แตะจอ', 'แตะที่ครัว อ่าง โต๊ะ หรือก๊อก แล้วคนที่ถูกงานจะเดินไปทำให้เลย', 'Tap'], ['@stick', 'เดินไป ครัว / อ่างล้างจาน / โต๊ะลูกค้า / ก๊อกเบียร์', 'Move'], ['@atk', 'ทำงานตรงที่ยืนอยู่: ปรุงอาหาร ล้างจาน เสิร์ฟ รินเบียร์ (แตะอีกครั้งให้หยุดในแถบทอง)', 'Work'], ['@swap', 'สลับคนทำงาน (อาเธอร์ / โรสแมรี่ / เพอร์ซิวาล)', 'Swap'], ['@sp', 'สกิล: พิณสงบลูกค้า / อาเธอร์จับโจร / โรสแมรี่ดับไฟ', 'Skill'], ['@stick', 'ตอนปรุงอาหาร: ดันจอยหรือแตะปุ่มลูกศรให้ตรงโน้ตที่วิ่งมาถึงวงกลม', 'Cook']], tip: 'ดูแถบแจ้งเตือนด้านล่าง: VIP, โจร, เตาไฟไหม้ · Glowcap ทำต้มยำกุ้งพญามังกรขายได้แพง' },
-  map: { title: 'วิธีเล่น: แผนที่โลก', rows: [['แตะจอ', 'แตะหมุด ลูกทีม หรือปุ่มได้เลย', 'Tap'], ['@stick', 'เลือกด่าน (ตอนนี้เปิดด่าน 1)', 'Select'], ['@crew', 'เลือก/ถอดลูกทีม (พาได้ 2 คน)', 'Crew'], ['@atk', 'เริ่มลุยด่าน', 'Start']], tip: 'ดาว = อันดับการเคลียร์ · หัวใจ = ความลับที่เจอ (ห้องลับ + ดรอปลับบอส)' },
-  alchemy: { title: 'วิธีเล่น: ห้องปรุงยา & ตีเหล็ก', rows: [['แตะจอ', 'แตะสูตร แล้วแตะปุ่ม [Craft / Cook]', 'Tap'], ['@stick', 'ซ้าย-ขวา เปลี่ยนหมวด · ขึ้น-ลง เลือกสูตร', 'Select'], ['@atk', 'ปรุง (Cook) หรือ คราฟต์ (Craft)', 'Make']], tip: 'Shroom Crown → Essence → ต้มยำกุ้งพญามังกร (บัฟ) หรือ Master Chef Set (ตำนาน)' },
-};
-const HELP_IMG = {};
-function helpIcon(name, cx, cy, d) {
-  const tb = window.__TB; if (!tb) return false;
-  const get = k => { if (!tb[k]) return null; if (!HELP_IMG[k]) { HELP_IMG[k] = new Image(); HELP_IMG[k].src = tb[k]; } return HELP_IMG[k].complete && HELP_IMG[k].naturalWidth ? HELP_IMG[k] : null; };
-  const smooth = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = true;
-  if (name === 'stick') { const b = get('base'), k = get('knob'); if (b) ctx.drawImage(b, cx - d / 2, cy - d / 2, d, d); if (k) ctx.drawImage(k, cx - d * 0.22, cy - d * 0.22, d * 0.44, d * 0.44); }
-  else { const im = get(name); if (im) ctx.drawImage(im, cx - d / 2, cy - d / 2, d, d); }
-  ctx.imageSmoothingEnabled = smooth; return true;
-}
+const helpOverlay = createHelp({
+  ctx, W, H, RES, ENV, UI_BIG, THAI,
+  get fxArtReady() { return fxArtReady; },
+  get uiArtReady() { return uiArtReady; },
+  rect, glow, text, textC, wrapText, panel, nineBox, slice3, uiBtn, btn, dimg, icon, LH, fxImg, fxB, knightSprite, controlStripCustom, keyLabel, keyLabelW,
+});
 function helpPageFor() { return scene === 'tavern' ? 'tavern' : scene === 'map' || scene === 'title' ? 'map' : scene === 'alchemy' ? 'alchemy' : 'stage'; }
-function drawHelp() {
-  const touch = document.body.classList.contains('tp-on'); const h = (touch ? HELP_TOUCH : HELP)[help]; if (!h) return;
-  rect(0, 0, W, H, '#05080ccc'); panel(14, 8, 372, 208, '#101820f6', '#f2a93b');
-  text(h.title, 27, 18, { size: 11, thai: true, color: '#f2a93b', weight: 600 }); text('How to play', 373, 20, { size: 8, align: 'right', color: '#8a9aa0' });
-  ctx.font = `700 8px ${THAI}`; const KW = touch ? 30 : Math.max(46, ...h.rows.map(r => keyLabelW(r[0], 8, THAI) + 16));
-  let ry = 38; const RS = h.rows.length > 6 ? 15 : 19, LHW = h.rows.length > 6 ? 8 : 8.5;
-  h.rows.forEach(([k, th, en], i) => {
-    const y = ry; ctx.font = `700 8px ${THAI}`; const kw = KW;
-    if (k[0] === '@') helpIcon(k.slice(1), 28 + kw / 2, y + 6.5, 17); else if (touch) text(k, 28 + kw / 2, y + 2.5, { size: 7, align: 'center', thai: true, weight: 600, color: '#ffd76a' }); else { uiBtn(26, y - 0.5, kw + 2, 14, false, '', '#2a3a44', '', '#2a3a44'); keyLabel(k, 28 + kw / 2, y + 6.5, 8, { thai: true }); }
-    ry = Math.max(y + RS, wrapText(th, 27 + kw + 7, y + 1.5, 311 - kw, LHW, { size: 7, thai: true, weight: 400 }) + (h.rows.length > 6 ? 3.5 : 6));
-    text(en, 373, y + 1, { size: 7, align: 'right', color: '#8a9aa0' });
-  });
-  wrapText(h.tip, 27, 183, 346, 9, { size: 7, thai: true, weight: 400, color: '#ffd76a' });
-  text(touch ? 'แตะที่ไหนก็ได้เพื่อปิด' : 'กด Enter / J / แตะ เพื่อปิด · กด H เปิดหน้านี้ได้ทุกเมื่อ', W / 2, 200, { size: 7, align: 'center', thai: true, color: '#bfe8ff' });
-}
 let uiRegions = [];
 function localFrac(e, el) { const r = el.getBoundingClientRect(); if (document.body.classList.contains('tp-rot')) return [(e.clientY - r.top) / r.height, (r.right - e.clientX) / r.width]; return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; }
 function btn(id, x, y, w, h) { uiRegions.push({ id, x, y, w, h }); }
@@ -2416,7 +2387,7 @@ function draw() {
   else if (scene === 'alchemy') alchemy.draw();
   ctx.restore();
   if (scene === 'gameover') drawOver();
-  if (help) drawHelp();
+  if (help) helpOverlay.draw(help);
 }
 /* ------------------------------------------------ share a result / invite friends */
 // A "Share" button over the stage-clear and night-shift results, and "Invite friends" on the title screen. On phones it opens
