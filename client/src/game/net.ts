@@ -2,7 +2,7 @@
 // Players are per-browser guests: the token lives in localStorage 'tk-net'; the last boards are
 // cached in 'tk-boards' so the panel shows something while it loads or when offline.
 // Response shapes come from shared/src/api.ts, the same types the server uses.
-import type { BoardId, BoardResponse, BoardRow, GuestResponse, MeResponse, RunFinishResponse, RunStartResponse } from '@tk/shared';
+import type { BoardId, BoardResponse, BoardResult, BoardRow, GuestResponse, MeResponse, RunFinishResponse, RunStartResponse } from '@tk/shared';
 
 type Reply<T> = (T | { ok: false; error?: string }) & { status: number };
 type Period = 'week' | 'all';
@@ -123,4 +123,20 @@ export function createNet(clearKeys: () => void): Net {
   };
 
   return N;
+}
+
+/** Boards shown in the ranking panel, with their Thai titles (tr() turns them into English). */
+export const NET_BOARDS: [BoardId, string][] = [['stage1_score', 'คะแนนด่าน 1'], ['stage1_time', 'เวลาผ่านด่าน 1'], ['tavern_gold', 'รายได้ร้านในคืนเดียว']];
+/** A board value as the panel shows it: clear time as m:ss.s, gold with a g, scores as a number. */
+export function netVal(b: BoardId, v: number): string { if (b === 'stage1_time') { const t = v / 1000, m = Math.floor(t / 60), s = t - m * 60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(1); } return b === 'tavern_gold' ? v + 'g' : String(v); }
+/** One line for the results screens: null when offline (the screen keeps its own line). */
+export function netLine(net: NetFinish | null, boards: string[]): { str: string; col: string } | null {
+  if (!net || net.state === 'off') return null;
+  if (net.state === 'send') return { str: 'กำลังส่งคะแนนขึ้นตารางอันดับ...', col: '#bba8ba' };
+  if (net.state === 'rejected') return { str: 'คะแนนรอบนี้ไม่ผ่านการตรวจ จึงไม่ขึ้นตารางอันดับ', col: '#ff8a7a' };
+  const nb = net.boards as Record<string, { week?: BoardResult } | undefined>;
+  const r = boards.map(b => nb[b] && nb[b].week).filter(Boolean) as BoardResult[]; if (!r.length) return null;
+  const best = r.some(x => x.newBest);
+  const str = boards.length > 1 ? 'อันดับสัปดาห์นี้: คะแนนที่ ' + r[0].rank + ' · เวลาที่ ' + (r[1] ? r[1].rank : '-') : 'อันดับรายได้สัปดาห์นี้: ที่ ' + r[0].rank;
+  return { str: best ? str + ' · สถิติใหม่!' : str, col: '#9be15d' };
 }

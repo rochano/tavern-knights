@@ -59,7 +59,7 @@ export interface Results {
 type Sprite = { r: Img; l: Img };
 type ImgTable2<K extends string> = Partial<Record<K, Sprite>> & Record<string, Sprite | undefined>;
 
-export interface StageHost extends DrawKit, GameState {
+export interface StageHost extends Omit<DrawKit, 'slice3' | 'controlStripCustom'>, Omit<GameState, 'knightMax'> {
   readonly KNIGHTS: { id: string; th: string; name: string; color: string }[];
   readonly CREW_ART: ImgTable2<'gorn_chop' | 'gorn_idle' | 'mole' | 'pixie' | 'bart'>;
   readonly ENV: ImgTable<'cellar' | 'cellar2' | 'arena' | 'farbg' | 'fungi' | 'ground2' | 'groundstrip' | 'midbg' | 'plat2' | 'platform' | 'sky' | 'trees'>;
