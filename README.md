@@ -20,10 +20,10 @@ npm run typecheck    # server TypeScript check
 
 ## ไฟล์ / Files
 
-กำลังย้ายเป็น Angular client-server ทีละเฟส (เฟส 1-2 เสร็จ: โครง Angular + API TypeScript)
+กำลังย้ายเป็น Angular client-server ทีละเฟส (เฟส 1-2 เสร็จ: โครง Angular + API TypeScript; เฟส 3 เริ่มแล้ว: โค้ดเกมอยู่ใน bundle ของ Angular)
 
 - `client/` Angular app (หน้าเกม). `client/src/index.html` = head/meta/SEO + หน้าจอโหลด, `client/src/app/play/` = markup + CSS ของจอเกม
-- `client/public/game/legacy-game.js` โค้ดเกม (ยังเป็นไฟล์เดียว จะย้ายเป็นโมดูล TypeScript ทีละฉากในเฟส 3-4)
+- `client/src/game/legacy-game.ts` โค้ดเกม เป็นโมดูล TypeScript ที่ Angular bundle เป็น chunk แยก (ยังเป็นไฟล์เดียว จะแยกเป็นโมดูลทีละฉากต่อไป)
 - `client/public/` ไฟล์ static: `art/` รูป, `audio/` เพลง, `sfx/` เสียง, `img/`, `about.html`, `guide/`, `robots.txt`, `sitemap.xml`, `llms.txt`, `_headers`
 - `server/src/app.ts` API อันดับ (Hono + TypeScript), `server/migrations/` SQL ของ D1
 - `functions/api/[[route]].ts` จุดเข้า Cloudflare Pages Function ที่เรียก server
