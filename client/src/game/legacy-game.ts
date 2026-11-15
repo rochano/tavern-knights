@@ -15,6 +15,8 @@ import { createTitle } from './scenes/title';
 import { createHelp } from './scenes/help';
 import { createTavern } from './scenes/tavern';
 import { createStage } from './scenes/stage';
+import { PXF_SRC, createDraw } from './draw';
+import { clamp, rnd, pick, overlap, hash } from './util';
 import { CREW_ART_SRC, ENEMY_ART_SRC, FX_ART_SRC, HERO_ATLAS, HERO_ATLAS_SRC, HERO_HI_SRC, UI_ART_SRC } from './data/art';
 
 let started = false;
@@ -444,7 +446,7 @@ const icon = (name, scale = 2) => {
   const key = 'ic_' + name + scale;
   if (!spriteCache.has(key)) {
     let r;
-    if (uiArtReady && UI_ICON[name]) { const src = UI_ICON[name][scale > 1 ? 1 : 0]; if (scale === 1 || scale === 2) r = src; else { r = document.createElement('canvas'); r.width = r.height = RES * 8 * scale; const g = r.getContext('2d'); g.drawImage(src, 0, 0, r.width, r.height); r.lw = r.lh = 8 * scale; } }
+    if (kit.uiArtReady && UI_ICON[name]) { const src = UI_ICON[name][scale > 1 ? 1 : 0]; if (scale === 1 || scale === 2) r = src; else { r = document.createElement('canvas'); r.width = r.height = RES * 8 * scale; const g = r.getContext('2d'); g.drawImage(src, 0, 0, r.width, r.height); r.lw = r.lh = 8 * scale; } }
     else if (ICON_PAINT[name]) r = paintCanvas(8 * scale, 8 * scale, 16, ICON_PAINT[name]);
     else r = makeSprite(SPR[name], SPR[name + 'Pal'], scale);
     spriteCache.set(key, { r, l: flip(r) });
@@ -500,20 +502,15 @@ const FX_ART = {}; let fxArtReady = false;
 function fxImg(k, face = 1) { const a = FX_ART[k]; return a ? (face < 0 ? a.f : a.n) : null; }
 function fxC(k, cx, cy, face = 1, s = 1) { const im = fxImg(k, face); if (!im) return false; const w = LW(im) * s, h = LH(im) * s; ctx.drawImage(im, Math.round(cx - w / 2), Math.round(cy - h / 2), w, h); return true; }
 function fxB(k, cx, by, face = 1, s = 1) { const im = fxImg(k, face); if (!im) return false; const w = LW(im) * s, h = LH(im) * s; ctx.drawImage(im, Math.round(cx - w / 2), Math.round(by - h), w, h); return true; }
-/* item icons, tavern/map icons, bar frames, dialog box and crew busts cut from the user's Gemini sheet D */
-const UI_ICON = {}, UI_BIG = {}; let uiArtReady = false;
-(() => {
-  const mk = (srcUri, done) => { const im = new Image(); im.onload = () => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; c.getContext('2d').drawImage(im, 0, 0); c.lw = im.width / RES; c.lh = im.height / RES; done(c); }; im.src = srcUri; };
-  const ik = Object.keys(UI_ART_SRC.icons), bk = Object.keys(UI_ART_SRC.big); let n = ik.length * 2 + bk.length;
-  const fin = () => { if (--n === 0) { uiArtReady = true; for (const key of [...spriteCache.keys()]) if (key.startsWith('ic_')) spriteCache.delete(key); } };
-  ik.forEach(k => { UI_ICON[k] = []; UI_ART_SRC.icons[k].forEach((u, i) => mk(u, c => { UI_ICON[k][i] = c; fin(); })); });
-  bk.forEach(k => mk(UI_ART_SRC.big[k], c => { UI_BIG[k] = c; fin(); }));
-})();
-function uiIcon(k, cx, cy, size) { const a = UI_ICON[k]; if (!uiArtReady || !a) return false; const im = size > 10 ? a[1] : a[0]; ctx.drawImage(im, Math.round(cx - size / 2), Math.round(cy - size / 2), size, size); return true; }
-function uiBig(k, cx, cy, s = 1) { const im = UI_BIG[k]; if (!uiArtReady || !im) return false; const w = LW(im) * s, h = LH(im) * s; ctx.drawImage(im, Math.round(cx - w / 2), Math.round(cy - h / 2), w, h); return true; }
-/* crisp UI frames: sheet-D frames re-sampled to their true pixel grid (1 art pixel each), drawn as 9-slices at a whole number of screen pixels per art pixel */
-const PXF_SRC = {"frame_dark": "art/ee9f33c9cd83.webp", "frame_blue": "art/73185bb01f97.webp", "dialog": "art/181d43739390.webp", "e6_btn_n": "art/99b0ba4aeb21.webp", "e6_btn_s": "art/21f3017ae152.webp", "e6_btn_d": "art/7bd29faefd84.webp", "e6_window": "art/b1560977b03e.webp"}, PXF = {};
-for (const k in PXF_SRC) { const im = new Image(); im.onload = () => { const H = im.height, mid = 3; im.T = Math.floor((H - mid) / 2); im.B = H - mid - im.T; im.L = im.R = k === 'dialog' ? 11 : 8; if (k === 'dialog') im.T = im.B = 11; if (k.startsWith('e6_btn')) { im.L = im.R = 10; im.T = 6; im.B = 6; } if (k === 'e6_window') { im.L = im.R = 20; im.T = im.B = 22; } PXF[k] = im; }; im.src = PXF_SRC[k]; }
+/* drawing kit (draw.ts): UI frames from the user's Gemini sheet D, 9-slices, text, buttons, panels, key labels */
+const RES = 4; // canvas px per world unit (world is 400x225)
+const kit = createDraw({
+  ctx, W, RES, FONT, THAI, tr,
+  get scene() { return scene; },
+  onUiReady() { for (const key of [...spriteCache.keys()]) if (key.startsWith('ic_')) spriteCache.delete(key); },
+});
+const { UI_ICON, UI_BIG, PXF, uiIcon, uiBig, pxSlice, slice3, frameBar, nineBox, hp, rect, text, textC, uiBtn, panel, bar, glow, shroom, outlined, wrapText,
+  keyLabelW, keyLabel, controlStrip, controlStripCustom } = kit;
 const POOL_SQ = 0.55;
 const E7_SRC = {"pit": "art/4c5078272bc3.webp", "pool": "art/6e7c374915d9.webp", "bub0": "art/bb0d5088bfe2.webp", "bub1": "art/f9fd734cc78a.webp", "bub2": "art/5be9cbb147c5.webp"}, E7 = {};
 for (const k in E7_SRC) { const im = new Image(); im.onload = () => { E7[k] = im; }; im.src = E7_SRC[k]; }
@@ -521,34 +518,6 @@ const E5_SRC = {"pool": "art/47a623b8d4ef.webp", "shock": "art/28a6c5a024c6.webp
 for (const k in E5_SRC) { const im = new Image(); im.onload = () => { E5[k] = im; }; im.src = E5_SRC[k]; }
 const TRAY_SRC = {"tray_empty": "art/2fec1f9ad44c.webp", "tray_beer": "art/cf5a1de7dacc.webp", "tray_mix": "art/6972664d1dbc.webp"}, TRAY = {};
 for (const k in TRAY_SRC) { const im = new Image(); im.onload = () => { TRAY[k] = im; }; im.src = TRAY_SRC[k]; }
-const pxFor = im => im === UI_BIG.frame_dark ? PXF.frame_dark : im === UI_BIG.frame_blue ? PXF.frame_blue : im === UI_BIG.dialog ? PXF.dialog : null;
-function pxSlice(p, x, y, w, h, u) {
-  const sn = v => Math.round(v * RES) / RES; x = sn(x); y = sn(y); w = sn(w); h = sn(h);
-  const uh = Math.min(u, w / (p.L + p.R), h / (p.T + p.B)), uq = Math.max(1, Math.floor(uh * RES)) / RES;
-  const sx = [0, p.L, p.width - p.R, p.width], sy = [0, p.T, p.height - p.B, p.height];
-  const dx = [x, x + p.L * uq, x + w - p.R * uq, x + w], dy = [y, y + p.T * uq, y + h - p.B * uq, y + h];
-  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { const dw = dx[i + 1] - dx[i], dh = dy[j + 1] - dy[j]; if (dw > 0 && dh > 0) ctx.drawImage(p, sx[i], sy[j], sx[i + 1] - sx[i], sy[j + 1] - sy[j], dx[i], dy[j], dw, dh); }
-  return uq;
-}
-function pxUnit(h) { return h >= 14 ? 1 : h >= 10.5 ? 0.75 : 0.5; }
-function slice3(im, x, y, w, h, cap) {
-  const p = pxFor(im); if (p) { pxSlice(p, x, y, w, h, pxUnit(h)); return; } const k = h / im.height, c = cap * k, sw = im.width; ctx.drawImage(im, 0, 0, cap, im.height, x, y, c, h); ctx.drawImage(im, cap, 0, sw - 2 * cap, im.height, x + c, y, w - 2 * c, h); ctx.drawImage(im, sw - cap, 0, cap, im.height, x + w - c, y, c, h); }
-function frameBar(k, x, y, w, h, frac, col, hi) {
-  const im = UI_BIG[k]; if (!uiArtReady || !im) return false;
-  const p = pxFor(im); let ix, iy, iw, ih; const f = clamp(frac, 0, 1);
-  if (p) { const u = pxSlice(p, x, y, w, h, pxUnit(h)); ix = x + 7 * u; iy = y + 4 * u; iw = w - 14 * u; ih = h - 8 * u; }
-  else { slice3(im, x, y, w, h, 22 * im.height / 40); const q = h / 40; ix = x + 12 * q; iy = y + 8.5 * q; iw = w - 24 * q; ih = h - 17 * q; }
-  rect(ix, iy, iw * f, ih, col); if (hi) rect(ix, iy, iw * f, Math.max(1, ih * 0.3), hi);
-  return { ix, iy, iw, ih };
-}
-function nineBox(k, x, y, w, h, b = 16, d = 6) {
-  const im = UI_BIG[k]; if (!uiArtReady || !im) return false;
-  if (k === 'dialog' && PXF.e6_window) { pxSlice(PXF.e6_window, x, y, w, h, h >= 150 ? 0.75 : 0.5); return true; }
-  const pp = pxFor(im); if (pp) { pxSlice(pp, x, y, w, h, h >= 60 ? 1.25 : 1); return true; }
-  b = b * im.height / 96; const sw = im.width, sh = im.height, sx = [0, b, sw - b, sw], sy = [0, b, sh - b, sh], dx = [x, x + d, x + w - d, x + w], dy = [y, y + d, y + h - d, y + h];
-  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) ctx.drawImage(im, sx[i], sy[j], sx[i + 1] - sx[i], sy[j + 1] - sy[j], dx[i], dy[j], dx[i + 1] - dx[i], dy[j + 1] - dy[j]);
-  return true;
-}
 const CUST_KEYS = ['cust_dwarf', 'cust_mug', 'cust_elf', 'cust_archer', 'cust_merchant', 'cust_bard', 'cust_noble', 'cust_lady'];
 const enemySprite = (type, frame) => {
   const key = 'en_' + type + frame;
@@ -573,97 +542,17 @@ const thiefSprite = f => {
   const o = spriteCache.get(key); if (!o.l) o.l = flip(o.r); return o;
 };
 /* --------------------------------------------------------------- helpers */
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-const rnd = (a, b) => a + Math.random() * (b - a);
-const pick = arr => arr[Math.floor(Math.random() * arr.length)];
-const overlap = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
-const RES = 4; // canvas px per world unit (world is 400x225)
-const hp = v => Math.round(v * RES) / RES;
-function rect(x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(hp(x), hp(y), hp(w), hp(h)); }
-function text(str, x, y, opt = {}) {
-  ctx.font = `${opt.weight || 600} ${opt.size || 10}px ${opt.thai ? THAI : FONT}`;
-  ctx.textAlign = opt.align || 'left'; ctx.textBaseline = opt.base || 'top';
-  if (opt.shadow !== false) { ctx.fillStyle = opt.shadowColor || '#1b1020'; ctx.fillText(str, hp(x) + 0.5, hp(y) + 0.5); }
-  ctx.fillStyle = opt.color || '#f6ead2'; ctx.fillText(str, hp(x), hp(y));
-}
-// text whose visual middle (cap height for Latin/digits, consonant body for Thai) sits exactly on cy, so it lines up with icons and bars
-const _midCache = {};
-function textC(str, x, cy, opt = {}) {
-  const size = opt.size || 10, font = `${opt.weight || 600} ${size}px ${opt.thai ? THAI : FONT}`, key = font;
-  if (_midCache[key] === undefined) { ctx.font = font; ctx.textBaseline = 'alphabetic'; const m = ctx.measureText(opt.thai ? 'กานม' : 'H08x'); _midCache[key] = m.actualBoundingBoxAscent / 2; }
-  text(str, x, cy + _midCache[key], Object.assign({}, opt, { base: 'alphabetic' }));
-}
-function uiBtn(x, y, w, h, on, c1, c2, c3, c4) {
-  const e6 = PXF[on === 'off' ? 'e6_btn_d' : on ? 'e6_btn_s' : 'e6_btn_n']; if (e6) { pxSlice(e6, x, y, w, h, clamp(Math.round(h / 25 * RES) / RES, 0.5, 1)); return; }
-  const im = uiArtReady && UI_BIG[on ? 'frame_blue' : 'frame_dark'];
-  if (im) { let cap = 22 * im.height / 40; const k = h / im.height; if (2 * cap * k > w - 1) cap = (w - 1) / 2 / k; slice3(im, x, y, w, h, cap); return; }
-  rect(x, y, w, h, on ? c1 : c2); rect(x + 0.5, y + 0.5, w - 1, h - 1, on ? c3 : c4);
-}
-function panel(x, y, w, h, fill = '#221727ee', edge = '#f2a93b') {
-  if (uiArtReady && UI_BIG.dialog) { if (h >= 24) { nineBox('dialog', x - 1, y - 1, w + 2, h + 2, 16, Math.min(7, h / 3)); return; } uiBtn(x, y, w, h, false); return; }
-  rect(x, y, w, h, edge); rect(x + 1, y + 1, w - 2, h - 2, '#1b1020'); rect(x + 2, y + 2, w - 4, h - 4, fill); }
-function bar(x, y, w, h, frac, col, back = '#1b1020') { rect(x, y, w, h, '#1b1020'); rect(x + 1, y + 1, w - 2, h - 2, back); rect(x + 1, y + 1, Math.max(0, (w - 2) * clamp(frac, 0, 1)), h - 2, col); }
 
 let shake = 0;
 function addShake(v) { shake = Math.max(shake, v); }
 
 /* -------------------------------------------------------- stage drawing */
-const hash = i => { const v = Math.sin(i * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
 const stars = Array.from({ length: 70 }, (_, i) => ({ x: hash(i) * W, y: hash(i + 99) * 110, ph: hash(i + 7) * 6 }));
 const flies = Array.from({ length: 26 }, (_, i) => ({ x: hash(i + 300) * 520, y: 70 + hash(i + 400) * 115, ph: hash(i + 500) * 6, s: 0.5 + hash(i + 600) * 0.5 }));
-function glow(x, y, r, col, a = 0.5) { const gr = ctx.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, col.replace('A', a)); gr.addColorStop(1, col.replace('A', 0)); ctx.fillStyle = gr; ctx.fillRect(x - r, y - r, r * 2, r * 2); }
-function shroom(x, baseY, h, capW, capH, stem, cap, under, spots, glowCol) {
-  ctx.fillStyle = stem; ctx.beginPath(); ctx.moveTo(x - capW * 0.1, baseY); ctx.quadraticCurveTo(x - capW * 0.02, baseY - h * 0.5, x - capW * 0.08, baseY - h); ctx.lineTo(x + capW * 0.08, baseY - h); ctx.quadraticCurveTo(x + capW * 0.16, baseY - h * 0.5, x + capW * 0.11, baseY); ctx.fill();
-  if (glowCol) glow(x, baseY - h, capW * 0.9, glowCol, 0.28);
-  ctx.fillStyle = under; ctx.beginPath(); ctx.ellipse(x, baseY - h + 1, capW / 2, capH * 0.35, 0, 0, Math.PI); ctx.fill();
-  ctx.fillStyle = cap; ctx.beginPath(); ctx.ellipse(x, baseY - h, capW / 2, capH, 0, Math.PI, 0); ctx.quadraticCurveTo(x, baseY - h + capH * 0.3, x - capW / 2, baseY - h); ctx.fill();
-  if (spots) { ctx.fillStyle = spots; for (let k = 0; k < 4; k++) { const a = Math.PI + 0.5 + k * 0.6; ctx.beginPath(); ctx.ellipse(x + Math.cos(a) * capW * 0.32, baseY - h + Math.sin(a) * capH * 0.55, capW * 0.06, capH * 0.12, 0, 0, 7); ctx.fill(); } }
-}
-/* Environment art cut from the user's environment sheet (grid lines removed, backgrounds keyed out). */
 const ENV_SRC={title_clean:"art/7e37ff8cac34.jpg",cellar2:"art/559c329846ee.jpg",tav2:"art/97f217a03440.jpg",arena:"art/a46905011e86.webp",ground2:"art/8fa63bc34a04.webp",plat2:"art/1de7f53ed7d5.webp",midbg:"art/003ce3dd268f.webp",farbg:"art/b16db0e3d121.jpg",title:"art/55d67ed13c86.jpg",sky:"art/91695c65291a.webp",trees:"art/08bd5ffeb7b3.webp",fungi:"art/36ab70487458.webp",groundstrip:"art/abde28010105.webp",platform:"art/c34d5b0aa1c8.webp",tavern:"art/7f6d45704aea.webp",cellar:"art/9c447fcc6c3a.webp",map:"art/f1237e09a557.jpg",};
 const ENV = {};
 const STAGE_POS_IMG = [[121, 47], [208, 48], [266, 60], [140, 140], [246, 113], [309, 34]];
 for (const k in ENV_SRC) { const im = new Image(); im.onload = () => { ENV[k] = im; if (k === 'map') STAGES.forEach((st, i) => { st.x = STAGE_POS_IMG[i][0]; st.y = STAGE_POS_IMG[i][1]; }); }; im.src = ENV_SRC[k]; }
-function outlined(str, x, y, size, col) {
-  ctx.font = `700 ${size}px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillStyle = '#1b1020';
-  for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, 1], [1, -1], [-1, 1]]) ctx.fillText(str, x + dx * 0.8, y + dy * 0.8);
-  ctx.fillStyle = col; ctx.fillText(str, x, y); ctx.fillStyle = '#ffffff55'; ctx.fillText(str, x - 0.3, y - 0.4);
-}
-function wrapText(str, x, y, maxW, lh, opt) {
-  str = tr(str);
-  ctx.font = `${opt.weight || 600} ${opt.size || 10}px ${opt.thai ? THAI : FONT}`;
-  let words = str.split(' '), line = '', yy = y;
-  if (window.Intl && Intl.Segmenter) { const sg = new Intl.Segmenter('th', { granularity: 'word' }); words = words.flatMap((w, i) => { const parts = ctx.measureText(w).width > maxW ? [...sg.segment(w)].map(p => p.segment) : [w]; return i ? ['\u0001' + parts[0], ...parts.slice(1)] : parts; }); }
-  for (let w of words) { let sep = ''; if (w[0] === '\u0001') { sep = ' '; w = w.slice(1); } else if (!window.Intl || !Intl.Segmenter) sep = ' '; const test = line ? line + sep + w : w; if (ctx.measureText(test).width > maxW && line) { text(line, x, yy, opt); line = w; yy += lh; } else line = test; }
-  if (line) text(line, x, yy, opt);
-  return yy + lh;
-}
-/* key labels: arrow glyphs use the bold Thai UI font (the pixel font draws them hairline-thin) */
-const KEY_AR = { '←': 'ar_left', '→': 'ar_right', '↑': 'ar_up', '↓': 'ar_down' };
-function keyToks(k) { return k.split(/([←→↑↓])/).filter(t => t && t !== ' '); }
-function keyLabelW(k, size, font) { ctx.font = `700 ${size}px ${font || FONT}`; const ts = keyToks(k); return ts.reduce((w, t, i) => w + (KEY_AR[t] ? size * 0.95 : (ctx.font = `700 ${size}px ${font || FONT}`, ctx.measureText(t).width)) + (i ? size * 0.25 : 0), 0); }
-function keyLabel(k, cx, cy, size, opt) {
-  const ts = keyToks(k); if (ts.length === 1 && !KEY_AR[ts[0]]) { textC(k, cx, cy, Object.assign({ size, align: 'center', weight: 700 }, opt)); return; }
-  const font = opt && opt.thai ? THAI : FONT; let x = cx - keyLabelW(k, size, font) / 2;
-  ts.forEach((t, i) => { if (i) x += size * 0.25; if (KEY_AR[t]) { const w = size * 0.95, rot = { '↑': 0, '→': Math.PI / 2, '↓': Math.PI, '←': -Math.PI / 2 }[t]; ctx.save(); ctx.translate(x + w / 2, cy); ctx.rotate(rot); textC('↑', 0, 0, Object.assign({ size: size * 1.2, align: 'center', weight: 700 }, opt, { thai: true })); ctx.restore(); x += w; } else { ctx.font = `700 ${size}px ${font}`; const w = ctx.measureText(t).width; textC(t.trim(), x + w / 2, cy, Object.assign({ size, align: 'center', weight: 700 }, opt)); x += w; } });
-}
-function controlStrip() { controlStripCustom(null); }
-function controlStripCustom(custom) {
-  if (document.body.classList.contains('tp-on')) return;
-  if (!(uiArtReady && UI_BIG.frame_dark && (slice3(UI_BIG.frame_dark, -6, 212, W + 12, 13, 44), true))) rect(0, 213, W, 12, '#05080cd8');
-  const items = custom ? custom : scene === 'tavern'
-    ? [['← →', 'เดิน'], ['1 2 3', 'สลับคน'], ['J / คลิก', 'ทำงาน'], ['Space / K', 'สกิล'], ['Esc', 'หยุด/ออก'], ['H', 'วิธีเล่น']]
-    : [['← →', 'เดิน'], ['↑ / W', 'กระโดด'], ['J / คลิก', 'โจมตี'], ['Space / K', 'ท่าพิเศษ'], ['L', 'ท่าประสาน'], ['1 2 3', 'สลับตัว'], ['C', 'ลูกทีม'], ['H', 'วิธีเล่น']];
-  let x = 6;
-  for (const [k, d] of items) {
-    const kw = keyLabelW(k, 7) + 5;
-    uiBtn(x - 1, 214.5, kw + 2, 9.5, false, '', '#2a3a44', '', '#2a3a44'); keyLabel(k, x + kw / 2, 219.25, 7, { shadow: false });
-    ctx.font = `400 7px ${THAI}`; const dw = ctx.measureText(d).width;
-    textC(d, x + kw + 3, 219.25, { size: 7, thai: true, weight: 400, color: '#cfe0e4', shadow: false });
-    x += kw + dw + 9;
-  }
-}
-
 /* ======================================================== STAGES 1-2 */
 const stage = createStage({
   CREW_ART, E5, E7, ENEMY_ART, ENV, GROUND, H, HERO_ATLAS, HERO_HI, KNIGHTS, LH, LW, NET, POOL_SQ, RES, THAI, UI_BIG, W, addShake, anyConfirm, bar,
@@ -679,7 +568,7 @@ const stage = createStage({
   get enemyArtReady() { return enemyArtReady; },
   get crewArtReady() { return crewArtReady; },
   get fxArtReady() { return fxArtReady; },
-  get uiArtReady() { return uiArtReady; },
+  get uiArtReady() { return kit.uiArtReady; },
   get scene() { return scene; }, set scene(v) { scene = v; },
   get help() { return help; }, set help(v) { help = v; },
 });
@@ -690,7 +579,7 @@ const { LEVEL_W, ARENA, startStage, finishStage, updateStage, makeEnemy, knightM
 const tavern = createTavern({
   ctx, W, H, RES, ENV, UI_BIG, KNIGHTS, CREW_ART, E5, TRAY, CUST_KEYS, NET,
   get fxArtReady() { return fxArtReady; },
-  get uiArtReady() { return uiArtReady; },
+  get uiArtReady() { return kit.uiArtReady; },
   get crewArtReady() { return crewArtReady; },
   get TOUCH_DEV() { return TOUCH_DEV; },
   get tpOnTxt() { return tpOnTxt; },
@@ -709,7 +598,7 @@ const startTavern = () => tavern.start(), endTavern = () => tavern.end();
 const alchemy = createAlchemy({
   ctx, W, H, RES, ENV, UI_BIG,
   get fxArtReady() { return fxArtReady; },
-  get uiArtReady() { return uiArtReady; },
+  get uiArtReady() { return kit.uiArtReady; },
   rect, glow, text, textC, wrapText, panel, nineBox, slice3, uiBtn, btn, dimg, icon, LH, fxImg, fxB, knightSprite, controlStripCustom,
   get save() { return save; },
   persist, track, knightMax,
@@ -720,7 +609,7 @@ const alchemy = createAlchemy({
 const map = createMap({
   ctx, W, H, RES, ENV, UI_BIG, FULL, FONT, THAI, CREW_ART,
   get fxArtReady() { return fxArtReady; },
-  get uiArtReady() { return uiArtReady; },
+  get uiArtReady() { return kit.uiArtReady; },
   get crewArtReady() { return crewArtReady; },
   get tpOnTxt() { return tpOnTxt; },
   get mapRank() { return mapRank; }, set mapRank(v) { mapRank = v; },
@@ -739,13 +628,13 @@ let scene = 'title', mapRank = false;
 const ranking = createRanking({
   ctx, W, H, RES, ENV, UI_BIG, NET, NET_BOARDS, THAI, cv, netVal,
   get fxArtReady() { return fxArtReady; },
-  get uiArtReady() { return uiArtReady; },
+  get uiArtReady() { return kit.uiArtReady; },
   rect, glow, text, textC, wrapText, panel, nineBox, slice3, uiBtn, btn, dimg, icon, LH, fxImg, fxB, knightSprite, controlStripCustom,
 });
 const titleScene = createTitle({
   ctx, W, H, RES, ENV, UI_BIG, THAI, GROUND, NET, KNIGHTS, ranking,
   get fxArtReady() { return fxArtReady; },
-  get uiArtReady() { return uiArtReady; },
+  get uiArtReady() { return kit.uiArtReady; },
   get LANG() { return LANG; },
   rect, glow, text, textC, wrapText, panel, nineBox, slice3, uiBtn, btn, dimg, icon, LH, fxImg, fxB, knightSprite, controlStripCustom,
   get save() { return save; },
@@ -758,7 +647,7 @@ let help = null;
 const helpOverlay = createHelp({
   ctx, W, H, RES, ENV, UI_BIG, THAI,
   get fxArtReady() { return fxArtReady; },
-  get uiArtReady() { return uiArtReady; },
+  get uiArtReady() { return kit.uiArtReady; },
   rect, glow, text, textC, wrapText, panel, nineBox, slice3, uiBtn, btn, dimg, icon, LH, fxImg, fxB, knightSprite, controlStripCustom, keyLabel, keyLabelW,
 });
 function helpPageFor() { return scene === 'tavern' ? 'tavern' : scene === 'map' || scene === 'title' ? 'map' : scene === 'alchemy' ? 'alchemy' : 'stage'; }
