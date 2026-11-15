@@ -116,8 +116,11 @@ export function startAudio(): void {
 /** QTE notes: the coin chime pitched per arrow (do-re-mi-sol), Perfect a step higher. */
 const NOTE_RATE: Record<string, number> = { up: 1.5, right: 1.335, down: 1.122, left: 1.0 };
 
+export type SfxName = 'slash' | 'hit' | 'jump' | 'swap' | 'coin' | 'hurt' | 'special' | 'boom' | 'arrow' | 'serve' | 'fail' | 'punch' | 'harp' | 'pour' | 'ult' | 'select' | 'note' | 'step' | 'chest' | 'hitShot';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const SFX: Record<string, (...a: any[]) => void> = {
+type Sound = (...a: any[]) => void;
+/** Named sounds; known names can be called as SFX.name(). */
+export const SFX: Record<SfxName, Sound> & Record<string, Sound> = {
   slash: () => { noise(0.06, 0.05); tone(520, 0.06, 'square', 0.03, -200); },
   hit: () => { tone(180, 0.08, 'square', 0.06, -80); noise(0.05, 0.05); },
   jump: () => tone(300, 0.12, 'square', 0.04, 300),
@@ -136,8 +139,8 @@ export const SFX: Record<string, (...a: any[]) => void> = {
   select: () => tone(660, 0.05, 'square', 0.035),
   note: (dir: string, perfect: boolean) => { const r = (NOTE_RATE[dir] || 1) * (perfect ? 1.122 : 1) * 0.8; if (!sfxPlay('coin', r)) tone(523 * r, 0.08, 'square', 0.04); },
   step: () => tone(140, 0.04, 'triangle', 0.025),
+  hitShot: () => SFX.hit(),
   chest: () => { [523, 659, 784, 1046, 1319].forEach((f, i) => tone(f, 0.2, 'triangle', 0.04, 0, i * 0.07)); },
 };
-SFX['hitShot'] = () => SFX['hit']();
 // Sounds with a file play the file once it has loaded; the synth above is the fallback.
 for (const k in SFX_FILE) { const syn = SFX[k]; SFX[k] = () => { if (!sfxPlay(k)) syn(); }; }

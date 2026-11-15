@@ -2,8 +2,11 @@
 // keys[a] = held now, pressed[a] = went down since the last game step (the game clears it each step).
 import { startAudio } from './audio';
 
-export const keys: Record<string, boolean> = {};
-export const pressed: Record<string, boolean> = {};
+export type Action = 'left' | 'right' | 'up' | 'down' | 'sp' | 'atk' | 'ult' | 'k1' | 'k2' | 'k3' | 'prev' | 'next' | 'sup' | 'help' | 'ok' | 'pause' | 'mute' | 'rename' | 'rank';
+/** Named actions plus 'ui:<id>' taps on canvas buttons. */
+export type ActionState = Partial<Record<Action, boolean>> & Record<string, boolean>;
+export const keys: ActionState = {};
+export const pressed: ActionState = {};
 
 /** Key code -> action. */
 export const KEYMAP: Record<string, string> = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'up', KeyW: 'up', Space: 'sp', ArrowDown: 'down', KeyS: 'down',

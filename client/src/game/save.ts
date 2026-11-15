@@ -3,7 +3,7 @@
 
 export interface SaveData {
   gold: number;
-  up: { blade: number; stew: number; brew: number; legend: boolean };
+  up: { blade: number; stew: number; brew: number; legend: boolean; armor?: number };
   ing: { glowcap: number; truffle: number; crown: number; ember: number; chili: number; essence: number; [k: string]: number };
   runs: number;
   best: number;
