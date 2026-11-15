@@ -25,6 +25,8 @@ export interface MapHost extends DrawKit, GameState {
   drawRankPanel(): void;
   rankPrefetch(): void;
   rankStale(): void;
+  /** full version only: the shop + advisor panel */
+  readonly shop: { readonly open: boolean; enter(): void; update(dt: number): void; draw(): void };
 }
 
 export interface StageInfo { n: number; th: string; sh: string; en: string; boss: string; x: number; y: number; readonly open?: boolean }
@@ -94,6 +96,8 @@ export function createMap(g: MapHost) {
   }
   function updateMap(dt: number) {
     if (g.mapRank) { g.rankInput(() => { g.mapRank = false; }); return; }
+    if (FULL && g.shop.open) { g.shop.update(dt); return; }
+    if (FULL && (pressed.shop || pressed['ui:mshop'])) { g.shop.enter(); SFX.select(); return; }
     if (pressed.rank || pressed['ui:mrank']) { g.mapRank = true; g.rankStale(); SFX.select(); return; }
     g.rankPrefetch(); /* prefetch so the Ranking panel opens instantly */
     if (pressed.left) { mapSel = Math.max(0, mapSel - 1); SFX.select(); }
@@ -188,12 +192,14 @@ export function createMap(g: MapHost) {
     textC('ห้องปรุงยา/ตีเหล็ก', 342, 201.5, { size: 7, align: 'center', thai: true, color: '#ffd7a0' }); }
     if (mapMsg) { panel(110, 140, 180, 16, '#1b120cf2', '#ff8a7a'); text(mapMsg.str, 200, 143, { size: 8, align: 'center', thai: true, color: '#ffb0a0' }); }
     btn('mrank', 366, 5, 32, 17); uiBtn(366, 6, 31, 15, false); textC('อันดับ', 381.5, 13.5, { size: 7, align: 'center', thai: true, color: '#ffd7a0' });
+    if (FULL) { btn('mshop', 366, 23, 32, 17); uiBtn(366, 24, 31, 15, false); textC('ร้านค้า', 381.5, 31.5, { size: 7, align: 'center', thai: true, color: '#ffd7a0' }); }
+    if (FULL && g.shop.open) { g.shop.draw(); controlStripCustom([['↑ ↓ ← →', 'เลือก'], ['Enter', 'ตกลง'], ['Q E', 'สลับแท็บ'], ['Esc', '\u200bปิด']]); return; }
     if (g.mapRank) {
       rect(0, 0, W, H, '#05050ae0'); if (!nineBox('dialog', 64, 28, 272, 162, 16, 9)) panel(70, 34, 260, 150, '#1b120cf4', '#f2a93b');
       btn('close', 70, 34, 260, 20); g.drawRankPanel();
       controlStripCustom([['← →', 'ตาราง'], ['↑ ↓', 'ช่วงเวลา'], ['N', 'เปลี่ยนชื่อ'], ['Esc', '\u200bปิด']]); return;
     }
-    controlStripCustom([['← →', 'เลือกด่าน'], ['1 2 3 C', 'เลือกลูกทีม'], ['Enter', 'เริ่มด่าน'], ['R', 'อันดับ'], ['H', 'วิธีเล่น']]);
+    controlStripCustom([['← →', 'เลือกด่าน'], ['1 2 3 C', 'เลือกลูกทีม'], ['Enter', 'เริ่มด่าน'], ['R', 'อันดับ'], ...(FULL ? [['B', 'ร้านค้า'] as [string, string]] : []), ['H', 'วิธีเล่น']]);
   }
 
   return {
