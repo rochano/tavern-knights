@@ -15,7 +15,9 @@ import { createTitle } from './scenes/title';
 import { createHelp } from './scenes/help';
 import { createTavern } from './scenes/tavern';
 import { createStage } from './scenes/stage';
-import { PXF_SRC, createDraw } from './draw';
+import { createDraw } from './draw';
+import { createTouch } from './touch';
+import { createShare } from './share';
 import { clamp, rnd, pick, overlap, hash } from './util';
 import { CREW_ART_SRC, ENEMY_ART_SRC, FX_ART_SRC, HERO_ATLAS, HERO_ATLAS_SRC, HERO_HI_SRC, UI_ART_SRC } from './data/art';
 
@@ -651,117 +653,19 @@ const helpOverlay = createHelp({
   rect, glow, text, textC, wrapText, panel, nineBox, slice3, uiBtn, btn, dimg, icon, LH, fxImg, fxB, knightSprite, controlStripCustom, keyLabel, keyLabelW,
 });
 function helpPageFor() { return scene === 'tavern' ? 'tavern' : scene === 'map' || scene === 'title' ? 'map' : scene === 'alchemy' ? 'alchemy' : 'stage'; }
-let uiRegions = [];
-function localFrac(e, el) { const r = el.getBoundingClientRect(); if (document.body.classList.contains('tp-rot')) return [(e.clientY - r.top) / r.height, (r.right - e.clientX) / r.width]; return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; }
-function btn(id, x, y, w, h) { uiRegions.push({ id, x, y, w, h }); }
-/* phones only open the keyboard when focus() runs inside the tap itself, so the rename button focuses the name field right here */
-document.addEventListener('mousedown', e => { if (ranking.nameEdit && e.target.id !== 'nameIn') e.preventDefault(); }, true); /* the mouse event a tap sends afterwards would move focus back to the canvas */
-cv.addEventListener('pointerup', e => {
-  const lf = localFrac(e, cv), x = lf[0] * W, y = lf[1] * H;
-  const hit = uiRegions.slice().reverse().find(b => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h);
-  if (!ranking.nameEdit && hit && hit.id === 'rkn' && !help) ranking.nameOpen();
-  else if (ranking.nameEdit && !(hit && (hit.id === 'nok' || hit.id === 'ncan'))) { try { const el = document.getElementById('nameIn'), n = el.value.length; el.focus(); el.setSelectionRange(n, n); } catch (x) {} }
+/* pointer + touch input (touch.ts): tap regions, mouse combat / station clicks, the phone pad */
+function btn(id, x, y, w, h) { touch.btn(id, x, y, w, h); }
+const touch = createTouch({
+  cv, W, H, ranking, stage, tavern, STATIONS, tr, helpPageFor,
+  get LANG() { return LANG; },
+  get scene() { return scene; },
+  get mapRank() { return mapRank; },
+  get titlePanel() { return titleScene.panel; },
+  get help() { return help; }, set help(v) { help = v; },
+  get tpOnTxt() { return tpOnTxt; }, set tpOnTxt(v) { tpOnTxt = v; },
 });
-cv.addEventListener('pointerdown', e => {
-  const lf = localFrac(e, cv); const x = lf[0] * W, y = lf[1] * H;
-  const hit = uiRegions.slice().reverse().find(b => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h);
-  if (hit && !help) pressed['ui:' + hit.id] = true;
-  // mouse combat in a stage: left button = attack, right button = special, middle = ultimate; the knight turns toward the cursor
-  if ((e.pointerType === 'mouse' || e.pointerType === 'touch') && scene === 'stage' && stage.S && !stage.S.paused && !help && !hit) {
-    const a = e.button === 0 ? 'atk' : e.button === 2 ? 'sp' : e.button === 1 ? 'ult' : null; if (!a) return;
-    if (stage.S.p && !stage.S.p.special) { const dx = stage.S.camX + x - (stage.S.p.x + 9); if (Math.abs(dx) > 4) stage.S.p.face = dx > 0 ? 1 : -1; }
-    if (a === 'atk') stage.S.aim = { x: stage.S.camX + x, y, t: stage.S.t };
-    mouseHeld = a; press(a);
-  }
-  // mouse in the night shift: left click a station = walk there with the right knight and work (same as J), right click = skill (K)
-  if ((e.pointerType === 'mouse' || e.pointerType === 'touch') && scene === 'tavern' && tavern.T && !tavern.T.paused && !tavern.T.over && !help && !hit) {
-    if (e.button === 2) { pressed.sp = true; return; }
-    if (e.button !== 0) return;
-    if (tavern.T.pour) { pressed.atk = true; return; }
-    if (tavern.T.cook || y < 40 || y > 200) return;
-    let bi = -1, bd = 26; STATIONS.forEach((st, i) => { const d = Math.abs(st.x - x); if (d < bd) { bd = d; bi = i; } });
-    if (bi >= 0) tavern.T.click = bi;
-  }
-});
-let mouseHeld = null;
-window.addEventListener('pointerup', e => { if (mouseHeld && (e.pointerType === 'mouse' || e.pointerType === 'touch')) { release(mouseHeld); mouseHeld = null; } });
-cv.addEventListener('contextmenu', e => { if (scene === 'stage' || scene === 'tavern') e.preventDefault(); });
-document.getElementById('btnHelp').addEventListener('click', () => { help = help ? null : helpPageFor(); cv.focus(); });
-/* on-screen touch buttons show only on touch-screen devices (no option for it) */
-document.body.classList.toggle('touch-on', matchMedia('(pointer: coarse)').matches);
-
-/* ---- mobile landscape controls ---- */
-const TOUCH_DEV = matchMedia('(pointer: coarse)').matches;
-if (TOUCH_DEV) { const stop = e => { if (e.cancelable) e.preventDefault(); }; document.addEventListener('touchmove', stop, { passive: false }); document.addEventListener('gesturestart', stop, { passive: false }); document.addEventListener('dblclick', stop, { passive: false }); let lastT = 0; document.addEventListener('touchend', e => { const n = Date.now(); if (n - lastT < 350 && e.cancelable) e.preventDefault(); lastT = n; }, { passive: false }); }
-const tpEl = document.getElementById('tpad');
-{
-  const big = UI_ART_SRC.big, ic = UI_ART_SRC.icons;
-  tpEl.querySelectorAll('.tp-dpad i').forEach(i => { i.style.backgroundImage = `url(${[].concat(big['ar_' + i.dataset.d])[0]})`; });
-  const TB = {"atk": "art/1d49f6e542e5.webp", "sp": "art/5b41ee0111f4.webp", "ult": "art/d0df181ca6fe.webp", "bowl": "art/fb1025919639.webp", "swap": "art/6d49bb9cbb72.webp", "crew": "art/5f1580632b25.webp", "harp": "art/5987157def42.webp", "close": "art/cf2bcf9cc425.webp", "pause": "art/a177c75724f2.webp", "rotate": "art/35f3fa8159e8.webp", "full": "art/f6d3526c2f94.webp", "base": "art/88d408978b29.webp", "knob": "art/8d2d0d34962d.webp", "knobon": "art/0c5a8837e78f.webp", "ok": "art/229b6170159d.webp", "okon": "art/e6448512c78c.webp"};
-
-  tpEl.querySelector('.tp-pause').style.backgroundImage = `url(${TB.pause})`; tpEl.querySelector('.tp-full').style.backgroundImage = `url(${TB.full})`;
-  tpEl.querySelector('.tp-next').style.backgroundImage = `url(${TB.swap})`; tpEl.querySelector('.tp-ult').style.backgroundImage = `url(${TB.ult})`; tpEl.querySelector('.tp-sup').style.backgroundImage = `url(${TB.crew})`; tpEl.querySelector('.tp-back').style.backgroundImage = `url(${TB.close})`;
-  document.querySelector('#rotate .rot-box').style.borderImageSource = `url(${PXF_SRC.e6_window})`; document.getElementById('rotIc').style.backgroundImage = `url(${TB.rotate})`;
-  window.__TB = TB; window.__CAUL = FX_ART_SRC.cauldron;
-  document.getElementById('tpDpad').style.backgroundImage = `url(${TB.base})`; document.getElementById('tpKnob').style.backgroundImage = `url(${TB.knob})`;
-  const tb = document.getElementById('tpad');
-  tb.querySelectorAll('.tp-b').forEach(b => {
-    const a = b.dataset.k; if (!a) return; const on = v => { b.classList.toggle('on', v); if (b.classList.contains('tp-atk') && (document.body.dataset.tp === 'title' || document.body.dataset.tp === 'map')) b.style.backgroundImage = `url(${v ? window.__TB.okon : window.__TB.ok})`; };
-    b.addEventListener('pointerdown', e => { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (_) {} press(a); on(true); });
-    const up = e => { e.preventDefault(); release(a); on(false); };
-    b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('lostpointercapture', () => { release(a); on(false); });
-    b.addEventListener('contextmenu', e => e.preventDefault());
-  });
-  // d-pad: one touch zone, direction from finger position (diagonals only in action stages)
-  const dp = document.getElementById('tpDpad'), cur = { up: false, down: false, left: false, right: false }; let pid = null;
-  const set = want => { for (const d in cur) { if (want[d] && !cur[d]) press(d); else if (!want[d] && cur[d]) release(d); cur[d] = !!want[d]; dp.querySelector(`[data-d=${d}]`).classList.toggle('on', cur[d]); } };
-  const kn = document.getElementById('tpKnob'), knob = (dx, dy) => { if (dx === null) { kn.classList.remove('on'); kn.style.transform = ''; kn.style.backgroundImage = `url(${window.__TB.knob})`; return; } const l = Math.hypot(dx, dy), k = l > 0.62 ? 0.62 / l : 1, r = dp.getBoundingClientRect(); kn.classList.add('on'); kn.style.backgroundImage = `url(${window.__TB.knobon})`; kn.style.transform = `translate(${dx * k * r.width / 2}px,${dy * k * r.height / 2}px)`; };
-  const aim = e => { const lf = localFrac(e, dp), dx = lf[0] * 2 - 1, dy = lf[1] * 2 - 1, w = {}; knob(dx, dy);
-    if (Math.hypot(dx, dy) < 0.22) { stage.stickVec = null; return set(w); }
-    if (document.body.dataset.tp === 'act') { const l = Math.hypot(dx, dy); stage.stickVec = { dx: dx / l, dy: dy / l }; if (dx < -0.3) w.left = 1; if (dx > 0.3) w.right = 1; if (dy / l < -0.55) w.up = 1; if (dy / l > 0.6) w.down = 1; }
-    else if (Math.abs(dx) > Math.abs(dy)) w[dx < 0 ? 'left' : 'right'] = 1; else w[dy < 0 ? 'up' : 'down'] = 1;
-    set(w); };
-  dp.addEventListener('pointerdown', e => { e.preventDefault(); pid = e.pointerId; try { dp.setPointerCapture(pid); } catch (_) {} aim(e); });
-  dp.addEventListener('pointermove', e => { if (e.pointerId === pid) aim(e); });
-  const end = e => { if (e.pointerId !== pid) return; pid = null; stage.stickVec = null; set({}); knob(null); };
-  dp.addEventListener('pointerup', end); dp.addEventListener('pointercancel', end);
-  // first touch: try fullscreen + landscape lock (Android); iPhone keeps the browser bar
-  const fb = document.getElementById('tpFull'), canFs = !!document.documentElement.requestFullscreen;
-  const goFs = () => { const el = document.documentElement; if (!document.fullscreenElement && el.requestFullscreen) el.requestFullscreen({ navigationUI: 'hide' }).then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {})).catch(() => {}); };
-  const fsUpd = () => fb.classList.toggle('hide', !canFs || !!document.fullscreenElement); document.addEventListener('fullscreenchange', fsUpd); fsUpd();
-  fb.addEventListener('pointerdown', e => { e.preventDefault(); goFs(); });
-  if (TOUCH_DEV) window.addEventListener('pointerdown', function fs() { window.removeEventListener('pointerdown', fs, true); const el = document.documentElement; if (!document.fullscreenElement && el.requestFullscreen) el.requestFullscreen({ navigationUI: 'hide' }).then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {})).catch(() => {}); }, true);
-}
-let tpKey = '';
-let tpRotKey = '';
-function tpRotFit(rot) { /* Safari/LINE: 100vh includes the area under the browser bars, so size the rotated game to the real visible box */
-  const w = window.innerWidth, h = window.innerHeight, k = rot + ':' + w + 'x' + h; if (k === tpRotKey) return; tpRotKey = k;
-  const st = document.querySelector('.wrap').style;
-  if (rot) { st.left = w + 'px'; st.width = h + 'px'; st.height = w + 'px'; } else { st.left = st.width = st.height = ''; }
-}
-function tpSync() {
-  if (!TOUCH_DEV) return;
-  const land = innerWidth >= innerHeight || ranking.nameEdit; /* while typing a name, lay the game flat at the top so the phone keyboard never covers it (X/FB in-app browsers don't resize for the keyboard) */
-  document.body.classList.toggle('tp-name', ranking.nameEdit); const nz = ranking.nameEdit && ranking.nameZ; document.body.classList.toggle('tp-namez', nz);
-  { /* upright phone: zoom in on the name box and centre it in the space above the keyboard */
-    const sc = document.querySelector('.screen'), vv = window.visualViewport;
-    if (nz) { const k = 1.75, wd = innerWidth, hd = wd * 9 / 16, avail = innerHeight < ranking.nameH0 * 0.8 ? innerHeight : vv && vv.height < innerHeight * 0.9 ? vv.height : innerHeight * 0.56;
-      sc.style.transformOrigin = '0 0'; sc.style.transform = `translate(${wd / 2 * (1 - k)}px, ${avail / 2 - 114 / 225 * hd * k}px) scale(${k})`; }
-    else if (sc.style.transform) sc.style.transform = sc.style.transformOrigin = ''; }
-  document.body.classList.toggle('tp-on', true); tpOnTxt = true; document.body.classList.toggle('tp-rot', !land); tpRotFit(!land);
-  const mode = help ? 'menu' : (scene === 'stage' || scene === 'gameover') ? 'act' : scene === 'tavern' ? 'tav' : scene === 'title' ? 'title' : scene === 'map' ? 'map' : 'menu';
-  if ((titleScene.panel && scene === 'title') || (mapRank && scene === 'map')) document.body.dataset.tpp = '1'; else delete document.body.dataset.tpp;
-  if (ranking.nameEdit) document.body.dataset.tpn = '1'; else delete document.body.dataset.tpn;
-  const key = mode + LANG + (mode === 'tav' && tavern.T ? tavern.T.active : ''); if (key === tpKey) return; tpKey = key; document.body.dataset.tp = mode;
-  const TB = window.__TB, Q = s => tpEl.querySelector(s);
-  const lab = (sel, img, txt) => { const b = Q(sel); if (img) b.style.backgroundImage = `url(${img})`; b.querySelector('span').textContent = tr(txt); };
-  if (mode === 'tav') { const who = tavern.T ? tavern.T.active : 0; lab('.tp-atk', TB.bowl, 'ทำงาน'); lab('.tp-sp', who === 2 ? TB.harp : TB.sp, 'สกิล'); lab('.tp-next', null, 'สลับคน'); }
-  else if (mode === 'title') { lab('.tp-atk', TB.ok, 'ตกลง'); lab('.tp-back', null, '\u200bปิด'); }
-  else if (mode === 'map') { lab('.tp-atk', TB.ok, 'ลุยเลย!'); lab('.tp-sp', window.__CAUL, 'ห้องปรุงยา'); lab('.tp-back', null, '\u200bปิด'); }
-  else { lab('.tp-atk', TB.atk, 'โจมตี'); lab('.tp-sp', TB.sp, 'ท่าพิเศษ'); lab('.tp-next', null, 'สลับตัว'); }
-  lab('.tp-ult', null, 'ท่าประสาน'); lab('.tp-sup', null, 'ลูกทีม');
-  document.getElementById('rotTxt').textContent = tr('หมุนมือถือเป็นแนวนอนเพื่อเล่น');
-}
+const { TOUCH_DEV } = touch;
+const tpSync = () => touch.sync();
 
 /* ================================================================== LOOP */
 const STEP = 1 / 60;
@@ -781,7 +685,7 @@ function update(dt) {
 }
 function draw() {
   ctx.setTransform(RES, 0, 0, RES, 0, 0); ctx.imageSmoothingEnabled = false;
-  uiRegions = [];
+  touch.clearRegions();
   ctx.save();
   if (shake > 0) ctx.translate(Math.round(rnd(-shake, shake)), Math.round(rnd(-shake, shake)));
   if (scene === 'title') titleScene.draw();
@@ -794,91 +698,15 @@ function draw() {
   if (scene === 'gameover') drawOver();
   if (help) helpOverlay.draw(help);
 }
-/* ------------------------------------------------ share a result / invite friends */
-// A "Share" button over the stage-clear and night-shift stage.results, and "Invite friends" on the title screen. On phones it opens
-// the system share sheet with a picture of the result; elsewhere a small panel with LINE / Facebook / X / copy / save picture.
-// Every share is counted (track 'share') with utm tags on the link, so gstats shows which shares bring players back.
-const SHARE = (() => {
-  const L = (th, en) => LANG === 'th' ? th : en;
-  const btn = document.getElementById('shareBtn'), inv = document.getElementById('inviteBtn'), pop = document.getElementById('sharePop');
-  const HOME = /^https?:$/.test(location.protocol) && !/^(localhost|127\.)/.test(location.hostname) ? location.origin + '/' : 'https://tavern-knights.pages.dev/';
-  let cur = null, lang = '', blob = null, imgUrl = '';
-  const link = (m, medium, camp) => HOME + '?utm_source=' + m + '&utm_medium=' + medium + '&utm_campaign=' + camp + (LANG === 'en' ? '&lang=en' : '');
-  const mmss = t => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
-  const starStr = n => '★'.repeat(n);
-  function what() {
-    if (scene === 'results' && stage.results) return { kind: 'stage', text: L('เคลียร์ด่านที่ ' + (stage.results.n || 1) + ' ของ Tavern Knights ได้ ' + stage.results.score + ' คะแนน ' + starStr(stage.results.stars) + ' เวลา ' + mmss(stage.results.time) + ' ใครทำได้ดีกว่านี้บ้าง? เล่นฟรีบนเว็บ',
-      'Cleared stage ' + (stage.results.n || 1) + ' of Tavern Knights with ' + stage.results.score + ' points ' + starStr(stage.results.stars) + ' in ' + mmss(stage.results.time) + '. Can you beat that? Free in your browser') };
-    if (scene === 'tavern' && tavern.T && tavern.T.over && tavern.night) return { kind: 'tavern', text: L('ปิดร้านกะดึกได้ ' + tavern.night.gold + 'g ' + starStr(tavern.night.stars) + ' เสิร์ฟไป ' + tavern.night.served + ' คน ใน Tavern Knights มาแข่งเปิดร้านกัน! เล่นฟรีบนเว็บ',
-      'Closed the night shift with ' + tavern.night.gold + 'g ' + starStr(tavern.night.stars) + ', ' + tavern.night.served + ' customers served in Tavern Knights. Think you can run it better? Free in your browser') };
-    return null;
-  }
-  const invite = () => ({ kind: 'invite', text: L('มาเล่น Tavern Knights กัน! เกมแอ็กชันพิกเซลผสมบริหารร้านเหล้า เล่นฟรีบนเว็บ ไม่ต้องโหลด', 'Come play Tavern Knights with me! Pixel action plus tavern management, free in your browser, no download') });
-  const urlFor = (c, m) => c.kind === 'invite' ? link(m, 'invite', 'friend') : link(m, 'share', 'result');
-  // A picture of the result screen with the game's address along the bottom.
-  function picture() {
-    return new Promise(res => {
-      try {
-        const w = cv.width, h = cv.height, bar = Math.round(h * 0.075), c = document.createElement('canvas'); c.width = w; c.height = h + bar;
-        const g = c.getContext('2d'); g.drawImage(cv, 0, 0); g.fillStyle = '#160f1c'; g.fillRect(0, h, w, bar);
-        g.fillStyle = '#ffd76a'; g.font = `600 ${Math.round(bar * 0.48)}px ${THAI}`; g.textBaseline = 'middle';
-        const l = 'Tavern Knights · ' + L('เล่นฟรีที่ ', 'Play free at ') + HOME.replace(/^https?:\/\//, '').replace(/\/$/, ''); g.fillText(l, Math.round(w * 0.03), h + bar / 2);
-        c.toBlob(b => res(b), 'image/png');
-      } catch (e) { res(null); }
-    });
-  }
-  const phone = () => !!(navigator.share && navigator.canShare && TOUCH_DEV);
-  function open(c, b) {
-    cur = c; blob = b; document.body.classList.add('sp-open'); pop.hidden = false;
-    document.getElementById('spTitle').textContent = c.kind === 'invite' ? L('ชวนเพื่อนมาเล่น', 'Invite friends') : L('แชร์ผลการเล่น', 'Share your result');
-    document.getElementById('spTxt').textContent = c.text;
-    const im = document.getElementById('spImg'); if (imgUrl) URL.revokeObjectURL(imgUrl); imgUrl = b ? URL.createObjectURL(b) : ''; im.hidden = !b; if (b) im.src = imgUrl;
-    const row = [navigator.share ? ['native', L('แชร์', 'Share')] : null, ['line', 'LINE'], ['facebook', 'Facebook'], ['x', 'X'], ['copy', L('คัดลอกลิงก์', 'Copy link')], b ? ['save', L('บันทึกรูป', 'Save picture')] : null].filter(Boolean);
-    document.getElementById('spRow').innerHTML = row.map(([k, t]) => k === 'line' || k === 'facebook' || k === 'x' ? `<a data-s="${k}" href="#" target="_blank" rel="noopener">${t}</a>` : `<button type="button" data-s="${k}">${t}</button>`).join('');
-    document.getElementById('spClose').textContent = L('ปิด', 'Close');
-    setTimeout(() => { const f = pop.querySelector('[data-s]'); if (f) f.focus(); }, 0);
-  }
-  function close() { pop.hidden = true; document.body.classList.remove('sp-open'); cur = null; try { cv.focus(); } catch (e) {} }
-  async function start(c) {
-    if (!c) return; initAudio(); SFX.select();
-    track('share_open', { kind: c.kind });
-    const b = c.kind === 'invite' ? null : await picture();
-    if (phone()) {
-      const files = b ? [new File([b], 'tavern-knights.png', { type: 'image/png' })] : [];
-      const data = files.length && navigator.canShare({ files }) ? { files, text: c.text + ' ' + urlFor(c, 'native') } : { title: 'Tavern Knights', text: c.text, url: urlFor(c, 'native') };
-      try { await navigator.share(data); track('share', { method: 'native', kind: c.kind }); } catch (e) {}
-      return;
-    }
-    open(c, b);
-  }
-  pop.addEventListener('click', e => {
-    if (e.target === pop || e.target.id === 'spClose') { close(); return; }
-    const a = e.target.closest('[data-s]'); if (!a || !cur) return; const m = a.dataset.s, c = cur;
-    track('share', { method: m, kind: c.kind });
-    if (m === 'native') { e.preventDefault(); const files = blob ? [new File([blob], 'tavern-knights.png', { type: 'image/png' })] : [];
-      navigator.share(files.length && navigator.canShare && navigator.canShare({ files }) ? { files, text: c.text + ' ' + urlFor(c, 'native') } : { title: 'Tavern Knights', text: c.text, url: urlFor(c, 'native') }).catch(() => {}); return; }
-    if (m === 'copy') { e.preventDefault(); const t = c.text + ' ' + urlFor(c, 'copy'), done = () => { a.textContent = L('คัดลอกแล้ว', 'Copied'); setTimeout(() => { a.textContent = L('คัดลอกลิงก์', 'Copy link'); }, 1800); };
-      try { navigator.clipboard.writeText(t).then(done, () => prompt('', t)); } catch (x) { prompt('', t); } return; }
-    if (m === 'save') { e.preventDefault(); const d = document.createElement('a'); d.href = imgUrl; d.download = 'tavern-knights.png'; document.body.appendChild(d); d.click(); d.remove(); return; }
-    const u = encodeURIComponent(urlFor(c, m)), tx = encodeURIComponent(c.text);
-    a.href = m === 'line' ? 'https://social-plugins.line.me/lineit/share?url=' + u + '&text=' + tx : m === 'facebook' ? 'https://www.facebook.com/sharer/sharer.php?u=' + u : 'https://twitter.com/intent/tweet?url=' + u + '&text=' + tx;
-  });
-  // While the panel is open, keys go to it, not to the game (Enter would otherwise skip the stage.results screen).
-  document.addEventListener('keydown', e => { if (pop.hidden) return; if (e.key === 'Escape') { e.preventDefault(); close(); } if (e.key !== 'Tab' && e.key !== 'Enter' && e.key !== ' ') e.preventDefault(); e.stopPropagation(); }, true);
-  btn.addEventListener('click', () => start(what()));
-  inv.addEventListener('click', () => start(invite()));
-  document.getElementById('btnGuide').addEventListener('click', () => { track('guides_open', { from: 'header' }); window.open(LANG === 'en' ? '/guide/en/' : '/guide/', '_blank', 'noopener'); });
-  function sync() {
-    const res = scene === 'results' && stage.results && stage.results.t > 0.8, tav = scene === 'tavern' && tavern.T && tavern.T.over && tavern.night && tavern.T.overT > 0.8;
-    const showS = (res || tav) && !help && pop.hidden, showI = scene === 'title' && !titleScene.panel && !help && pop.hidden && !ranking.nameEdit;
-    if (btn.hidden === showS) btn.hidden = !showS;
-    if (showS) { const k = res ? 'at-res' : 'at-tav'; if (!btn.classList.contains(k)) { btn.classList.remove('at-res', 'at-tav'); btn.classList.add(k); } }
-    if (inv.hidden === showI) inv.hidden = !showI;
-    if (!pop.hidden && !(res || tav || scene === 'title')) close();
-    if (lang !== LANG) { lang = LANG; btn.textContent = L('📣 แชร์ผล', '📣 Share'); inv.textContent = L('ชวนเพื่อนมาเล่น', 'Invite friends'); }
-  }
-  return { sync, close };
-})();
+/* share a result / invite friends (share.ts) */
+const SHARE = createShare({
+  cv, THAI, stage, tavern, ranking, initAudio, track,
+  get LANG() { return LANG; },
+  get scene() { return scene; },
+  get help() { return help; },
+  get TOUCH_DEV() { return TOUCH_DEV; },
+  get titlePanel() { return titleScene.panel; },
+});
 function frame(now) {
   acc += Math.min(0.1, (now - last) / 1000); last = now;
   while (acc >= STEP) { update(STEP); acc -= STEP; }
