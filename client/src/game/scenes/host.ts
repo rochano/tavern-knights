@@ -3,7 +3,7 @@
 import type { SaveData } from '../save';
 
 /** A drawable sprite: a canvas or image, optionally with a logical size and a draw offset. */
-export type Img = (HTMLCanvasElement | HTMLImageElement) & { lw?: number; lh?: number; ox?: number; oy?: number };
+export type Img = (HTMLCanvasElement | HTMLImageElement) & { lw?: number; lh?: number; ox?: number; oy?: number; padL?: number; hero?: boolean };
 
 /** Loaded art by key; keys a scene relies on are listed in K so they read as plain properties. */
 export type ImgTable<K extends string> = Partial<Record<K, Img>> & Record<string, Img | undefined>;

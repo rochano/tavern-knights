@@ -1,15 +1,116 @@
-// @ts-nocheck -- the stage state (S, enemies, boss, projectiles) is not typed yet; this file was moved out of
-// legacy-game.ts unchanged and keeps its checks off until the stage gets its own types (next step).
 // Action stages 1-2: start / checkpoint, player, crew helpers, enemies, boss, pickups, ultimates, the
 // stage world and HUD drawing, and the stage-clear / game-over screens.
 import { SFX } from '../audio';
 import { keys, pressed } from '../input';
+import type { Net, NetFinish, NetRun } from '../net';
+import type { DrawKit, GameState, Img, ImgTable, TextOpt } from './host';
 
-/**
- * Everything the stage needs from the game shell. Values that change while the game runs (save, art
- * ready flags, scene, help, language, touch mode) are read and written through getters/setters on host.
- */
-export function createStage(host) {
+/* Loosely typed pieces of a stage run. Fields match what the code below reads and writes; optional
+   fields are only set by some enemy types, specials or events. */
+interface Box { x: number; y: number; w: number; h: number }
+interface Special {
+  type: string; t: number; fired?: boolean; spawn: number; dir: number; ox: number; tick: number;
+}
+interface Player extends Box {
+  vx: number; vy: number; face: number; onGround: boolean; inv: number; atkT: number; atkCd: number; combo: number; comboT: number;
+  special: Special | null; swapCd: number; anim: number; lunge: number; kbT: number; wasGround?: boolean; coyote?: number; jumpBuf?: number;
+}
+interface KnightHp { hp: number; max: number; down: boolean }
+export interface Enemy extends Box {
+  type: string; vx: number; vy: number; face: number; hp: number; max: number; t: number; flash: number; burn: number; slow: number; freeze: number;
+  kbT: number; dead: boolean; cd: number; state: string; anim: number; active: boolean; contact: number;
+  heavyish?: boolean; heavy?: boolean; burnTick?: number; throwT?: number; puffT?: number; squashT?: number; onGround?: boolean;
+  /* set by the types or states that use them */
+  chT: number; dt: number; dvx: number; dvy: number; homeY: number;
+  /* boss only */
+  squash: number; hops: number; bounces: number;
+}
+interface Proj extends Box {
+  type: string; owner: 'p' | 'e'; vx: number; vy: number; dmg: number; life: number;
+  aim?: boolean; status?: string | null; pierce?: boolean; set?: Set<Enemy>; grav?: number; rot?: number; hit?: boolean;
+}
+interface Hit extends Box {
+  dmg: number; kb: number; delay: number; t: number; set: Set<Enemy>; status: string | null; from: number; noGauge?: boolean; shot?: boolean;
+}
+interface Pickup extends Box { type: string; bob: number; vy?: number; drop?: boolean; got?: boolean }
+interface Particle { x: number; y: number; vx: number; vy: number; life: number; max: number; col: string; size: number; grav?: boolean }
+interface FloatText { x: number; y: number; str: string; col: string; life: number; big?: boolean; dmg?: boolean; size?: number }
+type Fx = { type: 'bowl'; x: number; t: number } | { type: 'spark' | 'boom'; x: number; y: number; t: number };
+interface Platform { x: number; y: number; w: number; got?: boolean }
+interface Solid extends Box { kind?: string; broken?: boolean }
+interface Banner { text: string; sub: string; t: number; boss?: boolean }
+interface Gorn { t: number; x: number; state: string; mole?: boolean; hit?: boolean }
+interface Loot { glowcap: number; truffle: number; crown: number; ember: number; chili: number; cork?: number }
+export interface StageState {
+  n: number; t: number; camX: number; paused: boolean; pits: { x: number; w: number }[]; shelf: Platform | null;
+  p: Player; knights: KnightHp[]; active: number; gauge: number;
+  enemies: Enemy[]; projs: Proj[]; hits: Hit[]; pickups: Pickup[]; parts: Particle[]; texts: FloatText[];
+  platforms: Platform[]; solids: Solid[]; wall: Solid & { broken: boolean }; vaultOpened: boolean; pools: { x: number; w: number }[];
+  boss: Enemy | null; bossOn: boolean; bossIntro: number; kills: number; loot: Loot; buff: boolean; ko: number;
+  sup: { bart: number; bartCd: number; gorn: Gorn | null };
+  ult: { t: number; hit: boolean } | null; banner: Banner | null; end: { t: number; ember: boolean } | null;
+  speech: { who: string; line: string; t: number } | null; score: number; hint: string | null; checkpoint: boolean; poolT: number;
+  net?: NetRun | null; netT0?: number; fx?: Fx[]; corpse?: { i: number; x: number; y: number; face: number; t: number } | null;
+  aim?: { x: number; y: number; t: number }; lift?: { t: number } | null; stickyTold?: boolean; poisonT?: number;
+}
+export interface Results {
+  t: number; stars: number; hearts: number; score: number; kills: number; time: number; loot: Loot; n: number; vault: boolean; ember: boolean; net: NetFinish | null;
+}
+type Sprite = { r: Img; l: Img };
+type ImgTable2<K extends string> = Partial<Record<K, Sprite>> & Record<string, Sprite | undefined>;
+
+export interface StageHost extends DrawKit, GameState {
+  readonly KNIGHTS: { id: string; th: string; name: string; color: string }[];
+  readonly CREW_ART: ImgTable2<'gorn_chop' | 'gorn_idle' | 'mole' | 'pixie' | 'bart'>;
+  readonly ENV: ImgTable<'cellar' | 'cellar2' | 'arena' | 'farbg' | 'fungi' | 'ground2' | 'groundstrip' | 'midbg' | 'plat2' | 'platform' | 'sky' | 'trees'>;
+  readonly E5: ImgTable<'pool' | 'shock' | 'spore' | 'mug'>;
+  readonly E7: ImgTable<'pit' | 'pool' | 'bub0' | 'bub1' | 'bub2'>;
+  readonly ENEMY_ART: ImgTable2<'boss_idle' | 'puff_cloud'>;
+  readonly HERO_ATLAS: Partial<Record<'bowl', [number, number, number, number]>> & Record<string, [number, number, number, number] | undefined>;
+  readonly HERO_HI: ImgTable<'arthur_atk1' | 'rosemary_atk3'>;
+  readonly GROUND: number;
+  readonly POOL_SQ: number;
+  readonly NET: Net;
+  readonly THAI: string;
+  readonly heroAtlas: HTMLImageElement;
+  readonly flies: { x: number; y: number; ph: number; s: number }[];
+  readonly stars: { x: number; y: number; ph: number }[];
+  readonly LANG: string;
+  readonly tpOnTxt: boolean;
+  readonly heroReady: boolean;
+  readonly heroHiReady: boolean;
+  readonly enemyArtReady: boolean;
+  readonly crewArtReady: boolean;
+  scene: string;
+  help: string | null;
+  rnd(a: number, b: number): number;
+  clamp(v: number, a: number, b: number): number;
+  pick<V>(arr: V[]): V;
+  hash(i: number): number;
+  overlap(a: Box, b: Box): boolean;
+  addShake(v: number): void;
+  anyConfirm(): boolean | undefined;
+  bar(x: number, y: number, w: number, h: number, frac: number, col: string, back?: string): void;
+  frameBar(k: string, x: number, y: number, w: number, h: number, frac: number, col: string, hi?: string): { ix: number; iy: number; iw: number; ih: number } | false;
+  controlStrip(custom?: null): void;
+  LW(img: Img): number;
+  fxC(k: string, cx: number, cy: number, face?: number, s?: number): boolean;
+  enemyArtFor(e: Enemy, frame: number): { key: string; spr: Sprite; hurt: boolean } | null;
+  enemySprite(type: string, frame: number): Sprite;
+  knightHead(i: number): Sprite;
+  flip(c: Img): HTMLCanvasElement;
+  recol(c: Img, f: string): HTMLCanvasElement;
+  shade(c: Img, outline?: boolean, amt?: number): HTMLCanvasElement;
+  tinted(c: Img, color: string): HTMLCanvasElement;
+  noise(dur: number, vol?: number, delay?: number): void;
+  outlined(str: string, x: number, y: number, size: number, col: string): void;
+  shroom(x: number, baseY: number, h: number, capW: number, capH: number, stem: string, cap: string, under: string, spots: string | null, glowCol?: string | null): void;
+  netLine(net: NetFinish, boards: string[]): { str: string; col: string } | null;
+  crewLabel(id?: string): string;
+  startTavern(): void;
+}
+
+export function createStage(host: StageHost) {
   const {
     CREW_ART, E5, E7, ENEMY_ART, ENV, GROUND, H, HERO_ATLAS, HERO_HI, KNIGHTS, LH, LW, NET, POOL_SQ, RES, THAI, UI_BIG, W, addShake, anyConfirm, bar,
     btn, clamp, controlStrip, ctx, dimg, enemyArtFor, enemySprite, flies, flip, frameBar, fxB, fxC, fxImg, glow, hash, heroAtlas, icon, knightHead,
@@ -21,8 +122,9 @@ export function createStage(host) {
   function knightMax() { return 100 + 25 * host.save.up.stew; }
   function dmgMul() { return (1 + 0.2 * host.save.up.blade + (host.save.up.legend ? 0.5 : 0)) * (S && S.buff ? 1.3 : 1); }
 
-  let S = null;
-  function startStage(checkpoint, n) {
+  /** the running stage, null before the first one. Code below only runs inside a stage, so it reads S as set. */
+  let S = null as unknown as StageState;
+  function startStage(checkpoint?: boolean, n?: number) {
     n = n || (S && S.n) || 1;
     track(checkpoint ? 'stage_retry' : 'stage_start', { stage: n });
     const prevS = checkpoint ? S : null;
@@ -52,7 +154,7 @@ export function createStage(host) {
     if (host.save.drink && !checkpoint) { host.save.drink = false; persist(); S.gauge = 100; }
     if (n === 2) layoutStage2(!!checkpoint, prevWall, prevVault);
     if (!S.wall.broken) S.solids.push(S.wall);
-    const E = (type, x, y) => S.enemies.push(makeEnemy(type, x, y));
+    const E = (type: string, x: number, y?: number) => S.enemies.push(makeEnemy(type, x, y));
     if (n === 2) { if (checkpoint) { S.p.x = ARENA - 120; S.camX = ARENA - 260; } }
     else if (checkpoint) {
       S.p.x = ARENA - 120; S.camX = ARENA - 260;
@@ -61,7 +163,7 @@ export function createStage(host) {
       [560, 1010, 1700, 2210, 2470].forEach(x => E('moth', x, rnd(80, 110)));
       [860, 1480, 2360].forEach(x => E('puff', x));
       E('mimic', 1950);
-      const P = (type, x, y) => S.pickups.push({ type, x, y, w: 16, h: 16, bob: Math.random() * 6 });
+      const P = (type: string, x: number, y: number) => S.pickups.push({ type, x, y, w: 16, h: 16, bob: Math.random() * 6 });
       P('glowcap', 326, 132); P('beer', 446, 102); P('glowcap', 924, 96); P('ale', 1612, 126); P('beer', 1748, 94); P('glowcap', 2272, 100); P('glowcap', 2600, 170); P('beer', 1300, 116); P('chili', 790, 124); P('chili', 1745, 70); P('chili', 2420, 128);
       if (!S.vaultOpened) S.pickups.push({ type: 'chest', x: 1330, y: 174, w: 24, h: 16, bob: 0 });
     }
@@ -73,7 +175,7 @@ export function createStage(host) {
   /* ================================================================ STAGE 2: Ancient Wine Dungeon
      pits you jump over, sticky wine puddles, a dirt mound only the Mole can dig (vault),
      a high cellar shelf only the Pixie can reach, and the boss Baron von Barrel */
-  function layoutStage2(checkpoint, prevWall, prevVault) {
+  function layoutStage2(checkpoint: boolean, prevWall: boolean, prevVault: boolean) {
     S.platforms = [
       { x: 300, y: 150, w: 64 }, { x: 430, y: 122, w: 56 }, { x: 800, y: 146, w: 72 }, { x: 930, y: 118, w: 64 },
       { x: 1540, y: 150, w: 72 }, { x: 2140, y: 150, w: 72 }, { x: 2290, y: 120, w: 64 }, { x: 2440, y: 146, w: 72 },
@@ -85,21 +187,21 @@ export function createStage(host) {
     S.loot = Object.assign({ cork: 0 }, S.loot);
     if (checkpoint) return;
     S.enemies = [];
-    const E = (type, x, y) => S.enemies.push(makeEnemy(type, x, y));
+    const E = (type: string, x: number, y?: number) => S.enemies.push(makeEnemy(type, x, y));
     [260, 520, 880, 1150, 1700, 1900, 2240, 2500].forEach(x => E('keg', x));
     [480, 980, 1600, 2180, 2420].forEach(x => E('bat', x, rnd(78, 108)));
     [760, 1480, 2330].forEach(x => E('grape', x));
     [1120, 1960, 2600].forEach(x => E('imp', x));
-    const P = (type, x, y) => S.pickups.push({ type, x, y, w: 16, h: 16, bob: Math.random() * 6 });
+    const P = (type: string, x: number, y: number) => S.pickups.push({ type, x, y, w: 16, h: 16, bob: Math.random() * 6 });
     S.pickups = [];
     P('glowcap', 326, 130); P('beer', 452, 100); P('chili', 824, 124); P('glowcap', 954, 96); P('ale', 1564, 128); P('beer', 1300, 116); P('chili', 2164, 128); P('beer', 2314, 98); P('glowcap', 2466, 124); P('ale', 2640, 170);
     if (!S.vaultOpened) S.pickups.push({ type: 'chest', x: 1330, y: 174, w: 24, h: 16, bob: 0 });
     S.pickups.push({ type: 'shelfchest', x: S.shelf.x + 36, y: S.shelf.y - 16, w: 24, h: 16, bob: 0 });
   }
-  function overPit(x, w) { return S.pits.some(pt => x + w / 2 > pt.x + 2 && x + w / 2 < pt.x + pt.w - 2); }
-  function pitAhead(e, d) { const fx = d > 0 ? e.x + e.w + 6 : e.x - 6; return S.pits.some(pt => fx > pt.x && fx < pt.x + pt.w); }
+  function overPit(x: number, w: number) { return S.pits.some(pt => x + w / 2 > pt.x + 2 && x + w / 2 < pt.x + pt.w - 2); }
+  function pitAhead(e: Box, d: number) { const fx = d > 0 ? e.x + e.w + 6 : e.x - 6; return S.pits.some(pt => fx > pt.x && fx < pt.x + pt.w); }
 
-  function makeEnemy(type, x, y) {
+  function makeEnemy(type: string, x: number, y?: number): Enemy {
     const base = { type, x, y: 0, vx: 0, vy: 0, face: -1, hp: 20, max: 20, w: 20, h: 22, t: Math.random() * 2, flash: 0, burn: 0, slow: 0, freeze: 0, kbT: 0, dead: false, cd: rnd(0.5, 2), state: 'idle', anim: 0, active: false, contact: 8 };
     if (type === 'sporeling') Object.assign(base, { hp: 22, max: 22, w: 20, h: 20 });
     if (type === 'moth') Object.assign(base, { hp: 14, max: 14, w: 20, h: 12, homeY: y, contact: 7 });
@@ -110,14 +212,14 @@ export function createStage(host) {
     if (type === 'grape') Object.assign(base, { hp: 28, max: 28, w: 20, h: 18, contact: 8 });
     if (type === 'grapelet') Object.assign(base, { hp: 8, max: 8, w: 12, h: 10, contact: 5, cd: rnd(0.3, 0.8) });
     if (type === 'imp') Object.assign(base, { hp: 22, max: 22, w: 18, h: 20, contact: 7, cd: rnd(1, 2) });
-    base.y = type === 'moth' || type === 'bat' ? y : GROUND - base.h;
-    return base;
+    base.y = type === 'moth' || type === 'bat' ? y as number : GROUND - base.h;
+    return base as Enemy;
   }
 
   function activeK() { return S.knights[S.active]; }
   function kid() { return KNIGHTS[S.active].id; }
 
-  function swapTo(i) {
+  function swapTo(i: number) {
     const p = S.p;
     if (i === S.active || S.knights[i].down || p.swapCd > 0 || S.ult) return;
     if (p.special && p.special.type === 'tempest') p.special = null;
@@ -126,22 +228,22 @@ export function createStage(host) {
     S.texts.push({ x: p.x + 9, y: p.y - 6, str: KNIGHTS[i].name + '!', col: KNIGHTS[i].color, life: 0.7 });
     SFX.swap();
   }
-  function cycle(d) { for (let n = 1; n <= 3; n++) { const i = (S.active + d * n + 3) % 3; if (!S.knights[i].down) { swapTo(i); return; } } }
+  function cycle(d: number) { for (let n = 1; n <= 3; n++) { const i = (S.active + d * n + 3) % 3; if (!S.knights[i].down) { swapTo(i); return; } } }
 
-  function addGauge(v) { const before = S.gauge; S.gauge = clamp(S.gauge + v, 0, 100); if (before < 100 && S.gauge >= 100) S.texts.push({ x: S.p.x + 9, y: S.p.y - 14, str: 'GAUGE MAX!', col: '#7fd6ff', life: 1 }); }
+  function addGauge(v: number) { const before = S.gauge; S.gauge = clamp(S.gauge + v, 0, 100); if (before < 100 && S.gauge >= 100) S.texts.push({ x: S.p.x + 9, y: S.p.y - 14, str: 'GAUGE MAX!', col: '#7fd6ff', life: 1 }); }
 
   /* mouse aim: a click in a stage stores the cursor's world point; shots fired within 0.25 s fly toward it (kept in front of the knight, at most ~50 degrees up or down) */
-  let stickVec = null; // mobile joystick direction (-1..1), used to aim shots when no tap aim is fresh
-  function aimEnemy(sx, sy, face, px, py, rad) { /* nearest live monster on the facing side; with px/py, only ones within rad of that point */
-    let best = null, bd = 1e9;
+  let stickVec: { dx: number; dy: number } | null = null; // mobile joystick direction (-1..1), used to aim shots when no tap aim is fresh
+  function aimEnemy(sx: number, sy: number, face: number, px?: number, py?: number, rad?: number): [number, number] | null { /* nearest live monster on the facing side; with px/py, only ones within rad of that point */
+    let best: [number, number] | null = null, bd = 1e9;
     for (const e of S.enemies) { if (e.dead || !e.active || e.state === 'sleep') continue; const ex = e.x + e.w / 2, ey = e.y + e.h * 0.5, dx = ex - sx; if (dx * face < 4 || Math.abs(dx) > W * 0.95) continue;
-      const d = px === undefined ? Math.abs(dx) + Math.abs(ey - sy) * 0.6 : Math.hypot(ex - px, ey - py) - Math.max(e.w, e.h) / 2; if (px !== undefined && d > rad) continue; if (d < bd) { bd = d; best = [ex, ey]; } }
+      const d = px === undefined ? Math.abs(dx) + Math.abs(ey - sy) * 0.6 : Math.hypot(ex - px, ey - py!) - Math.max(e.w, e.h) / 2; if (px !== undefined && d > rad!) continue; if (d < bd) { bd = d; best = [ex, ey]; } }
     return best;
   }
-  function aimVel(sx, sy, speed, face) {
+  function aimVel(sx: number, sy: number, speed: number, face: number): [number, number] {
     const a = S.aim, tap = a && S.t - a.t <= 0.25;
-    const vec = (dx, dy) => { if (dx * face < 10) dx = 10 * face; const lim = Math.abs(dx) * 1.2; dy = Math.max(-lim, Math.min(lim, dy)); const l = Math.hypot(dx, dy) || 1; return [speed * dx / l, speed * dy / l]; };
-    const stickAim = () => { let dx = Math.max(Math.abs(stickVec.dx), 0.35) * face, dy = stickVec.dy; const lim = Math.abs(dx) * 1.2; dy = Math.max(-lim, Math.min(lim, dy)); const l = Math.hypot(dx, dy) || 1; return [speed * dx / l, speed * dy / l]; };
+    const vec = (dx: number, dy: number): [number, number] => { if (dx * face < 10) dx = 10 * face; const lim = Math.abs(dx) * 1.2; dy = Math.max(-lim, Math.min(lim, dy)); const l = Math.hypot(dx, dy) || 1; return [speed * dx / l, speed * dy / l]; };
+    const stickAim = (): [number, number] => { let dx = Math.max(Math.abs(stickVec!.dx), 0.35) * face, dy = stickVec!.dy; const lim = Math.abs(dx) * 1.2; dy = Math.max(-lim, Math.min(lim, dy)); const l = Math.hypot(dx, dy) || 1; return [speed * dx / l, speed * dy / l]; };
     if (document.body.classList.contains('tp-on')) {
       /* touch: shots lock onto monsters. A tap snaps to the monster near the tap, otherwise to the nearest one on the facing side.
          With no monster in front the shot flies straight ahead; the joystick never tilts shots, since a thumb drifts while running. */
@@ -181,16 +283,16 @@ export function createStage(host) {
     const p = S.p, m = dmgMul(), id = kid();
     if (S.gauge < 50 || p.special) return;
     S.gauge -= 50; SFX.special(); addShake(3);
-    const names = { arthur: 'Flame Wave!', rosemary: 'Tomyumkung Power!', percival: 'Meteor Shower!' };
-    const lines = { arthur: 'คลื่นเพลิง! เผามันให้เกรียม!', rosemary: 'พลังแห่งต้มยำกุ้ง! เมี้ยว!', percival: 'คาถาฝนดาวตก!' };
+    const names: Record<string, string> = { arthur: 'Flame Wave!', rosemary: 'Tomyumkung Power!', percival: 'Meteor Shower!' };
+    const lines: Record<string, string> = { arthur: 'คลื่นเพลิง! เผามันให้เกรียม!', rosemary: 'พลังแห่งต้มยำกุ้ง! เมี้ยว!', percival: 'คาถาฝนดาวตก!' };
     say(KNIGHTS[S.active].th, lines[id] + '  (' + names[id] + ')');
     if (id === 'arthur') {
-      p.atkT = 0.3; p.special = { type: 'skillet', t: 0.3 };
+      p.atkT = 0.3; p.special = { type: 'skillet', t: 0.3 } as Special;
       S.projs.push({ type: 'firewave', owner: 'p', x: p.x + (p.face > 0 ? p.w : -34), y: p.y - 8, w: 34, h: 40, vx: 250 * p.face, vy: 0, dmg: 42 * m, status: 'burn', life: 1.1, pierce: true, set: new Set() });
     } else if (id === 'rosemary') {
-      p.special = { type: 'tomyum', t: 0.7, fired: false }; p.inv = Math.max(p.inv, 0.7);
+      p.special = { type: 'tomyum', t: 0.7, fired: false } as Special; p.inv = Math.max(p.inv, 0.7);
     } else {
-      p.special = { type: 'rain', t: 1.0, spawn: 0, dir: p.face, ox: p.x };
+      p.special = { type: 'rain', t: 1.0, spawn: 0, dir: p.face, ox: p.x } as Special;
     }
   }
 
@@ -200,8 +302,8 @@ export function createStage(host) {
     S.gauge = 0; S.ult = { t: 0, hit: false }; SFX.ult(); say('อาเธอร์', 'พลังแห่งต้มยำกุ้ง! ย้ากกก!', 2.6);
   }
 
-  function say(who, line, t = 2.2) { if (S) S.speech = { who, line, t }; }
-  function hurtEnemy(e, dmg, kb, status, fromX, gauge = true) {
+  function say(who: string, line: string, t = 2.2) { if (S) S.speech = { who, line, t }; }
+  function hurtEnemy(e: Enemy, dmg: number, kb: number, status: string | null | undefined, fromX: number, gauge = true) {
     if (e.dead) return;
     e.hp -= dmg; e.flash = 0.1;
     if (kb && !e.heavy) { e.vx = Math.sign(e.x + e.w / 2 - fromX || 1) * kb; e.kbT = 0.18; if (e.type !== 'moth') e.vy = -80; }
@@ -216,7 +318,7 @@ export function createStage(host) {
     if (e.hp <= 0) killEnemy(e);
   }
 
-  function killEnemy(e) {
+  function killEnemy(e: Enemy) {
     e.dead = true;
     if (e.type === 'boss') { bossDefeated(e); return; }
     S.kills++; S.score += e.type === 'mimic' ? 500 : 100; S.fx = S.fx || []; S.fx.push({ type: 'boom', x: e.x + e.w / 2, y: e.y + e.h / 2, t: 0.6 });
@@ -229,7 +331,7 @@ export function createStage(host) {
     else if (r < 0.48) S.pickups.push({ type: 'glowcap', x: e.x, y: e.y - 6, w: 16, h: 16, vy: -150, drop: true, bob: 0 });
   }
 
-  function hurtPlayer(dmg, fromX) {
+  function hurtPlayer(dmg: number, fromX: number) {
     const p = S.p;
     if (p.inv > 0 || S.ult || S.end) return;
     const k = activeK();
@@ -248,12 +350,12 @@ export function createStage(host) {
   function gameOver() { host.scene = 'gameover'; overT = 0; }
   let overT = 0;
 
-  function bossDefeated(b) {
+  function bossDefeated(b: Enemy) {
     if (S.n === 2) {
       addShake(8); SFX.boom();
-      S.loot.cork++; S.score += 6000; say('บารอนฟอนบาร์เรล', 'ไวน์ร้อยปีของข้า... เสียของหมดเลย!', 2.5);
+      S.loot.cork!++; S.score += 6000; say('บารอนฟอนบาร์เรล', 'ไวน์ร้อยปีของข้า... เสียของหมดเลย!', 2.5);
       const frozen = b.freeze > 0 || b.slow > 0;
-      if (frozen) S.loot.cork++;
+      if (frozen) S.loot.cork!++;
       S.end = { t: 0, ember: frozen };
       track('boss_defeated', { stage: 2, boss: 'baron_von_barrel', ember: frozen ? 1 : 0, time_s: Math.round(S.t) });
       for (let n = 0; n < 60; n++) S.parts.push({ x: b.x + b.w / 2, y: b.y + b.h / 2, vx: rnd(-220, 220), vy: rnd(-260, 40), life: 1.2, max: 1.2, col: pick(['#8a2040', '#c8304a', '#ffd35a', '#a0703a']), size: 4, grav: true });
@@ -269,12 +371,12 @@ export function createStage(host) {
   }
 
   function spawnBoss() {
-    if (S.n === 2) { S.boss = { type: 'boss', x: ARENA + 280, y: -100, w: 70, h: 66, vx: 0, vy: 0, face: -1, hp: 560, max: 560, heavy: true, flash: 0, burn: 0, slow: 0, freeze: 0, kbT: 0, dead: false, state: 'intro', t: 2.2, contact: 14, hops: 0, onGround: false, squash: 0, bounces: 0 }; S.enemies.push(S.boss); return; }
-    S.boss = { type: 'boss', x: ARENA + 280, y: -100, w: 76, h: 70, vx: 0, vy: 0, face: -1, hp: 460, max: 460, heavy: true, flash: 0, burn: 0, slow: 0, freeze: 0, kbT: 0, dead: false, state: 'intro', t: 2.2, contact: 14, hops: 0, onGround: false, squash: 0 };
+    if (S.n === 2) { S.boss = { type: 'boss', x: ARENA + 280, y: -100, w: 70, h: 66, vx: 0, vy: 0, face: -1, hp: 560, max: 560, heavy: true, flash: 0, burn: 0, slow: 0, freeze: 0, kbT: 0, dead: false, state: 'intro', t: 2.2, contact: 14, hops: 0, onGround: false, squash: 0, bounces: 0 } as Enemy; S.enemies.push(S.boss); return; }
+    S.boss = { type: 'boss', x: ARENA + 280, y: -100, w: 76, h: 70, vx: 0, vy: 0, face: -1, hp: 460, max: 460, heavy: true, flash: 0, burn: 0, slow: 0, freeze: 0, kbT: 0, dead: false, state: 'intro', t: 2.2, contact: 14, hops: 0, onGround: false, squash: 0 } as Enemy;
     S.enemies.push(S.boss);
   }
 
-  function updateBaron(b, dt) {
+  function updateBaron(b: Enemy, dt: number) {
     const p = S.p, f = b.freeze > 0 ? 0 : b.slow > 0 ? 0.55 : 1, phase2 = b.hp < b.max * 0.5;
     b.vy += 900 * dt; b.y += b.vy * dt; b.x += b.vx * dt * (f || 0);
     b.squash = Math.max(0, b.squash - dt * 3);
@@ -323,7 +425,7 @@ export function createStage(host) {
     }
   }
 
-  function updateBoss(b, dt) {
+  function updateBoss(b: Enemy, dt: number) {
     if (S.n === 2) { updateBaron(b, dt); return; }
     const p = S.p, f = b.freeze > 0 ? 0 : b.slow > 0 ? 0.55 : 1, phase2 = b.hp < b.max * 0.5;
     b.vy += 900 * dt; b.y += b.vy * dt; b.x += b.vx * dt * (f || 0);
@@ -378,7 +480,7 @@ export function createStage(host) {
     }
   }
 
-  function updateEnemy(e, dt) {
+  function updateEnemy(e: Enemy, dt: number) {
     const p = S.p, px = p.x + p.w / 2, ex = e.x + e.w / 2, dx = px - ex;
     if (!e.active) { if (e.x < S.camX + W + 40 && e.x > S.camX - 80) e.active = true; else return; }
     if (e.type === 'boss') { updateBoss(e, dt); return; }
@@ -439,9 +541,9 @@ export function createStage(host) {
     if (e.y > H + 30 && !e.dead) { e.dead = true; S.kills++; S.score += 100; } /* fell into a pit */
   }
 
-  function updateStage(dt) {
+  function updateStage(dt: number) {
     if (pressed.pause) S.paused = !S.paused;
-    if (S.paused) { if (pressed['ui:shelp']) { host.help = 'stage'; return; } if (pressed.ok || pressed.click || pressed['ui:sresume']) S.paused = false; return; }
+    if (S.paused) { if (pressed['ui:shelp']) { host.help = 'stage'; return; } if (pressed.ok || pressed['click'] || pressed['ui:sresume']) S.paused = false; return; }
     S.t += dt;
     const p = S.p;
     if (S.banner) { S.banner.t -= dt; if (S.banner.t <= 0) S.banner = null; }
@@ -489,7 +591,7 @@ export function createStage(host) {
     p.vy = Math.min(p.vy + 900 * dt, 520);
     if (S.lift) { /* the Pixie carries the knight up to the high shelf */
       const L = S.lift; L.t += dt; p.vx = 0; p.vy = 0; p.inv = Math.max(p.inv, 0.3);
-      const tx = S.shelf.x + 14, ty = S.shelf.y - p.h; p.x += (tx - p.x) * Math.min(1, dt * 2.5); p.y += (ty - 6 - p.y) * Math.min(1, dt * 2.2);
+      const tx = S.shelf!.x + 14, ty = S.shelf!.y - p.h; p.x += (tx - p.x) * Math.min(1, dt * 2.5); p.y += (ty - 6 - p.y) * Math.min(1, dt * 2.2);
       if (L.t > 1.4) { p.x = tx; p.y = ty; p.onGround = true; S.lift = null; say('พิกซี่', 'ถึงแล้ว! ตรงนี้มีหีบลับด้วยนะ~'); }
     } else moveBody(p, dt);
     if (S.n === 2 && p.y > H + 20) { /* fell into a pit */
@@ -550,7 +652,7 @@ export function createStage(host) {
       pr.x += pr.vx * dt; pr.y += pr.vy * dt;
       if (pr.aim && pr.y + pr.h > GROUND + 6) pr.life = 0;
       if (pr.owner === 'p') {
-        for (const e of S.enemies) if (!e.dead && e.active && !pr.set.has(e) && overlap(pr, e)) { pr.set.add(e); hitKind = 'shot'; hurtEnemy(e, pr.dmg, pr.type === 'firewave' ? 160 : 40, pr.status, pr.x - pr.vx, true); hitKind = 'melee'; if (!pr.pierce) { pr.life = 0; break; } }
+        for (const e of S.enemies) if (!e.dead && e.active && !pr.set!.has(e) && overlap(pr, e)) { pr.set!.add(e); hitKind = 'shot'; hurtEnemy(e, pr.dmg, pr.type === 'firewave' ? 160 : 40, pr.status, pr.x - pr.vx, true); hitKind = 'melee'; if (!pr.pierce) { pr.life = 0; break; } }
         if (pr.type === 'bowl' && pr.y + pr.h >= GROUND) {
           pr.life = 0; addShake(7); SFX.boom();
           const zone = { x: pr.x - 40, y: GROUND - 70, w: pr.w + 80, h: 70 };
@@ -570,11 +672,11 @@ export function createStage(host) {
 
     /* pickups */
     for (const it of S.pickups) {
-      if (it.drop) { it.vy += 700 * dt; it.y += it.vy * dt; if (it.y + it.h > GROUND && !(S.pits.length && overPit(it.x, it.w))) { it.y = GROUND - it.h; it.vy = 0; it.drop = false; } if (it.y > H + 20) it.got = true; }
+      if (it.drop) { it.vy! += 700 * dt; it.y += it.vy! * dt; if (it.y + it.h > GROUND && !(S.pits.length && overPit(it.x, it.w))) { it.y = GROUND - it.h; it.vy = 0; it.drop = false; } if (it.y > H + 20) it.got = true; }
       it.bob += dt;
       if (it.got || !overlap(p, it)) continue;
-      if (it.type === 'shelfchest') { if (!S.shelf.got) { S.shelf.got = true; SFX.chest(); S.loot.glowcap += 2; S.loot.chili += 2; addGauge(40); S.score += 800; S.texts.push({ x: it.x + 12, y: it.y - 20, str: 'หีบบนชั้นลับ! +SP', col: '#e8c76a', life: 2, big: true }); } continue; }
-      if (it.type === 'chest' && S.n === 2) { if (!S.vaultOpened) { S.vaultOpened = true; SFX.chest(); it.got = true; S.loot.truffle++; S.loot.cork++; S.score += 800; S.texts.push({ x: it.x + 12, y: it.y - 20, str: '100-Year Vintage Cork!', col: '#e8c76a', life: 2, big: true }); SFX.ult(); } continue; }
+      if (it.type === 'shelfchest') { if (!S.shelf!.got) { S.shelf!.got = true; SFX.chest(); S.loot.glowcap += 2; S.loot.chili += 2; addGauge(40); S.score += 800; S.texts.push({ x: it.x + 12, y: it.y - 20, str: 'หีบบนชั้นลับ! +SP', col: '#e8c76a', life: 2, big: true }); } continue; }
+      if (it.type === 'chest' && S.n === 2) { if (!S.vaultOpened) { S.vaultOpened = true; SFX.chest(); it.got = true; S.loot.truffle++; S.loot.cork!++; S.score += 800; S.texts.push({ x: it.x + 12, y: it.y - 20, str: '100-Year Vintage Cork!', col: '#e8c76a', life: 2, big: true }); SFX.ult(); } continue; }
       if (it.type === 'chest') { if (!S.vaultOpened) { S.vaultOpened = true; SFX.chest(); it.got = true; S.loot.truffle++; S.loot.glowcap += 2; S.texts.push({ x: it.x + 12, y: it.y - 20, str: 'Truffle of Ages!', col: '#e8c76a', life: 2, big: true }); SFX.ult(); } continue; }
       it.got = true; SFX.coin(); S.score += it.type === 'glowcap' ? 50 : 20;
       if (it.type === 'beer') { addGauge(host.save.tools.lucky ? 55 : 35); S.texts.push({ x: it.x + 8, y: it.y - 6, str: 'เบียร์วุ้น! +SP', col: '#ffd76a', life: 0.9 }); }
@@ -616,7 +718,7 @@ export function createStage(host) {
     if (S.end) { S.end.t += dt; if (S.end.t > 3) finishStage(); }
   }
 
-  function moveBody(p, dt) {
+  function moveBody(p: Player | Enemy, dt: number) {
     const prevBottom = p.y + p.h;
     p.x += p.vx * dt;
     for (const s of S.solids) if (overlap(p, s)) { if (p.vx > 0) p.x = s.x - p.w; else if (p.vx < 0) p.x = s.x + s.w; }
@@ -658,25 +760,26 @@ export function createStage(host) {
     S.texts.push({ x: S.wall.x + 40, y: S.wall.y - 10, str: S.n === 2 ? 'Secret tunnel!' : 'Secret vault!', col: '#e8c76a', life: 1.6, big: true });
   }
 
-  function updateParticles(dt) {
+  function updateParticles(dt: number) {
     for (const q of S.parts) { q.life -= dt; q.x += q.vx * dt; q.y += q.vy * dt; if (q.grav) q.vy += 500 * dt; }
     S.parts = S.parts.filter(q => q.life > 0);
     for (const t of S.texts) { t.life -= dt; t.y -= 18 * dt; }
     S.texts = S.texts.filter(t => t.life > 0);
   }
 
-  let results = null;
+  /** the last stage-clear summary; read only on the results screen, after finishStage set it. */
+  let results = null as unknown as Results;
   function finishStage() {
-    for (const k in S.loot) host.save.ing[k] = (host.save.ing[k] || 0) + S.loot[k];
+    for (const k in S.loot) host.save.ing[k] = (host.save.ing[k] || 0) + (S.loot as unknown as Record<string, number>)[k];
     host.save.runs++; persist();
-    const stars = 1 + (S.t < 300 ? 1 : 0) + (S.ko === 0 ? 1 : 0), hearts = (S.vaultOpened ? 1 : 0) + (S.end.ember ? 1 : 0);
+    const stars = 1 + (S.t < 300 ? 1 : 0) + (S.ko === 0 ? 1 : 0), hearts = (S.vaultOpened ? 1 : 0) + (S.end!.ember ? 1 : 0);
     const prev = host.save.stages[S.n] || { stars: 0, hearts: 0 }; host.save.stages[S.n] = { stars: Math.max(prev.stars, stars), hearts: Math.max(prev.hearts, hearts) }; persist();
-    results = { n: S.n, time: S.t, kills: S.kills, loot: Object.assign({}, S.loot), vault: S.vaultOpened, ember: S.end.ember, t: 0, stars, hearts, score: S.score, net: S.net ? NET.finish(S.net, { score: S.score, timeMs: Math.round(((S.netT0 || 0) + S.t) * 1000), kills: S.kills }) : null };
+    results = { n: S.n, time: S.t, kills: S.kills, loot: Object.assign({}, S.loot), vault: S.vaultOpened, ember: S.end!.ember, t: 0, stars, hearts, score: S.score, net: S.net ? NET.finish(S.net, { score: S.score, timeMs: Math.round(((S.netT0 || 0) + S.t) * 1000), kills: S.kills }) : null };
     host.scene = 'results';
   }
 
-  function tileX(img, par, camX, y, w, h) { const off = ((camX * par) % w + w) % w; for (let x = -off; x < W; x += w) ctx.drawImage(img, Math.round(x), y, w, h); }
-  function drawForestBg(camX, t) {
+  function tileX(img: Img, par: number, camX: number, y: number, w: number, h: number) { const off = ((camX * par) % w + w) % w; for (let x = -off; x < W; x += w) ctx.drawImage(img, Math.round(x), y, w, h); }
+  function drawForestBg(camX: number, t: number) {
     if (ENV.sky && ENV.trees && ENV.fungi) {
       rect(0, 0, W, H, '#10293d');
       if (ENV.farbg) tileX(ENV.farbg, 0.08, camX, 0, 800, 225);
@@ -714,7 +817,7 @@ export function createStage(host) {
     // fireflies
     for (const f of flies) { const x = ((f.x - camX * 0.7 * f.s) % 520 + 520) % 520 - 60, y = f.y + Math.sin(t * 1.3 + f.ph) * 8; const a = 0.5 + 0.5 * Math.sin(t * 3 + f.ph); glow(x, y, 6, 'rgba(200,255,140,A)', 0.5 * a); rect(x, y, 1, 1, '#f0ffc0'); }
   }
-  function drawGround(camX) {
+  function drawGround(camX: number) {
     if (ENV.groundstrip) {
       const g2 = ctx.createLinearGradient(0, GROUND, 0, H); g2.addColorStop(0, '#3a2a1c'); g2.addColorStop(1, '#120c08'); ctx.fillStyle = g2; ctx.fillRect(0, GROUND, W, H - GROUND);
       if (ENV.ground2) { ctx.fillStyle = '#21150e'; ctx.fillRect(0, GROUND + 20, W, H - GROUND - 20); tileX(ENV.ground2, 1, camX, GROUND - 7, 564, 40); } else tileX(ENV.groundstrip, 1, camX, GROUND - 5, 100, 24);
@@ -740,14 +843,14 @@ export function createStage(host) {
   }
   /* temporary Stage 2 scenery: the alchemy cellar art (G6) darkened as a tiled far wall, stage props recoloured to stone and wine */
   const F_STONE = 'grayscale(1) sepia(0.28) brightness(0.62) contrast(1.1)', F_WINE = 'hue-rotate(70deg) saturate(1.5) brightness(0.8)', F_DIRT = 'sepia(0.9) saturate(1.3) brightness(0.8)';
-  function drawDungeonBg(camX, t) {
+  function drawDungeonBg(camX: number, t: number) {
     rect(0, 0, W, H, '#140c10');
     if (ENV.cellar2) { const im = recol(ENV.cellar2, 'brightness(0.42) saturate(0.7) sepia(0.25)'); tileX(im, 0.12, camX, -18, 400, 225); }
     const fog = ctx.createLinearGradient(0, 90, 0, GROUND); fog.addColorStop(0, 'rgba(80,20,30,0)'); fog.addColorStop(1, 'rgba(110,30,40,0.28)'); ctx.fillStyle = fog; ctx.fillRect(0, 90, W, GROUND - 90);
     if (ENV.cellar2) { const x0 = ARENA - camX - 20; if (x0 < W) { ctx.drawImage(recol(ENV.cellar2, 'brightness(0.6) saturate(1.2) hue-rotate(-12deg)'), Math.round(x0), -10, 440, 248); const gr = ctx.createLinearGradient(x0, 0, x0 + 60, 0); gr.addColorStop(0, '#140c10'); gr.addColorStop(1, 'rgba(20,12,16,0)'); ctx.fillStyle = gr; ctx.fillRect(x0, 0, 60, H); } }
   }
-  function drawStageBg(n, camX, t) { if (n === 2) drawDungeonBg(camX, t); else drawForestBg(camX, t); }
-  function drawDungeonGround(camX) {
+  function drawStageBg(n: number, camX: number, t: number) { if (n === 2) drawDungeonBg(camX, t); else drawForestBg(camX, t); }
+  function drawDungeonGround(camX: number) {
     ctx.fillStyle = '#16100e'; ctx.fillRect(0, GROUND, W, H - GROUND);
     if (ENV.ground2) tileX(recol(ENV.ground2, F_STONE), 1, camX, GROUND - 7, 564, 40);
     for (const pt of S.pits) { const x = pt.x - camX; if (x > W || x + pt.w < 0) continue;
@@ -775,7 +878,7 @@ export function createStage(host) {
       rect(pl.x - 0.5, pl.y - 0.5, pl.w + 1, 8, '#1b1020'); rect(pl.x, pl.y, pl.w, 7, '#8a5a32'); for (let k = 0; k < pl.w; k += 12) rect(pl.x + k, pl.y + 1, 0.5, 6, '#5a3a22'); rect(pl.x, pl.y + 3.5, pl.w, 0.5, '#a8723a');
       rect(pl.x, pl.y, pl.w, 2, '#3cbf5a'); for (let k = 3; k < pl.w - 3; k += 7) rect(pl.x + k, pl.y + 2, 1.5, 1 + hash(pl.x + k) * 4, '#2a9a48'); }
     // mound
-    const m = S.solids.find(s => s.kind === 'slab');
+    const m = S.solids.find(s => s.kind === 'slab')!;
     if (ENV.plat2 && host.fxArtReady) { // vault roof = G3 mossy platform art; open alcove behind (no code-drawn room)
       const im = S.n === 2 ? recol(ENV.plat2, F_STONE) : ENV.plat2, y = m.y - 2, h = 16, cw = 7, mw = 13.75;
       ctx.drawImage(im, 0, 0, 28, 64, m.x - 2, y, cw, h); ctx.drawImage(im, 83, 0, 28, 64, m.x + m.w - 5, y, cw, h);
@@ -797,7 +900,7 @@ export function createStage(host) {
     }
     // pickups
     for (const it of S.pickups) {
-      if (it.type === 'shelfchest') { if (host.fxArtReady) fxB(S.shelf.got ? 'chest_open' : 'chest', it.x + 12, it.y + 17); continue; }
+      if (it.type === 'shelfchest') { if (host.fxArtReady) fxB(S.shelf!.got ? 'chest_open' : 'chest', it.x + 12, it.y + 17); continue; }
       if (it.type === 'chest') {
         if (host.fxArtReady) { fxB(S.vaultOpened ? 'chest_open' : 'chest', it.x + 12, it.y + 17); continue; }
         if (S.wall.broken || true) { const open = S.vaultOpened; rect(it.x, it.y + (open ? 4 : 0), 24, open ? 12 : 16, '#1b1020'); rect(it.x + 1, it.y + 1 + (open ? 4 : 0), 22, (open ? 10 : 14), '#c08a3c'); rect(it.x + 1, it.y + 6, 22, 2, '#f2c94c'); if (!open) rect(it.x + 10, it.y + 5, 4, 5, '#f2c94c'); }
@@ -821,14 +924,14 @@ export function createStage(host) {
     // gorn
     if (S.sup.gorn) { if (S.sup.gorn.mole) drawBustHelper('mole', 'MOLE', S.sup.gorn.x + 15, GROUND - 6, S.sup.gorn.state === 'smash' ? Math.sin(S.t * 40) * 2 : Math.abs(Math.sin(S.t * 14)) * -2, S.sup.gorn.state === 'leave'); else drawGorn(S.sup.gorn); }
     if (S.lift) drawBustHelper('pixie', 'PIXIE', S.p.x + S.p.w / 2, S.p.y - 2, Math.sin(S.t * 12) * 2, false);
-    if (S.corpse) { const c = S.corpse; c.t -= 1 / 60; const hasDead = host.heroReady && HERO_ATLAS[KNIGHTS[c.i].id + '_dead']; if (hasDead) { const ds = knightSprite(c.i, 'dead'); ctx.globalAlpha = clamp(c.t, 0, 1); ctx.drawImage(c.face > 0 ? ds.r : ds.l, Math.round(c.x + 9 - 50 - (ds.r.padL || 0)), Math.round(GROUND - (ds.r.lh - 1.5)), ds.r.lw, ds.r.lh); ctx.globalAlpha = 1; if (c.t <= 0) S.corpse = null; } else { const spr = knightSprite(c.i, 'stand'); const img = c.face > 0 ? spr.r : spr.l; ctx.save(); ctx.globalAlpha = clamp(c.t, 0, 1); ctx.translate(c.x + 9, GROUND - 6); ctx.rotate(-c.face * Math.PI / 2 * clamp((1.4 - c.t) * 4, 0, 1)); dimg(img, -18, -38); ctx.restore(); ctx.globalAlpha = 1; if (c.t <= 0) S.corpse = null; } }
+    if (S.corpse) { const c = S.corpse; c.t -= 1 / 60; const hasDead = host.heroReady && HERO_ATLAS[KNIGHTS[c.i].id + '_dead']; if (hasDead) { const ds = knightSprite(c.i, 'dead'); ctx.globalAlpha = clamp(c.t, 0, 1); ctx.drawImage(c.face > 0 ? ds.r : ds.l, Math.round(c.x + 9 - 50 - (ds.r.padL || 0)), Math.round(GROUND - (ds.r.lh! - 1.5)), ds.r.lw!, ds.r.lh!); ctx.globalAlpha = 1; if (c.t <= 0) S.corpse = null; } else { const spr = knightSprite(c.i, 'stand'); const img = c.face > 0 ? spr.r : spr.l; ctx.save(); ctx.globalAlpha = clamp(c.t, 0, 1); ctx.translate(c.x + 9, GROUND - 6); ctx.rotate(-c.face * Math.PI / 2 * clamp((1.4 - c.t) * 4, 0, 1)); dimg(img, -18, -38); ctx.restore(); ctx.globalAlpha = 1; if (c.t <= 0) S.corpse = null; } }
     // player
     drawPlayer();
-    if (S.poisonT > 0) { S.poisonT -= 1 / 60; dimg(icon('st_poison', 1), S.p.x + 5, S.p.y - 20 + Math.sin(S.t * 8)); }
+    if (S.poisonT! > 0) { S.poisonT! -= 1 / 60; dimg(icon('st_poison', 1), S.p.x + 5, S.p.y - 20 + Math.sin(S.t * 8)); }
     // particles
     for (const q of S.parts) { ctx.globalAlpha = clamp(q.life / q.max, 0, 1); rect(q.x, q.y, q.size, q.size, q.col); }
     ctx.globalAlpha = 1;
-    for (const t of S.texts) { ctx.globalAlpha = clamp(t.life * 2, 0, 1); if (t.dmg) { outlined(t.str, t.x, t.y, t.size, t.col); continue; } text(t.str, t.x, t.y, { thai: /[\u0E00-\u0E7F]/.test(t.str), align: 'center', size: t.big ? 11 : 9, color: t.col, weight: 700 }); }
+    for (const t of S.texts) { ctx.globalAlpha = clamp(t.life * 2, 0, 1); if (t.dmg) { outlined(t.str, t.x, t.y, t.size!, t.col); continue; } text(t.str, t.x, t.y, { thai: /[\u0E00-\u0E7F]/.test(t.str), align: 'center', size: t.big ? 11 : 9, color: t.col, weight: 700 }); }
     ctx.globalAlpha = 1;
     ctx.restore();
   }
@@ -842,13 +945,13 @@ export function createStage(host) {
     else if (!p.onGround) frame = 'jump';
     else if (Math.abs(p.vx) > 1) frame = 'run' + (1 + Math.floor(p.anim * 10) % 4);
     const spr = knightSprite(i, frame); const img = p.face > 0 ? spr.r : spr.l;
-    if (img.hero) { ctx.drawImage(img, Math.round(p.x + p.w / 2 - 50 - (img.padL || 0)), Math.round(p.y + p.h - (img.lh - 1.5)), img.lw, img.lh); }
+    if (img.hero) { ctx.drawImage(img, Math.round(p.x + p.w / 2 - 50 - (img.padL || 0)), Math.round(p.y + p.h - (img.lh! - 1.5)), img.lw!, img.lh!); }
     else dimg(img, Math.round(p.x + p.w / 2 - LW(img) / 2), Math.round(p.y + p.h - LH(img)));
     if (id === 'arthur' && p.atkT > 0 && host.fxArtReady && !HERO_HI.arthur_atk1 && !(p.special && p.special.type === 'skillet')) { const heavy = p.combo === 2; ctx.globalAlpha = clamp(p.atkT / (heavy ? 0.2 : 0.14), 0, 1); fxC(heavy ? 'crescent' : 'slash', p.x + p.w / 2 + p.face * 22, p.y + 14, p.face, heavy ? 1 : 0.85); ctx.globalAlpha = 1; }
     if (id === 'percival' && (p.atkT > 0 || (p.special && p.special.type === 'rain'))) { const hx = p.x + p.w / 2 + p.face * 12, hy = p.y + 4; for (let k = 0; k < 3; k++) { const a = S.t * 8 + k * 2.1; rect(hx + Math.cos(a) * 8, hy + Math.sin(a) * 8, 1.5, 1.5, '#bff4ff'); } }
   }
 
-  function drawEnemy(e) {
+  function drawEnemy(e: Enemy) {
     if (e.type === 'boss') { drawBoss(e); return; }
     let img;
     const frame = e.type === 'mimic' ? (e.state === 'sleep' ? 0 : (Math.floor(e.t * 6) % 2)) : Math.floor(e.anim * 6) % 2;
@@ -863,20 +966,20 @@ export function createStage(host) {
     const sc = e.type === 'grapelet' ? 0.55 : e.type === 'keg' ? 0.9 : 1;
     const dx = Math.round(e.x + e.w / 2 - LW(img) * sc / 2), dy = Math.round(e.y + e.h - LH(img) * sc);
     if (sc !== 1) dimg(img, dx, dy, LW(img) * sc, LH(img) * sc); else dimg(img, dx, dy);
-    if (e.type === 'puff' && e.puffT && host.enemyArtReady) { const cl = ENEMY_ART.puff_cloud.l, k = 0.35 + e.puffT; ctx.globalAlpha = Math.min(1, e.puffT * 4); dimg(cl, e.x + e.w / 2 - LW(cl) * k / 2, e.y - LH(cl) * k * 0.7, LW(cl) * k, LH(cl) * k); ctx.globalAlpha = 1; }
+    if (e.type === 'puff' && e.puffT && host.enemyArtReady) { const cl = ENEMY_ART.puff_cloud!.l, k = 0.35 + e.puffT; ctx.globalAlpha = Math.min(1, e.puffT * 4); dimg(cl, e.x + e.w / 2 - LW(cl) * k / 2, e.y - LH(cl) * k * 0.7, LW(cl) * k, LH(cl) * k); ctx.globalAlpha = 1; }
     else if (e.type === 'puff' && e.puffT) { ctx.fillStyle = '#e8d8ff88'; ctx.beginPath(); ctx.arc(e.x + e.w / 2, e.y - 2, 6 + e.puffT * 10, 0, 7); ctx.fill(); }
     if (e.burn > 0 && Math.random() < 0.4) S.parts.push({ x: e.x + rnd(0, e.w), y: e.y + rnd(0, e.h), vx: 0, vy: -40, life: 0.3, max: 0.3, col: '#ff8a3d', size: 2 });
-    const sts = [e.burn > 0 && 'st_fire', e.freeze > 0 && 'st_freeze', e.slow > 0 && 'st_slow'].filter(Boolean); sts.forEach((n, k) => dimg(icon(n, 1), e.x + e.w / 2 - sts.length * 4.5 + k * 9, e.y - 16));
+    const sts = [e.burn > 0 && 'st_fire', e.freeze > 0 && 'st_freeze', e.slow > 0 && 'st_slow'].filter((n): n is string => Boolean(n)); sts.forEach((n, k) => dimg(icon(n, 1), e.x + e.w / 2 - sts.length * 4.5 + k * 9, e.y - 16));
     if (e.hp < e.max && e.type !== 'mimic' && e.type !== 'grapelet' || (e.type === 'mimic' && e.state !== 'sleep' && e.hp < e.max)) bar(e.x, e.y - 6, e.w, 3, e.hp / e.max, '#e2483b');
   }
 
   const bossCanvas = (() => {
     /* painted with paths at 2x (224x208 real), alpha-thresholded, shaded and outlined; drawn at 112x104 world units, facing left */
-    const make = (squash, angry) => {
-      const c = document.createElement('canvas'); c.width = 224; c.height = 208; const g = c.getContext('2d');
+    const make = (squash: number, angry: boolean) => {
+      const c: Img = document.createElement('canvas'); c.width = 224; c.height = 208; const g = c.getContext('2d')!;
       g.scale(2, 2);
-      const ell = (x, y, rx, ry, fill) => { g.fillStyle = fill; g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); g.fill(); };
-      const lg = (y0, y1, a, b2) => { const gr = g.createLinearGradient(0, y0, 0, y1); gr.addColorStop(0, a); gr.addColorStop(1, b2); return gr; };
+      const ell = (x: number, y: number, rx: number, ry: number, fill: string | CanvasGradient) => { g.fillStyle = fill; g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); g.fill(); };
+      const lg = (y0: number, y1: number, a: string, b2: string) => { const gr = g.createLinearGradient(0, y0, 0, y1); gr.addColorStop(0, a); gr.addColorStop(1, b2); return gr; };
       const sq = 1 - squash * 0.08, sx = 1 + squash * 0.08;
       g.translate(56, 104); g.scale(sx, sq); g.translate(-56, -104);
       // legs
@@ -911,11 +1014,11 @@ export function createStage(host) {
       shade(c, true, 0.15);
       c.lw = 112; c.lh = 104; return c;
     };
-    const o = { idle: make(0, false), squash: make(1, false), idleA: make(0, true), squashA: make(1, true) };
+    const o: Record<string, Img> = { idle: make(0, false), squash: make(1, false), idleA: make(0, true), squashA: make(1, true) };
     for (const k of Object.keys(o)) o[k + 'R'] = flip(o[k]);
     return o;
   })();
-  function drawBoss(b) {
+  function drawBoss(b: Enemy) {
     const angry = b.hp < b.max * 0.5;
     if (host.enemyArtReady) {
       let k = 'boss_idle';
@@ -925,12 +1028,12 @@ export function createStage(host) {
       else if (b.state === 'crouch' || b.state === 'summon' || b.state === 'air') k = 'boss_fists';
       else if (Math.abs(b.vx) > 5 || b.state === 'intro') k = Math.floor(S.t * 4) % 2 ? 'boss_stomp' : 'boss_idle';
       if (S.n === 2) { if (b.state === 'curl' || b.state === 'roll') k = 'boss_fists'; else if (b.state === 'spray') k = 'boss_spit'; }
-      let spr = ENEMY_ART[k]; if (S.n === 2) spr = { l: recol(spr.l, 'sepia(1) saturate(2.2) hue-rotate(-15deg) brightness(0.85)'), r: recol(spr.r, 'sepia(1) saturate(2.2) hue-rotate(-15deg) brightness(0.85)') };
+      let spr = ENEMY_ART[k]!; if (S.n === 2) spr = { l: recol(spr.l, 'sepia(1) saturate(2.2) hue-rotate(-15deg) brightness(0.85)'), r: recol(spr.r, 'sepia(1) saturate(2.2) hue-rotate(-15deg) brightness(0.85)') };
       let im = b.face > 0 ? spr.l : spr.r;
       if (S.n === 2 && b.state === 'roll') { ctx.save(); ctx.translate(Math.round(b.x + b.w / 2), Math.round(b.y + b.h / 2 + 4)); ctx.rotate(S.t * 14 * Math.sign(b.vx || 1)); const w = LW(im) * 0.75, h = LH(im) * 0.75; ctx.drawImage(b.flash > 0 ? tinted(im, '#ffffffaa') : im, -w / 2, -h / 2, w, h); ctx.restore(); return; }
       if (b.flash > 0) im = tinted(im, '#ffffffaa'); else if (b.freeze > 0) im = tinted(im, '#a8ecff99'); else if (b.burn > 0 && Math.floor(S.t * 10) % 2) im = tinted(im, '#ff8a3d77'); else if (angry) im = tinted(im, '#ff203822');
       const wob = b.state === 'spray' ? Math.sin(S.t * 50) * 1.5 : 0;
-      const cxOff = k === 'boss_spit' ? (b.face > 0 ? 1 : -1) * (LW(im) - LW(ENEMY_ART.boss_idle.l)) / 2 : 0;
+      const cxOff = k === 'boss_spit' ? (b.face > 0 ? 1 : -1) * (LW(im) - LW(ENEMY_ART.boss_idle!.l)) / 2 : 0;
       dimg(im, Math.round(b.x + b.w / 2 - LW(im) / 2 + cxOff + wob), Math.round(b.y + b.h - LH(im) + 3));
       if (b.burn > 0 && Math.random() < 0.6) S.parts.push({ x: b.x + rnd(0, b.w), y: b.y + rnd(0, b.h), vx: 0, vy: -50, life: 0.4, max: 0.4, col: pick(['#ff8a3d', '#ffd35a']), size: 3 });
       return;
@@ -943,7 +1046,7 @@ export function createStage(host) {
     if (b.burn > 0 && Math.random() < 0.6) S.parts.push({ x: b.x + rnd(0, b.w), y: b.y + rnd(0, b.h), vx: 0, vy: -50, life: 0.4, max: 0.4, col: pick(['#ff8a3d', '#ffd35a']), size: 3 });
   }
 
-  function drawProj(pr) {
+  function drawProj(pr: Proj) {
     if (pr.type === 'bottle' || pr.type === 'wine') { /* temporary: reuse the poison-pool bubble art recoloured until card W7 arrives */
       const im = E7.bub0 ? recol(E7.bub0, pr.type === 'bottle' ? 'hue-rotate(200deg) saturate(1.4)' : F_WINE) : null;
       if (im) { const sz = pr.type === 'bottle' ? 11 : 9; ctx.save(); ctx.translate(pr.x + pr.w / 2, pr.y + pr.h / 2); ctx.rotate(S.t * 10); ctx.drawImage(im, -sz / 2, -sz / 2, sz, sz); ctx.restore(); }
@@ -966,18 +1069,18 @@ export function createStage(host) {
     }
     else if (pr.type === 'spore' && E5.spore) { const im = E5.spore, w = 26, h = im.height * w / im.width; ctx.save(); ctx.translate(pr.x + pr.w / 2, pr.y + pr.h / 2); ctx.rotate(Math.atan2(pr.vy || 0, pr.vx || 1)); ctx.drawImage(im, -w * 0.686, -h * 0.416, w, h); ctx.restore(); }
     else if (pr.type === 'spore') { rect(pr.x, pr.y, pr.w, pr.h, '#1b1020'); rect(pr.x + 1, pr.y + 1, pr.w - 2, pr.h - 2, '#c88ae8'); rect(pr.x + 3, pr.y + 2, 2, 2, '#f1e3ff'); }
-    else if (pr.type === 'cloud' && host.enemyArtReady) { const cl = ENEMY_ART.puff_cloud[pr.vx > 0 ? 'r' : 'l'], k = 0.2 + Math.sin(S.t * 10) * 0.01; dimg(cl, pr.x + 6 - LW(cl) * k / 2, pr.y + 6 - LH(cl) * k / 2, LW(cl) * k, LH(cl) * k); }
+    else if (pr.type === 'cloud' && host.enemyArtReady) { const cl = ENEMY_ART.puff_cloud![pr.vx > 0 ? 'r' : 'l'], k = 0.2 + Math.sin(S.t * 10) * 0.01; dimg(cl, pr.x + 6 - LW(cl) * k / 2, pr.y + 6 - LH(cl) * k / 2, LW(cl) * k, LH(cl) * k); }
     else if (pr.type === 'cloud') { ctx.fillStyle = '#d9c86acc'; ctx.beginPath(); ctx.arc(pr.x + 6, pr.y + 6, 6 + Math.sin(S.t * 10) * 1, 0, 7); ctx.fill(); rect(pr.x + 3, pr.y + 4, 2, 2, '#fff8c0'); }
     else if (pr.type === 'wave' && E5.shock) { const im = E5.shock, f = Math.sign(pr.vx) || 1, w = 46 + Math.sin(S.t * 30) * 2, h = im.height * w / im.width; ctx.save(); ctx.translate(f > 0 ? pr.x + pr.w + 4 : pr.x - 4, GROUND + 2); ctx.scale(f, 1); ctx.drawImage(im, -w, -h, w, h); ctx.restore(); }
     else if (pr.type === 'wave') { for (let i = 0; i < 4; i++) rect(pr.x + i * 4, pr.y + 14 - (6 + ((i + Math.floor(S.t * 20)) % 3) * 3), 3, 6 + ((i + Math.floor(S.t * 20)) % 3) * 3, i % 2 ? '#c88ae8' : '#f1e3ff'); }
   }
 
-  function drawStar(x, y, r, col, rot = 0) {
+  function drawStar(x: number, y: number, r: number, col: string, rot = 0) {
     ctx.fillStyle = '#1b1020'; starPath(x, y, r + 1, rot); ctx.fill(); ctx.fillStyle = col; starPath(x, y, r, rot); ctx.fill(); ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 0.5, y - 1.5, 1, 1);
   }
-  function starPath(x, y, r, rot) { ctx.beginPath(); for (let k = 0; k < 10; k++) { const a = rot + k * Math.PI / 5 - Math.PI / 2, rr = k % 2 ? r * 0.45 : r; ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } ctx.closePath(); }
-  function drawTomyumBowl(cx, by, sc) {
-    if (host.heroReady) { const b = HERO_ATLAS.bowl, w = 56 * sc, h = w * b[3] / b[2]; ctx.drawImage(heroAtlas, b[0], b[1], b[2], b[3], cx - w / 2, by - h, w, h); return; }
+  function starPath(x: number, y: number, r: number, rot: number) { ctx.beginPath(); for (let k = 0; k < 10; k++) { const a = rot + k * Math.PI / 5 - Math.PI / 2, rr = k % 2 ? r * 0.45 : r; ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } ctx.closePath(); }
+  function drawTomyumBowl(cx: number, by: number, sc: number) {
+    if (host.heroReady) { const b = HERO_ATLAS.bowl!, w = 56 * sc, h = w * b[3] / b[2]; ctx.drawImage(heroAtlas, b[0], b[1], b[2], b[3], cx - w / 2, by - h, w, h); return; }
     ctx.save(); ctx.translate(cx, by); ctx.scale(sc, sc);
     ctx.fillStyle = '#1b1020'; ctx.beginPath(); ctx.ellipse(0, -16, 25, 17, 0, 0, Math.PI); ctx.fill(); rect(-9, -2, 18, 3, '#1b1020');
     ctx.fillStyle = '#9aa0aa'; ctx.beginPath(); ctx.ellipse(0, -16, 24, 16, 0, 0, Math.PI); ctx.fill();
@@ -991,15 +1094,15 @@ export function createStage(host) {
     ctx.restore();
   }
   /* temporary Pixie/Mole helpers in stages: their map bust art until stage sprites from card F1 are cut */
-  function drawBustHelper(id, label, cx, by, bob, flipX) {
+  function drawBustHelper(id: string, label: string, cx: number, by: number, bob: number, flipX: boolean) {
     const bi = host.uiArtReady && UI_BIG['bust_' + id]; if (!bi) return;
     const sz = 30; ctx.save(); ctx.translate(Math.round(cx), Math.round(by + bob)); if (flipX) ctx.scale(-1, 1); ctx.drawImage(bi, -sz / 2, -sz, sz, sz); ctx.restore();
     text(label, cx, by - sz - 9 + bob, { align: 'center', size: 8, color: id === 'pixie' ? '#ffb0e0' : '#e8c79a' });
   }
-  function drawGorn(g) {
+  function drawGorn(g: Gorn) {
     const x = Math.round(g.x), y = GROUND - 40, bump = g.state === 'smash' && g.t < 0.4 ? 6 : 0;
     if (host.crewArtReady) {
-      const gi = CREW_ART[g.state === 'smash' ? 'gorn_chop' : 'gorn_idle'][g.state === 'leave' ? 'r' : 'l'];
+      const gi = CREW_ART[g.state === 'smash' ? 'gorn_chop' : 'gorn_idle']![g.state === 'leave' ? 'r' : 'l'];
       const hop = g.state === 'smash' ? 0 : Math.abs(Math.sin(S.t * 14)) * 2;
       dimg(gi, Math.round(x + 15 - LW(gi) / 2 + bump), Math.round(GROUND - LH(gi) - hop));
       text('GORN', x + 15, GROUND - LH(gi) - 8, { align: 'center', size: 8, color: '#9be15d' });
@@ -1100,7 +1203,7 @@ export function createStage(host) {
     }
   }
 
-  function updateResults(dt) { results.t += dt; if (results.t > 0.8 && (!results.net || results.net.state !== 'send' || results.t > 3) && anyConfirm()) { host.startTavern(); if (!host.save.seen.tavern) { host.help = 'tavern'; host.save.seen.tavern = true; persist(); } } }
+  function updateResults(dt: number) { results.t += dt; if (results.t > 0.8 && (!results.net || results.net.state !== 'send' || results.t > 3) && anyConfirm()) { host.startTavern(); if (!host.save.seen['tavern']) { host.help = 'tavern'; host.save.seen['tavern'] = true; persist(); } } }
   function drawResults() {
     drawStageBg(results.n || 1, results.t * 10, results.t);
     rect(0, 0, W, H, '#05141aaa');
@@ -1110,14 +1213,14 @@ export function createStage(host) {
     text(r2 ? 'ดันเจี้ยนไวน์โบราณ · Ancient Wine Dungeon' : 'ป่าเห็ดพิษ · Poison Mushroom Forest', W / 2, 40, { size: 8, align: 'center', thai: true, weight: 400, color: '#bba8ba' });
     for (let k = 0; k < 3; k++) text('★', W / 2 - 20 + k * 20, 51, { size: 15, align: 'center', color: k < results.stars ? '#f2c94c' : '#3a3a40', shadow: k < results.stars });
     const m = Math.floor(results.time / 60), s = Math.floor(results.time % 60);
-    const rows = [['เวลา', m + ':' + String(s).padStart(2, '0')], ['คะแนน', results.score], ['ปราบมอนสเตอร์', results.kills], ['Glowcap / พริก', '+' + results.loot.glowcap + ' / +' + results.loot.chili], ['Shroom Crown', '+' + results.loot.crown], ['ห้องลับ (เชฟกอร์น)', results.vault ? 'เจอ! Truffle of Ages' : 'พลาด'], ['ดรอปลับบอส', results.ember ? 'Ember Spore!' : 'พลาด (ปราบตอนติดไฟ)']];
+    const rows: [string, string | number][] = [['เวลา', m + ':' + String(s).padStart(2, '0')], ['คะแนน', results.score], ['ปราบมอนสเตอร์', results.kills], ['Glowcap / พริก', '+' + results.loot.glowcap + ' / +' + results.loot.chili], ['Shroom Crown', '+' + results.loot.crown], ['ห้องลับ (เชฟกอร์น)', results.vault ? 'เจอ! Truffle of Ages' : 'พลาด'], ['ดรอปลับบอส', results.ember ? 'Ember Spore!' : 'พลาด (ปราบตอนติดไฟ)']];
     if (r2) rows.splice(4, 3, ['100-Year Vintage Cork', '+' + (results.loot.cork || 0)], ['อุโมงค์ลับ (ตุ่น)', results.vault ? 'เจอ! Truffle + Cork' : 'พลาด'], ['ดรอปลับบอส', results.ember ? 'Cork เพิ่ม!' : 'พลาด (ปราบตอนติดน้ำแข็ง)']);
     rows.forEach(([a, b], i) => { text(a, 78, 72 + i * 12.5, { size: 8.5, thai: true, weight: 400 }); text(String(b), 322, 72 + i * 12.5, { size: 8.5, align: 'right', thai: true, color: /พลาด/.test(String(b)) ? '#7a6a6a' : '#ffd76a' }); });
     const nl = results.net ? netLine(results.net, ['stage1_score', 'stage1_time']) : null;
     text(nl ? nl.str : 'กลับร้านกันเถอะ ลูกค้ากะดึกรออยู่!', W / 2, 159, { size: nl ? 9 : 8, align: 'center', thai: true, color: nl ? nl.col : '#bba8ba', weight: nl ? 700 : 400 });
     if (results.t > 0.8 && (!results.net || results.net.state !== 'send' || results.t > 3)) text('Enter / แตะ: เริ่มกะดึก', W / 2, 172, { size: 10, align: 'center', thai: true, color: Math.floor(results.t * 2) % 2 ? '#ffd76a' : '#f6ead2' });
   }
-  function updateOver(dt) {
+  function updateOver(dt: number) {
     overT += dt;
     if (overT > 0.8 && anyConfirm()) startStage(S.bossOn);
   }
