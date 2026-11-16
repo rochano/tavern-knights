@@ -1,0 +1,16 @@
+# After Cloudflare Pages publishes main, tell Bing (IndexNow) the pages changed.
+name: IndexNow
+on:
+  push:
+    branches: [main]
+    paths: ["client/**"]
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/indexnow.mjs client/public/sitemap.xml https://tavern-knights.pages.dev/f49116c21332e91931ce4d0155b0fbc5.txt --wait
